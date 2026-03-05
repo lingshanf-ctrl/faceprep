@@ -55,9 +55,10 @@ export async function POST(request: NextRequest) {
       data: {
         userId: session.id,
         title,
-        content,
-        category: category || "OTHER",
-        difficulty: difficulty || "MEDIUM",
+        referenceAnswer: content,
+        category: category || "GENERAL",
+        type: "TECHNICAL",
+        difficulty: difficulty || 1,
       },
     });
 
