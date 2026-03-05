@@ -10,10 +10,11 @@ datasource db {
 // 用户
 model User {
   id        String   @id @default(cuid())
-  email     String   @unique
+  phone     String?  @unique  // 手机号登录（可选，兼容旧数据）
+  email     String?  @unique  // 可选邮箱
   name      String?
   avatar    String?
-  password  String?  // 用于 Credentials 登录
+  password  String?  // 保留但不再用于验证码登录
   plan      Plan     @default(FREE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -22,6 +23,19 @@ model User {
   favorites       Favorite[]
   customQuestions CustomQuestion[]
   sessions        InterviewSession[]
+}
+
+// 手机验证码
+model VerificationCode {
+  id        String   @id @default(cuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@index([expiresAt])
 }
 
 enum Plan {

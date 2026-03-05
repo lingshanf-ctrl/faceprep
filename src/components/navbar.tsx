@@ -84,11 +84,11 @@ export function Navbar() {
                 <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-surface rounded-full">
                   <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center">
                     <span className="text-accent text-xs font-semibold">
-                      {(session.user.name || session.user.email || "U")[0].toUpperCase()}
+                      {(session.user.name || session.user.phone || "U")[0].toUpperCase()}
                     </span>
                   </div>
                   <span className="text-sm text-foreground font-medium">
-                    {session.user.name || session.user.email?.split("@")[0]}
+                    {session.user.name || session.user.phone}
                   </span>
                 </div>
                 <button
