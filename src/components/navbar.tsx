@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import { useAuth } from "./auth-provider";
 import { useLanguage } from "./language-provider";
 
 const navItemsZh = [
@@ -22,7 +22,7 @@ const navItemsEn = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { user, isLoading, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { locale, toggleLocale, t } = useLanguage();
   const navItems = locale === "zh" ? navItemsZh : navItemsEn;
@@ -77,22 +77,22 @@ export function Navbar() {
               {locale === "zh" ? "EN" : "中"}
             </button>
 
-            {status === "loading" ? (
+            {isLoading ? (
               <div className="w-20 h-10 bg-surface rounded-xl animate-pulse" />
-            ) : session?.user ? (
+            ) : user ? (
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-surface rounded-full">
                   <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center">
                     <span className="text-accent text-xs font-semibold">
-                      {(session.user.name || session.user.phone || "U")[0].toUpperCase()}
+                      {(user.name || user.email || "U")[0].toUpperCase()}
                     </span>
                   </div>
                   <span className="text-sm text-foreground font-medium">
-                    {session.user.name || session.user.phone}
+                    {user.name || user.email?.split("@")[0]}
                   </span>
                 </div>
                 <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={logout}
                   className="px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
                 >
                   {t.nav.logout}

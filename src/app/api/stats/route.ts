@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 
 // 获取匿名ID
@@ -9,9 +9,9 @@ function getAnonymousId(request: NextRequest): string | null {
 
 // 获取用户ID（登录用户优先，否则使用匿名ID）
 async function getUserId(request: NextRequest): Promise<{ userId: string; isAnonymous: boolean }> {
-  const session = await auth();
-  if (session?.user?.id) {
-    return { userId: session.user.id, isAnonymous: false };
+  const session = await getSession();
+  if (session?.id) {
+    return { userId: session.id, isAnonymous: false };
   }
   const anonymousId = getAnonymousId(request);
   if (anonymousId) {

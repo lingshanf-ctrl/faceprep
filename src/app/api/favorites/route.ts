@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 
 // 获取用户的收藏题目
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getSession();
+    if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const scoreThreshold = parseInt(searchParams.get("scoreThreshold") || "60");
 
     // 基础查询
-    const where: any = { userId: session.user.id };
+    const where: any = { userId: session.id };
 
     const favorites = await db.favorite.findMany({
       where,
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     if (includeLowScore) {
       const practices = await db.practice.findMany({
         where: {
-          userId: session.user.id,
+          userId: session.id,
           score: { lt: scoreThreshold },
         },
         include: {
@@ -83,8 +83,8 @@ export async function GET(request: NextRequest) {
 // 添加收藏
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getSession();
+    if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     const existing = await db.favorite.findUnique({
       where: {
         userId_questionId: {
-          userId: session.user.id,
+          userId: session.id,
           questionId,
         },
       },
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     const favorite = await db.favorite.create({
       data: {
-        userId: session.user.id,
+        userId: session.id,
         questionId,
       },
       include: {
@@ -143,8 +143,8 @@ export async function POST(request: NextRequest) {
 // 取消收藏
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getSession();
+    if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -161,7 +161,7 @@ export async function DELETE(request: NextRequest) {
     await db.favorite.delete({
       where: {
         userId_questionId: {
-          userId: session.user.id,
+          userId: session.id,
           questionId,
         },
       },

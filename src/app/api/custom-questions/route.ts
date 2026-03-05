@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 
 // 获取用户的自定义题目
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getSession();
+    if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
-    const type = searchParams.get("type");
 
-    const where: any = { userId: session.user.id };
-    if (category) where.category = category;
-    if (type) where.type = type;
+    const where: any = { userId: session.id };
+    if (category) {
+      where.category = category;
+    }
 
     const questions = await db.customQuestion.findMany({
       where,
@@ -36,15 +36,15 @@ export async function GET(request: NextRequest) {
 // 创建自定义题目
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getSession();
+    if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { title, category, type, difficulty, keyPoints, referenceAnswer } = body;
+    const { title, content, category, difficulty } = body;
 
-    if (!title || !category || !type) {
+    if (!title || !content) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -53,13 +53,11 @@ export async function POST(request: NextRequest) {
 
     const question = await db.customQuestion.create({
       data: {
-        userId: session.user.id,
+        userId: session.id,
         title,
-        category,
-        type,
-        difficulty: difficulty || 1,
-        keyPoints,
-        referenceAnswer,
+        content,
+        category: category || "OTHER",
+        difficulty: difficulty || "MEDIUM",
       },
     });
 
@@ -73,47 +71,45 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 批量创建自定义题目
-export async function PUT(request: NextRequest) {
+// 删除自定义题目
+export async function DELETE(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const session = await getSession();
+    if (!session?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { questions } = body;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
 
-    if (!Array.isArray(questions) || questions.length === 0) {
+    if (!id) {
       return NextResponse.json(
-        { error: "Invalid questions array" },
+        { error: "Missing question id" },
         { status: 400 }
       );
     }
 
-    const userId = session.user.id;
+    // 验证题目属于当前用户
+    const question = await db.customQuestion.findFirst({
+      where: { id, userId: session.id },
+    });
 
-    const created = await db.$transaction(
-      questions.map((q) =>
-        db.customQuestion.create({
-          data: {
-            userId,
-            title: q.title,
-            category: q.category,
-            type: q.type,
-            difficulty: q.difficulty || 1,
-            keyPoints: q.keyPoints,
-            referenceAnswer: q.referenceAnswer,
-          },
-        })
-      )
-    );
+    if (!question) {
+      return NextResponse.json(
+        { error: "Question not found" },
+        { status: 404 }
+      );
+    }
 
-    return NextResponse.json({ questions: created }, { status: 201 });
+    await db.customQuestion.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to batch create custom questions:", error);
+    console.error("Failed to delete custom question:", error);
     return NextResponse.json(
-      { error: "Failed to create custom questions" },
+      { error: "Failed to delete custom question" },
       { status: 500 }
     );
   }

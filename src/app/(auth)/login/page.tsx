@@ -1,104 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/components/auth-provider";
 import { useLanguage } from "@/components/language-provider";
 
 export default function LoginPage() {
   const router = useRouter();
   const { t, locale } = useLanguage();
-  const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [countdown, setCountdown] = useState(0);
+  const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSendingCode, setIsSendingCode] = useState(false);
 
-  // 倒计时
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
-
-  // 发送验证码
-  const handleSendCode = async () => {
-    // 验证手机号
-    const phoneRegex = /^1[3-9]\d{9}$/;
-    if (!phoneRegex.test(phone)) {
-      setError("请输入正确的手机号");
-      return;
-    }
-
-    setIsSendingCode(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/auth/send-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "发送失败，请重试");
-      } else {
-        setCountdown(60); // 60秒倒计时
-        // 开发环境显示验证码
-        if (data.code) {
-          console.log("验证码:", data.code);
-          setError(`【开发环境】验证码: ${data.code}`);
-        }
-      }
-    } catch {
-      setError("发送失败，请检查网络");
-    } finally {
-      setIsSendingCode(false);
-    }
-  };
-
-  // 登录/注册
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    // 验证手机号
-    const phoneRegex = /^1[3-9]\d{9}$/;
-    if (!phoneRegex.test(phone)) {
-      setError("请输入正确的手机号");
-      return;
-    }
-
-    // 验证验证码
-    if (!/^\d{6}$/.test(code)) {
-      setError("请输入6位验证码");
-      return;
-    }
-
     setIsLoading(true);
 
-    try {
-      const result = await signIn("credentials", {
-        phone,
-        code,
-        redirect: false,
-      });
+    const result = await login(email, password);
 
-      if (result?.error) {
-        setError(result.error);
-      } else {
-        router.push("/dashboard");
-        router.refresh();
-      }
-    } catch {
-      setError(locale === "zh" ? "登录失败，请重试" : "Login failed, please try again");
-    } finally {
+    if (result.error) {
+      setError(result.error);
       setIsLoading(false);
+    } else {
+      router.push("/dashboard");
+      router.refresh();
     }
   };
 
@@ -141,62 +70,46 @@ export default function LoginPage() {
 
           <div className="mb-10">
             <h1 className="font-display text-display-sm font-bold text-foreground tracking-tight mb-3">
-              {locale === "zh" ? "手机号登录" : "Phone Login"}
+              {locale === "zh" ? "欢迎回来" : "Welcome Back"}
             </h1>
             <p className="text-foreground-muted">
-              {locale === "zh" ? "输入手机号和验证码即可登录/注册" : "Enter phone and verification code to login/register"}
+              {locale === "zh" ? "登录您的账号继续练习" : "Sign in to continue practicing"}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 手机号 */}
+            {/* 邮箱 */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                {locale === "zh" ? "手机号" : "Phone Number"}
+                {locale === "zh" ? "邮箱" : "Email"}
               </label>
               <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={locale === "zh" ? "请输入11位手机号" : "Enter 11-digit phone number"}
-                maxLength={11}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={locale === "zh" ? "请输入邮箱" : "Enter your email"}
                 required
                 className="w-full px-5 py-4 bg-surface border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
-            {/* 验证码 */}
+            {/* 密码 */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                {locale === "zh" ? "验证码" : "Verification Code"}
+                {locale === "zh" ? "密码" : "Password"}
               </label>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  placeholder={locale === "zh" ? "请输入6位验证码" : "Enter 6-digit code"}
-                  maxLength={6}
-                  required
-                  className="flex-1 px-5 py-4 bg-surface border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={countdown > 0 || isSendingCode || !phone}
-                  className="px-5 py-4 bg-surface border border-border rounded-2xl text-foreground font-medium hover:bg-accent hover:text-white hover:border-accent disabled:opacity-50 disabled:cursor-not-allowed transition-all whitespace-nowrap min-w-[120px]"
-                >
-                  {isSendingCode
-                    ? locale === "zh" ? "发送中..." : "Sending..."
-                    : countdown > 0
-                    ? `${countdown}s`
-                    : locale === "zh" ? "获取验证码" : "Get Code"}
-                </button>
-              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={locale === "zh" ? "请输入密码" : "Enter your password"}
+                required
+                className="w-full px-5 py-4 bg-surface border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+              />
             </div>
 
             {error && (
-              <div className={`p-4 rounded-2xl text-sm ${error.includes("【开发环境】") ? "bg-success/5 border border-success/20 text-success" : "bg-error/5 border border-error/20 text-error"}`}>
+              <div className="p-4 rounded-2xl text-sm bg-error/5 border border-error/20 text-error">
                 {error}
               </div>
             )}
@@ -212,16 +125,19 @@ export default function LoginPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  {locale === "zh" ? "登录中..." : "Logging in..."}
+                  {locale === "zh" ? "登录中..." : "Signing in..."}
                 </span>
               ) : (
-                locale === "zh" ? "登录 / 注册" : "Login / Register"
+                locale === "zh" ? "登录" : "Sign In"
               )}
             </button>
           </form>
 
           <p className="text-center text-sm text-foreground-muted mt-8">
-            {locale === "zh" ? "首次登录将自动创建账号" : "First login will automatically create an account"}
+            {locale === "zh" ? "还没有账号？" : "Don't have an account?"}{" "}
+            <Link href="/register" className="text-accent hover:underline">
+              {locale === "zh" ? "立即注册" : "Sign up"}
+            </Link>
           </p>
         </div>
       </div>
