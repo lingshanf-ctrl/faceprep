@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { checkRateLimit } from "@/lib/rate-limit";
+
+// 简单的内存频率限制存储（生产环境建议使用 Redis）
+const smsRateLimit = new Map<string, number>();
+
+// 每分钟清理一次过期的记录
+setInterval(() => {
+  const now = Date.now();
+  const expireTime = 5 * 60 * 1000; // 5分钟过期
+  for (const [key, timestamp] of smsRateLimit.entries()) {
+    if (now - timestamp > expireTime) {
+      smsRateLimit.delete(key);
+    }
+  }
+}, 60000);
 
 // 生成6位随机验证码
 function generateCode(): string {
@@ -32,28 +45,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 频率限制：每个 IP 每分钟最多发送 3 次
+    // 频率限制：每个 IP 和手机号有独立的限制
     const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const rateLimitKey = `sms:${ip}`;
-    const rateLimit = checkRateLimit(rateLimitKey, 3, 60); // 3次/分钟
 
-    if (!rateLimit.success) {
+    // 简单的频率限制：使用内存存储（生产环境建议使用 Redis）
+    const rateLimitKey = `sms:${ip}:${phone}`;
+
+    // 检查该 IP+手机号的组合是否在短时间内多次请求
+    const lastRequest = smsRateLimit.get(rateLimitKey);
+    const now = Date.now();
+
+    if (lastRequest && now - lastRequest < 60000) { // 1分钟内只能发送一次
       return NextResponse.json(
-        { error: "发送过于频繁，请稍后再试" },
+        { error: "发送过于频繁，请1分钟后再试" },
         { status: 429 }
       );
     }
 
-    // 频率限制：同一手机号每分钟最多发送 1 次
-    const phoneRateLimitKey = `sms:phone:${phone}`;
-    const phoneRateLimit = checkRateLimit(phoneRateLimitKey, 1, 60); // 1次/分钟
-
-    if (!phoneRateLimit.success) {
-      return NextResponse.json(
-        { error: "该手机号发送过于频繁，请稍后再试" },
-        { status: 429 }
-      );
-    }
+    // 记录本次请求时间
+    smsRateLimit.set(rateLimitKey, now);
 
     // 生成验证码
     const code = generateCode();
