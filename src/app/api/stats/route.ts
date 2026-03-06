@@ -27,34 +27,58 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 获取所有练习记录
-    const practices = await db.practice.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      select: {
-        score: true,
-        createdAt: true,
-      },
-    });
+    // 使用数据库聚合函数（高性能）
+    const [aggregation, recentPractices, streakData, categoryStats] = await Promise.all([
+      // 聚合统计：总数、平均分、最高分
+      db.practice.aggregate({
+        where: { userId },
+        _count: { id: true },
+        _avg: { score: true },
+        _max: { score: true },
+      }),
+      // 只取最近7条用于趋势图
+      db.practice.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 7,
+        select: {
+          score: true,
+        },
+      }),
+      // 只取最近60天的日期用于计算连续天数
+      db.practice.findMany({
+        where: {
+          userId,
+          createdAt: {
+            gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000), // 60天内
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          createdAt: true,
+        },
+        distinct: ["createdAt"], // 去重日期
+      }),
+      // 按分类统计平均分（用于能力雷达图）
+      db.practice.groupBy({
+        by: ["questionCategory"],
+        where: { userId },
+        _avg: { score: true },
+        _count: { id: true },
+      }),
+    ]);
 
-    // 基础统计
-    const totalPractices = practices.length;
-    const scores = practices
-      .map((p) => p.score)
-      .filter((s): s is number => s !== null);
+    const totalPractices = aggregation._count.id;
+    const averageScore = Math.round(aggregation._avg.score || 0);
+    const highestScore = aggregation._max.score || 0;
 
-    const averageScore =
-      scores.length > 0
-        ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-        : 0;
-
-    const highestScore = scores.length > 0 ? Math.max(...scores) : 0;
-
-    // 最近7次趋势
-    const recentTrend = practices.slice(0, 7).map((p) => p.score || 0).reverse();
+    // 最近7次趋势（倒序排列）
+    const recentTrend = recentPractices
+      .map((p) => p.score || 0)
+      .reverse();
 
     // 计算连续练习天数
-    const streak = calculateStreak(practices.map((p) => p.createdAt));
+    const streak = calculateStreak(streakData.map((p) => p.createdAt));
 
     // 匿名用户添加警告头
     const headers = new Headers();
@@ -62,12 +86,23 @@ export async function GET(request: NextRequest) {
       headers.set("X-Anonymous-User", "true");
     }
 
+    // 添加缓存头（统计数据5分钟内有效）
+    headers.set("Cache-Control", "private, max-age=300");
+
+    // 将分类统计转换为能力维度数据
+    const categoryScores = categoryStats.map((stat) => ({
+      category: stat.questionCategory,
+      avgScore: Math.round(stat._avg.score || 0),
+      count: stat._count.id,
+    }));
+
     return NextResponse.json({
       totalPractices,
       averageScore,
       highestScore,
       recentTrend,
       streak,
+      categoryScores,
       isAnonymous,
     }, { headers });
   } catch (error) {

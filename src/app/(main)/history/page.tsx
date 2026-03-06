@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
-import { getPracticeRecords, getStats, getStreak, PracticeRecord } from "@/lib/practice-store";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { getPracticeRecords, getStats, PracticeRecord } from "@/lib/practice-store";
 import { getInterviewSessions, getInterviewStats, InterviewSession } from "@/lib/interview-store";
 
 const translations = {
@@ -189,6 +190,150 @@ function formatDateLabel(dateStr: string, locale: string, t: any) {
   }
 }
 
+// Virtual Practice Records Component
+function VirtualPracticeRecords({
+  records,
+  groupedRecords,
+  t,
+  locale,
+}: {
+  records: PracticeRecord[];
+  groupedRecords: { date: string; label: string; records: PracticeRecord[] }[];
+  t: any;
+  locale: string;
+}) {
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  // Flatten records for virtualization
+  const flattenedItems = useMemo(() => {
+    const items: Array<{ type: "header"; label: string; date: string } | { type: "record"; record: PracticeRecord }> = [];
+    groupedRecords.forEach((group) => {
+      items.push({ type: "header", label: group.label, date: group.date });
+      group.records.forEach((record) => {
+        items.push({ type: "record", record });
+      });
+    });
+    return items;
+  }, [groupedRecords]);
+
+  const virtualizer = useVirtualizer({
+    count: flattenedItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 100, // 估计每项高度
+    overscan: 5, // 预渲染5项
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  // 如果记录少于20条，不使用虚拟列表
+  if (records.length < 20) {
+    return (
+      <div>
+        <h3 className="font-display text-heading-xl font-semibold text-foreground mb-8">{t.history.practiceRecords}</h3>
+        <div className="space-y-8">
+          {groupedRecords.map((group) => (
+            <div key={group.date}>
+              <div className="flex items-center gap-4 mb-4">
+                <span className="text-small font-medium text-foreground-muted uppercase tracking-wider">{group.label}</span>
+                <div className="flex-1 h-px bg-border"></div>
+              </div>
+              <div className="space-y-3">
+                {group.records.map((record) => (
+                  <Link
+                    key={record.id}
+                    href={`/practice/review/${record.id}`}
+                    className="block bg-surface rounded-2xl p-5 hover:bg-accent/5 border border-border hover:border-accent/10 transition-all group"
+                  >
+                    <div className="flex items-center justify-between gap-6">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-foreground group-hover:text-accent transition-colors truncate">
+                          {record.questionTitle}
+                        </h4>
+                        <p className="text-small text-foreground-muted mt-1 line-clamp-1">{record.answer.slice(0, 80)}...</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`font-display text-heading-xl font-bold ${getScoreColor(record.score)}`}>
+                          {record.score}
+                        </span>
+                        <svg className="w-5 h-5 text-foreground-muted group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h3 className="font-display text-heading-xl font-semibold text-foreground mb-8">
+        {t.history.practiceRecords}
+        <span className="ml-2 text-sm font-normal text-foreground-muted">({records.length} 条记录)</span>
+      </h3>
+      <div ref={parentRef} className="h-[600px] overflow-auto">
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {virtualItems.map((virtualItem) => {
+            const item = flattenedItems[virtualItem.index];
+            return (
+              <div
+                key={virtualItem.key}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  transform: `translateY(${virtualItem.start}px)`,
+                }}
+              >
+                {item.type === "header" ? (
+                  <div className="flex items-center gap-4 mb-4 mt-6 first:mt-0">
+                    <span className="text-small font-medium text-foreground-muted uppercase tracking-wider">{item.label}</span>
+                    <div className="flex-1 h-px bg-border"></div>
+                  </div>
+                ) : (
+                  <Link
+                    href={`/practice/review/${item.record.id}`}
+                    className="block bg-surface rounded-2xl p-5 hover:bg-accent/5 border border-border hover:border-accent/10 transition-all group mb-3"
+                  >
+                    <div className="flex items-center justify-between gap-6">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-foreground group-hover:text-accent transition-colors truncate">
+                          {item.record.questionTitle}
+                        </h4>
+                        <p className="text-small text-foreground-muted mt-1 line-clamp-1">{item.record.answer.slice(0, 80)}...</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className={`font-display text-heading-xl font-bold ${getScoreColor(item.record.score)}`}>
+                          {item.record.score}
+                        </span>
+                        <svg className="w-5 h-5 text-foreground-muted group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Practice History Component
 function PracticeHistory({ locale, t }: { locale: string; t: any }) {
   const [records, setRecords] = useState<PracticeRecord[]>([]);
@@ -197,19 +342,17 @@ function PracticeHistory({ locale, t }: { locale: string; t: any }) {
     averageScore: 0,
     highestScore: 0,
     recentTrend: [] as number[],
+    categoryScores: [] as { category: string; avgScore: number; count: number }[],
+    streak: 0,
   });
-  const [streak, setStreak] = useState(0);
-
   useEffect(() => {
     async function loadData() {
-      const [allRecords, statsData, streakDays] = await Promise.all([
+      const [allRecords, statsData] = await Promise.all([
         getPracticeRecords(),
         getStats(),
-        getStreak(),
       ]);
       setRecords(allRecords);
       setStats(statsData);
-      setStreak(streakDays);
     }
     loadData();
   }, []);
@@ -230,14 +373,44 @@ function PracticeHistory({ locale, t }: { locale: string; t: any }) {
   }, [records, locale, t]);
 
   const abilities = useMemo(() => {
+    // 如果有分类统计数据，使用真实数据
+    if (stats.categoryScores && stats.categoryScores.length > 0) {
+      // 将分类映射到能力维度
+      const categoryMap: Record<string, { zh: string; en: string }> = {
+        FRONTEND: { zh: "前端", en: "Frontend" },
+        BACKEND: { zh: "后端", en: "Backend" },
+        PRODUCT: { zh: "产品", en: "Product" },
+        DESIGN: { zh: "设计", en: "Design" },
+        OPERATION: { zh: "运营", en: "Operation" },
+        GENERAL: { zh: "通用", en: "General" },
+      };
+
+      // 取前4个分类，或填充到4个
+      const mapped = stats.categoryScores.slice(0, 4).map((cat) => ({
+        name: locale === "zh" ? categoryMap[cat.category]?.zh : categoryMap[cat.category]?.en,
+        value: cat.avgScore,
+      }));
+
+      // 如果不足4个，用默认值填充
+      while (mapped.length < 4) {
+        mapped.push({
+          name: locale === "zh" ? `维度${mapped.length + 1}` : `Dim${mapped.length + 1}`,
+          value: stats.averageScore || 60,
+        });
+      }
+
+      return mapped;
+    }
+
+    // 无数据时使用默认平均分
     const avgScore = stats.averageScore || 60;
     return [
-      { name: locale === "zh" ? "结构" : "Structure", value: Math.min(100, avgScore + Math.random() * 10 - 5) },
-      { name: locale === "zh" ? "深度" : "Depth", value: Math.min(100, avgScore + Math.random() * 10 - 5) },
-      { name: locale === "zh" ? "逻辑" : "Logic", value: Math.min(100, avgScore + Math.random() * 10 - 5) },
-      { name: locale === "zh" ? "应变" : "Adapt", value: Math.min(100, avgScore + Math.random() * 10 - 5) },
+      { name: locale === "zh" ? "内容" : "Content", value: avgScore },
+      { name: locale === "zh" ? "结构" : "Structure", value: avgScore },
+      { name: locale === "zh" ? "逻辑" : "Logic", value: avgScore },
+      { name: locale === "zh" ? "表达" : "Expression", value: avgScore },
     ];
-  }, [stats.averageScore, locale]);
+  }, [stats.categoryScores, stats.averageScore, locale]);
 
   const improvement = useMemo(() => {
     if (stats.recentTrend.length < 2) return null;
@@ -289,8 +462,8 @@ function PracticeHistory({ locale, t }: { locale: string; t: any }) {
         </div>
         <div className="bg-surface rounded-2xl p-6 text-center border border-border">
           <div className="font-display text-display font-bold text-foreground flex items-center justify-center gap-2">
-            {streak}
-            {streak > 0 && <span className="text-2xl">🔥</span>}
+            {stats.streak}
+            {stats.streak > 0 && <span className="text-2xl">🔥</span>}
           </div>
           <div className="text-small text-foreground-muted mt-2 uppercase tracking-wider">{t.history.stats.streak}</div>
         </div>
@@ -334,46 +507,13 @@ function PracticeHistory({ locale, t }: { locale: string; t: any }) {
         </div>
       </div>
 
-      {/* Practice Records */}
-      <div>
-        <h3 className="font-display text-heading-xl font-semibold text-foreground mb-8">{t.history.practiceRecords}</h3>
-        <div className="space-y-8">
-          {groupedRecords.map((group) => (
-            <div key={group.date}>
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-small font-medium text-foreground-muted uppercase tracking-wider">{group.label}</span>
-                <div className="flex-1 h-px bg-border"></div>
-              </div>
-              <div className="space-y-3">
-                {group.records.map((record) => (
-                  <Link
-                    key={record.id}
-                    href={`/questions/${record.questionId}`}
-                    className="block bg-surface rounded-2xl p-5 hover:bg-accent/5 border border-border hover:border-accent/10 transition-all group"
-                  >
-                    <div className="flex items-center justify-between gap-6">
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-foreground group-hover:text-accent transition-colors truncate">
-                          {record.questionTitle}
-                        </h4>
-                        <p className="text-small text-foreground-muted mt-1 line-clamp-1">{record.answer.slice(0, 80)}...</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`font-display text-heading-xl font-bold ${getScoreColor(record.score)}`}>
-                          {record.score}
-                        </span>
-                        <svg className="w-5 h-5 text-foreground-muted group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Practice Records with Virtual List */}
+      <VirtualPracticeRecords
+        records={records}
+        groupedRecords={groupedRecords}
+        t={t}
+        locale={locale}
+      />
     </>
   );
 }

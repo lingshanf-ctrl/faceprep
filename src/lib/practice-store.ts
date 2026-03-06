@@ -74,33 +74,30 @@ export async function getPracticeRecords(options?: {
     return result.data.practices;
   }
 
-  // 离线时从 IndexedDB 读取
-  if (result.offline) {
-    const db = await openDB();
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.getAll();
+  // 服务器获取失败（包括 401 未授权、离线等情况），从本地缓存读取
+  console.warn("Server fetch failed, falling back to local cache:", result.error);
 
-    return new Promise((resolve) => {
-      request.onsuccess = () => {
-        const records = request.result as PracticeRecord[];
-        // 按时间排序
-        records.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        db.close();
-        resolve(records.slice(0, options?.limit || 100));
-      };
-      request.onerror = () => {
-        db.close();
-        resolve([]);
-      };
-    });
-  }
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, "readonly");
+  const store = tx.objectStore(STORE_NAME);
+  const request = store.getAll();
 
-  console.error("Failed to fetch practices:", result.error);
-  return [];
+  return new Promise((resolve) => {
+    request.onsuccess = () => {
+      const records = request.result as PracticeRecord[];
+      // 按时间排序
+      records.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      db.close();
+      resolve(records.slice(0, options?.limit || 100));
+    };
+    request.onerror = () => {
+      db.close();
+      resolve([]);
+    };
+  });
 }
 
 // 保存练习记录
@@ -124,6 +121,7 @@ export async function savePracticeRecord(
   // 尝试同步到服务器
   const result = await practicesApi.create({
     questionId: record.questionId,
+    questionTitle: record.questionTitle,
     answer: record.answer,
     score: record.score,
     feedback: JSON.stringify(record.feedback),
@@ -132,9 +130,21 @@ export async function savePracticeRecord(
   if (result.offline) {
     // 离线时加入同步队列
     await addToSyncQueue({ type: "create", data: record });
+    console.warn("[Practice Save] Offline mode, saved to sync queue");
+  }
+
+  if (result.error) {
+    console.error("[Practice Save] Server error:", result.error);
+    if (result.requireLogin) {
+      console.warn("[Practice Save] User not logged in or session expired");
+    }
+    // 服务器保存失败，但仍然返回本地记录
+    // 这样用户可以继续使用，数据会在后续同步
+    return newRecord;
   }
 
   if (result.data) {
+    console.log("[Practice Save] Saved to server successfully");
     return result.data.practice;
   }
 
@@ -146,7 +156,23 @@ export async function savePracticeRecord(
 export async function getPracticeRecordById(
   id: string
 ): Promise<PracticeRecord | undefined> {
-  // 先查本地缓存
+  // 先从服务器获取
+  try {
+    const result = await practicesApi.getById(id);
+    if (result.data?.practice) {
+      // 更新本地缓存
+      const db = await openDB();
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      await store.put(result.data.practice);
+      db.close();
+      return result.data.practice;
+    }
+  } catch (error) {
+    console.warn("[getPracticeRecordById] Server fetch failed, falling back to local cache:", error);
+  }
+
+  // 服务器获取失败，从本地缓存读取
   const db = await openDB();
   const tx = db.transaction(STORE_NAME, "readonly");
   const store = tx.objectStore(STORE_NAME);
@@ -206,6 +232,8 @@ export async function getStats(): Promise<{
   averageScore: number;
   highestScore: number;
   recentTrend: number[];
+  categoryScores: { category: string; avgScore: number; count: number }[];
+  streak: number;
 }> {
   const result = await statsApi.getStats();
 
@@ -215,6 +243,8 @@ export async function getStats(): Promise<{
       averageScore: result.data.averageScore,
       highestScore: result.data.highestScore,
       recentTrend: result.data.recentTrend,
+      categoryScores: result.data.categoryScores || [],
+      streak: result.data.streak || 0,
     };
   }
 
@@ -227,10 +257,28 @@ export async function getStats(): Promise<{
       averageScore: 0,
       highestScore: 0,
       recentTrend: [],
+      categoryScores: [],
+      streak: 0,
     };
   }
 
   const scores = records.map((r) => r.score);
+
+  // 离线时按分类计算平均分
+  const categoryMap = new Map<string, number[]>();
+  records.forEach((r) => {
+    if (r.questionCategory) {
+      const cats = categoryMap.get(r.questionCategory) || [];
+      cats.push(r.score);
+      categoryMap.set(r.questionCategory, cats);
+    }
+  });
+  const categoryScores = Array.from(categoryMap.entries()).map(([category, scores]) => ({
+    category,
+    avgScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+    count: scores.length,
+  }));
+
   return {
     totalPractices: records.length,
     averageScore: Math.round(
@@ -238,6 +286,8 @@ export async function getStats(): Promise<{
     ),
     highestScore: Math.max(...scores),
     recentTrend: records.slice(0, 7).map((r) => r.score).reverse(),
+    categoryScores,
+    streak: 0, // 离线时暂不计算连续天数
   };
 }
 

@@ -70,15 +70,22 @@ enum QuestionType {
 model Practice {
   id        String   @id @default(cuid())
   userId    String
-  questionId String
+  questionId String?
   answer    String   // 用户回答
   score     Int?     // AI 评分 0-100
-  feedback  String?  // AI 点评
+  feedback  String?  // AI 点评(JSON字符串，包含good/improve/suggestion/starAnswer)
   duration  Int?     // 答题时长(秒)
+
+  // 题目快照（练习时的状态，防止题目被修改或删除后丢失上下文）
+  questionTitle    String? // 当时的题目标题
+  questionCategory Category? // 当时的题目分类
+  questionType     QuestionType? // 当时的题目类型
+  questionDifficulty Int?   // 当时的题目难度
+
   createdAt DateTime @default(now())
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question? @relation(fields: [questionId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([questionId])

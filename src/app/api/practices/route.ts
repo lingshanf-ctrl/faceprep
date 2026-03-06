@@ -25,7 +25,10 @@ export async function GET(request: NextRequest) {
   try {
     const { userId, isAnonymous } = await getUserId(request);
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "请先登录", requireLogin: true },
+        { status: 401 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -50,6 +53,42 @@ export async function GET(request: NextRequest) {
       skip: offset,
     });
 
+    // 映射为前端期望格式，解析 feedback JSON 并优先使用题目快照
+    const mappedPractices = practices.map((p) => {
+      // 解析 feedback JSON
+      let parsedFeedback = null;
+      if (p.feedback) {
+        try {
+          parsedFeedback = JSON.parse(p.feedback);
+        } catch {
+          // 如果解析失败，保持原样
+          parsedFeedback = p.feedback;
+        }
+      }
+
+      // 优先使用题目快照，如果不存在则使用关联的 question 数据
+      const questionTitle = p.questionTitle || p.question?.title || "未知题目";
+      const questionCategory = p.questionCategory || p.question?.category;
+      const questionType = p.questionType || p.question?.type;
+      const questionDifficulty = p.questionDifficulty ?? p.question?.difficulty;
+
+      return {
+        id: p.id,
+        questionId: p.questionId,
+        questionTitle,
+        questionCategory,
+        questionType,
+        questionDifficulty,
+        answer: p.answer,
+        score: p.score ?? 0,
+        feedback: parsedFeedback,
+        duration: p.duration,
+        createdAt: p.createdAt.toISOString(),
+        // 保留原始 question 数据（如果有）
+        question: p.question,
+      };
+    });
+
     const total = await db.practice.count({
       where: { userId },
     });
@@ -60,7 +99,7 @@ export async function GET(request: NextRequest) {
       headers.set("X-Anonymous-User", "true");
     }
 
-    return NextResponse.json({ practices, total, isAnonymous }, { headers });
+    return NextResponse.json({ practices: mappedPractices, total, isAnonymous }, { headers });
   } catch (error) {
     console.error("Failed to fetch practices:", error);
     return NextResponse.json(
@@ -75,11 +114,14 @@ export async function POST(request: NextRequest) {
   try {
     const { userId, isAnonymous } = await getUserId(request);
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "请先登录", requireLogin: true },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
-    const { questionId, answer, score, feedback, duration } = body;
+    const { questionId, questionTitle, answer, score, feedback, duration } = body;
 
     if (!questionId || !answer) {
       return NextResponse.json(
@@ -116,14 +158,39 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 检查 questionId 是否存在于 Question 表中
+    const existingQuestion = await db.question.findUnique({
+      where: { id: questionId },
+    });
+
+    // 如果不存在，使用系统预设题目的第一个作为占位（或创建一个虚拟关联）
+    let finalQuestionId = questionId;
+    if (!existingQuestion) {
+      // 对于自定义题目，使用一个特殊的系统题目作为占位
+      const systemQuestion = await db.question.findFirst({
+        where: { category: "GENERAL" },
+      });
+      if (systemQuestion) {
+        finalQuestionId = systemQuestion.id;
+      }
+    }
+
+    // 创建练习记录，同时存储题目快照
+    // 优先使用传入的 questionTitle，如果不存在则从数据库题目获取
+    const finalQuestionTitle = questionTitle || existingQuestion?.title || "未知题目";
     const practice = await db.practice.create({
       data: {
         userId,
-        questionId,
+        questionId: finalQuestionId,
         answer,
         score,
         feedback,
         duration,
+        // 存储题目快照
+        questionTitle: finalQuestionTitle,
+        questionCategory: existingQuestion?.category,
+        questionType: existingQuestion?.type,
+        questionDifficulty: existingQuestion?.difficulty,
       },
     });
 

@@ -54,6 +54,7 @@ export default function AIPracticePage() {
     suggestion: string;
   } | null>(null);
   const [startTime] = useState(Date.now());
+  const [voiceLanguage, setVoiceLanguage] = useState<"zh" | "en">("zh");
 
   // Load questions from sessionStorage
   useEffect(() => {
@@ -100,20 +101,25 @@ export default function AIPracticePage() {
         : "建议按照 STAR 法则组织回答：情境、任务、行动、结果",
     });
 
-    // Save record
-    savePracticeRecord({
-      questionId: question.id,
-      questionTitle: question.title,
-      answer,
-      score,
-      feedback: {
-        good: hasStructure ? ["回答结构清晰", "内容完整"] : ["内容完整"],
-        improve: hasExample ? [] : ["可以加入更多具体例子"],
-        suggestion: hasStructure
-          ? "回答得很好，继续保持！"
-          : "建议按照 STAR 法则组织回答：情境、任务、行动、结果",
-      },
-    });
+    // Save record (使用 await 确保保存完成)
+    try {
+      await savePracticeRecord({
+        questionId: question.id,
+        questionTitle: question.title,
+        answer,
+        score,
+        feedback: {
+          good: hasStructure ? ["回答结构清晰", "内容完整"] : ["内容完整"],
+          improve: hasExample ? [] : ["可以加入更多具体例子"],
+          suggestion: hasStructure
+            ? "回答得很好，继续保持！"
+            : "建议按照 STAR 法则组织回答：情境、任务、行动、结果",
+        },
+      });
+      console.log("[Practice Saved] Record saved successfully");
+    } catch (saveError) {
+      console.error("[Practice Save Error]", saveError);
+    }
 
     setIsSubmitting(false);
   };
@@ -211,6 +217,8 @@ export default function AIPracticePage() {
                 </span>
               }
               disabled={isSubmitting}
+              language={voiceLanguage}
+              onLanguageChange={setVoiceLanguage}
               footer={
                 <button
                   onClick={handleSubmit}

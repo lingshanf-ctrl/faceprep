@@ -112,6 +112,7 @@ export default function QuestionDetailPage() {
   const [startTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
   const [favorited, setFavorited] = useState(false);
+  const [voiceLanguage, setVoiceLanguage] = useState<"zh" | "en">("zh");
 
   // Load favorite status
   useEffect(() => {
@@ -200,18 +201,25 @@ export default function QuestionDetailPage() {
 
       setFeedback(data);
 
-      savePracticeRecord({
-        questionId: question.id,
-        questionTitle: question.title,
-        answer: answer,
-        score: data.score,
-        feedback: {
-          good: data.good,
-          improve: data.improve,
-          suggestion: data.suggestion,
-          starAnswer: data.starAnswer,
-        },
-      });
+      // 保存练习记录（使用 await 确保保存完成）
+      try {
+        await savePracticeRecord({
+          questionId: question.id,
+          questionTitle: question.title,
+          answer: answer,
+          score: data.score,
+          feedback: {
+            good: data.good,
+            improve: data.improve,
+            suggestion: data.suggestion,
+            starAnswer: data.starAnswer,
+          },
+        });
+        console.log("[Practice Saved] Record saved successfully");
+      } catch (saveError) {
+        console.error("[Practice Save Error]", saveError);
+        // 保存失败不影响展示反馈结果，但会在控制台记录错误
+      }
 
       checkAndUnlockAchievements();
     } catch (err) {
@@ -337,6 +345,8 @@ export default function QuestionDetailPage() {
                   </div>
                 }
                 disabled={isSubmitting}
+                language={voiceLanguage}
+                onLanguageChange={setVoiceLanguage}
               />
 
               {/* Error message */}

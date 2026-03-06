@@ -7,6 +7,7 @@ interface VoiceInputProps {
   onInterimTranscript?: (text: string) => void;
   disabled?: boolean;
   className?: string;
+  language?: "zh" | "en"; // 语音识别语言
 }
 
 type RecognitionProvider = "native" | "baidu" | null;
@@ -26,6 +27,7 @@ export const VoiceInput = memo(function VoiceInput({
   onInterimTranscript,
   disabled = false,
   className = "",
+  language = "zh",
 }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
   const [provider, setProvider] = useState<RecognitionProvider>(null);
@@ -249,6 +251,7 @@ export const VoiceInput = memo(function VoiceInput({
       const formData = new FormData();
       const fileName = audioBlob.type.includes('wav') ? 'recording.wav' : 'recording.webm';
       formData.append("audio", audioBlob, fileName);
+      formData.append("language", language); // 传递语言参数
 
       const response = await fetch("/api/baidu-asr", {
         method: "POST",
@@ -294,7 +297,7 @@ export const VoiceInput = memo(function VoiceInput({
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
 
-    recognition.lang = "zh-CN";
+    recognition.lang = language === "en" ? "en-US" : "zh-CN";
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;

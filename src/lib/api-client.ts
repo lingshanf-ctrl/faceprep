@@ -77,6 +77,7 @@ export const practicesApi = {
   // 创建练习记录
   async create(data: {
     questionId: string;
+    questionTitle: string;
     answer: string;
     score?: number;
     feedback?: string;
@@ -86,6 +87,11 @@ export const practicesApi = {
       method: "POST",
       body: JSON.stringify(data),
     });
+  },
+
+  // 获取单个练习记录
+  async getById(id: string) {
+    return fetchApi<{ practice: PracticeRecord }>(`/practices/${id}`);
   },
 
   // 删除练习记录
@@ -106,6 +112,7 @@ export const statsApi = {
       highestScore: number;
       recentTrend: number[];
       streak: number;
+      categoryScores: { category: string; avgScore: number; count: number }[];
     }>("/stats");
   },
 };

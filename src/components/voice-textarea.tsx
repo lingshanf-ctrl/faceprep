@@ -13,6 +13,8 @@ interface VoiceTextareaProps {
   minHeight?: string;
   label?: React.ReactNode;
   footer?: React.ReactNode;
+  language?: "zh" | "en";
+  onLanguageChange?: (lang: "zh" | "en") => void;
 }
 
 // 识别状态
@@ -33,6 +35,8 @@ export const VoiceTextarea = memo(function VoiceTextarea({
   minHeight = "200px",
   label,
   footer,
+  language = "zh",
+  onLanguageChange,
 }: VoiceTextareaProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [state, setState] = useState<RecognitionState>({ status: "idle" });
@@ -221,6 +225,7 @@ export const VoiceTextarea = memo(function VoiceTextarea({
           // 发送到百度识别
           const formData = new FormData();
           formData.append("audio", wavBlob, "recording.wav");
+          formData.append("language", language);
 
           const response = await fetch("/api/baidu-asr", {
             method: "POST",
@@ -456,7 +461,7 @@ export const VoiceTextarea = memo(function VoiceTextarea({
       </div>
 
       {/* 底部工具栏 */}
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex items-center gap-3 mt-4">
         <button
           type="button"
           onClick={toggleListening}
@@ -512,6 +517,26 @@ export const VoiceTextarea = memo(function VoiceTextarea({
             {state.status === "idle" && "语音输入"}
           </span>
         </button>
+
+        {/* 语言切换按钮 */}
+        {onLanguageChange && (
+          <button
+            type="button"
+            onClick={() => onLanguageChange(language === "zh" ? "en" : "zh")}
+            disabled={isActive}
+            className={`
+              px-3 py-2 rounded-full text-xs font-medium border transition-all
+              ${language === "en"
+                ? "bg-accent text-white border-accent"
+                : "bg-surface text-foreground-muted border-border hover:border-accent/50"
+              }
+              ${isActive ? "opacity-50 cursor-not-allowed" : ""}
+            `}
+            title={language === "zh" ? "切换到英文识别" : "切换到中文识别"}
+          >
+            {language === "zh" ? "中文" : "EN"}
+          </button>
+        )}
 
         {footer}
       </div>

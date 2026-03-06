@@ -79,6 +79,7 @@ export default function InterviewPage() {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [voiceLanguage, setVoiceLanguage] = useState<"zh" | "en">("zh");
 
   // 加载面试会话
   useEffect(() => {
@@ -298,6 +299,8 @@ export default function InterviewPage() {
               </span>
             }
             disabled={isSubmitting}
+            language={voiceLanguage}
+            onLanguageChange={setVoiceLanguage}
             footer={
               <div className="flex items-center gap-3">
                 <button

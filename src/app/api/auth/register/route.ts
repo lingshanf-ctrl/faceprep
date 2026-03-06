@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { createSessionToken, setSessionCookie } from "@/lib/session";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+// 获取客户端 IP
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  return (req as unknown as { ip?: string }).ip || "unknown";
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +28,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "密码至少需要6个字符" },
         { status: 400 }
+      );
+    }
+
+    // 检查频率限制（基于 IP）
+    const ip = getClientIp(req);
+    const rateLimitKey = `register:${ip}`;
+    const rateLimit = checkRateLimit(rateLimitKey);
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: rateLimit.message || "注册请求过于频繁，请稍后再试" },
+        { status: 429 }
       );
     }
 
@@ -52,6 +74,8 @@ export async function POST(req: NextRequest) {
       name: user.name,
     });
     await setSessionCookie(token);
+
+    console.log(`[Register Success] ${email} from ${ip}`);
 
     return NextResponse.json(
       {

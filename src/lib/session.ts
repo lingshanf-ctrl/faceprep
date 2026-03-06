@@ -1,9 +1,19 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "your-secret-key-min-32-characters-long"
-);
+// 获取 JWT Secret，生产环境必须设置
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      "JWT_SECRET environment variable is required. " +
+      "Generate one with: openssl rand -base64 32"
+    );
+  }
+  return new TextEncoder().encode(secret);
+};
+
+const JWT_SECRET = getJwtSecret();
 
 const COOKIE_NAME = "session-token";
 
@@ -41,9 +51,13 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
 
 export async function setSessionCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
+  // 根据环境决定是否使用 secure
+  // localhost 开发环境使用 http，生产环境使用 https
+  const isSecure = process.env.NODE_ENV === "production";
+
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecure,
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 30, // 30 days
     path: "/",

@@ -107,9 +107,13 @@ export async function POST(request: NextRequest) {
     // 获取音频数据
     const audioBuffer = await audioFile.arrayBuffer();
 
+    // 获取语言参数
+    const language = formData.get("language") as string || "zh";
+
     // 调用百度语音识别 API
-    // dev_pid=1537 表示普通话（带标点）
-    const asrUrl = `https://vop.baidu.com/server_api?dev_pid=1537&cuid=job-pilot-client&token=${token}`;
+    // dev_pid=1537 表示普通话（带标点），dev_pid=1737 表示英语
+    const devPid = language === "en" ? "1737" : "1537";
+    const asrUrl = `https://vop.baidu.com/server_api?dev_pid=${devPid}&cuid=job-pilot-client&token=${token}`;
 
     // 根据文件类型确定格式
     // 百度语音 REST API 支持的格式: pcm, wav, amr, m4a
