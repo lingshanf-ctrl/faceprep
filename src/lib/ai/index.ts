@@ -33,57 +33,164 @@ export function getAIProvider(provider?: string): AIProvider {
   }
 }
 
-// 面试点评 Prompt
-const FEEDBACK_SYSTEM_PROMPT = `你是一位资深的面试辅导专家，专门帮助应届毕业生准备面试。
-你的点评风格：友善但直接，给出具体可操作的建议。`;
+// 面试教练级 Prompt
+const COACH_SYSTEM_PROMPT = `你是一位拥有15年经验的顶级面试教练，曾帮助数千名候选人进入谷歌、阿里、字节等顶级公司。
 
-const FEEDBACK_USER_PROMPT = `请对以下面试回答进行点评。
+你的 coaching 风格：
+1. 像朋友一样真诚，但像教练一样严格
+2. 不说"还不错"，而是说"这个地方可以加个数据，效果会好很多"
+3. 每次反馈都让用户有具体的收获，不是泛泛而谈
+4. 相信每个人都有潜力，用发展的眼光看待回答
 
-【面试问题】
-{question}
+你的评估基于国际通用的能力模型，从四个维度进行专业评估。`;
 
-【考察点】
-{keyPoints}
+const COACH_USER_PROMPT = `请作为专业面试教练，对以下回答进行深度评估。
 
-【用户回答】
+===== 题目信息 =====
+【题目】{question}
+【题型】{type}
+【难度】{difficulty}/3
+【考察要点】{keyPoints}
+
+===== 参考答案标准 =====
+{referenceAnswer}
+
+===== 常见错误（供参考） =====
+{commonMistakes}
+
+===== 答题框架指导 =====
+{framework}
+
+===== 用户回答 =====
 {userAnswer}
 
-请严格按照以下 JSON 格式返回（不要包含其他内容）：
+===== 评估任务 =====
+
+## 1. 四维能力评估（0-100分）
+
+请从以下四个维度评估，并给出具体理由：
+
+### 内容完整性（30分权重）
+- 得分：？
+- 评价：是否覆盖所有考察点？是否有具体案例和数据？
+- 缺失点：哪些考察点没有覆盖？（用数组列出）
+
+### 结构逻辑性（25分权重）
+- 得分：？
+- 评价：是否使用了正确的答题框架（如STAR法则）？
+- 问题：结构混乱的地方在哪里？（用数组列出）
+
+### 表达专业性（25分权重）
+- 得分：？
+- 评价：用词是否准确？有无冗余或模糊表述？自信度如何？
+- 具体建议：哪些词可以改得更专业？（用数组列出）
+
+### 差异化亮点（20分权重）
+- 得分：？
+- 评价：有没有超出预期的洞察或个人特色？
+- 亮点提炼：最闪光的1-2个点是什么？（用数组列出）
+
+### 总分
+总分 = 上述四项加权得分（四舍五入到整数）
+
+## 2. 差距分析（Gap Analysis）
+
+对比参考答案，逐段分析：
+
+🔴 缺失（完全没有）：
+- location: "第几段或整体"
+- description: "具体缺失什么内容"
+
+🟡 不足（有但不够）：
+- location: "第几段"
+- description: "当前状况"
+- suggestion: "如何改进"
+
+🟢 良好（达到标准）：
+- location: "第几段"
+- description: "做得好的地方"
+
+🌟 亮点（超出预期）：
+- location: "第几段"
+- description: "亮点内容"
+
+## 3. 个性化改进建议
+
+给出3条可执行的改进建议：
+- priority: "high" | "medium" | "low"
+- action: "具体行动描述"
+- expectedGain: "预期提升多少分或什么效果"
+
+## 4. 优化版回答示例
+
+基于用户的表达风格，给出一个改进后的版本（保留用户原意和风格，只做优化）：
+
+## 5. 教练寄语
+
+给用户一句鼓励的话（50字以内），同时指出下一步重点练习方向。
+
+===== 输出格式 =====
+
+严格按照以下JSON格式返回，不要包含其他内容：
+
 {
-  "score": 评分（0-100的整数）,
-  "good": ["做得好的点1", "做得好的点2"],
-  "improve": ["需要改进的点1", "需要改进的点2", "需要改进的点3"],
-  "suggestion": "具体的改进建议，包括如何用 STAR 法则组织回答",
-  "starAnswer": "用 STAR 法则重新组织的示例回答（可选，100字以内）"
+  "totalScore": 整数,
+  "dimensions": {
+    "content": { "score": 整数, "feedback": "评价", "missing": ["缺失1", "缺失2"] },
+    "structure": { "score": 整数, "feedback": "评价", "issues": ["问题1", "问题2"] },
+    "expression": { "score": 整数, "feedback": "评价", "suggestions": ["建议1", "建议2"] },
+    "highlights": { "score": 整数, "feedback": "评价", "strongPoints": ["亮点1", "亮点2"] }
+  },
+  "gapAnalysis": {
+    "missing": [{ "location": "位置", "description": "描述" }],
+    "insufficient": [{ "location": "位置", "description": "描述", "suggestion": "建议" }],
+    "good": [{ "location": "位置", "description": "描述" }],
+    "excellent": [{ "location": "位置", "description": "描述" }]
+  },
+  "improvements": [
+    { "priority": "high|medium|low", "action": "行动", "expectedGain": "预期收益" }
+  ],
+  "optimizedAnswer": "优化后的回答",
+  "coachMessage": "教练寄语"
+}`;
+
+// 题目元数据
+export interface QuestionMetadata {
+  type?: string;
+  difficulty?: number;
+  referenceAnswer?: string;
+  commonMistakes?: string;
+  framework?: string;
 }
 
-评分标准：
-- 90-100：回答完整、结构清晰、有具体案例和数据
-- 70-89：回答基本完整，但缺少亮点或具体细节
-- 50-69：回答不够完整，结构混乱或偏题
-- 50以下：回答过于简短或完全偏题`;
-
-// 生成面试点评
+// 生成面试点评（新版 - 面试教练级）
 export async function generateFeedback(
   question: string,
   keyPoints: string,
   userAnswer: string,
+  metadata?: QuestionMetadata,
   provider?: string
 ): Promise<InterviewFeedback> {
   const ai = getAIProvider(provider);
 
-  const prompt = FEEDBACK_USER_PROMPT
+  // 构建完整的 prompt，传入所有元数据
+  const prompt = COACH_USER_PROMPT
     .replace("{question}", question)
+    .replace("{type}", metadata?.type || "GENERAL")
+    .replace("{difficulty}", String(metadata?.difficulty || 2))
     .replace("{keyPoints}", keyPoints)
+    .replace("{referenceAnswer}", metadata?.referenceAnswer || "请参考标准回答结构")
+    .replace("{commonMistakes}", metadata?.commonMistakes || "无")
+    .replace("{framework}", metadata?.framework || "使用STAR法则：情境-任务-行动-结果")
     .replace("{userAnswer}", userAnswer);
 
   const result = await ai.complete({
     messages: [
-      { role: "system", content: FEEDBACK_SYSTEM_PROMPT },
+      { role: "system", content: COACH_SYSTEM_PROMPT },
       { role: "user", content: prompt },
     ],
     temperature: 0.7,
-    maxTokens: 1500,
+    maxTokens: 3000, // 增加token以支持更详细的反馈
   });
 
   // 解析 JSON 响应
@@ -95,19 +202,79 @@ export async function generateFeedback(
       jsonStr = jsonMatch[1];
     }
 
-    const feedback = JSON.parse(jsonStr.trim());
+    const parsed = JSON.parse(jsonStr.trim());
 
-    return {
-      score: Math.min(100, Math.max(0, Number(feedback.score) || 60)),
-      good: Array.isArray(feedback.good) ? feedback.good : [],
-      improve: Array.isArray(feedback.improve) ? feedback.improve : [],
-      suggestion: feedback.suggestion || "请提供更详细的回答",
-      starAnswer: feedback.starAnswer,
+    // 构建标准反馈格式
+    const feedback: InterviewFeedback = {
+      totalScore: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
+      dimensions: {
+        content: {
+          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.content?.score) || 60)),
+          feedback: parsed.dimensions?.content?.feedback || "内容评估",
+          missing: Array.isArray(parsed.dimensions?.content?.missing)
+            ? parsed.dimensions.content.missing
+            : [],
+        },
+        structure: {
+          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.structure?.score) || 60)),
+          feedback: parsed.dimensions?.structure?.feedback || "结构评估",
+          issues: Array.isArray(parsed.dimensions?.structure?.issues)
+            ? parsed.dimensions.structure.issues
+            : [],
+        },
+        expression: {
+          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.expression?.score) || 60)),
+          feedback: parsed.dimensions?.expression?.feedback || "表达评估",
+          suggestions: Array.isArray(parsed.dimensions?.expression?.suggestions)
+            ? parsed.dimensions.expression.suggestions
+            : [],
+        },
+        highlights: {
+          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.highlights?.score) || 60)),
+          feedback: parsed.dimensions?.highlights?.feedback || "亮点评估",
+          strongPoints: Array.isArray(parsed.dimensions?.highlights?.strongPoints)
+            ? parsed.dimensions.highlights.strongPoints
+            : [],
+        },
+      },
+      gapAnalysis: {
+        missing: Array.isArray(parsed.gapAnalysis?.missing) ? parsed.gapAnalysis.missing : [],
+        insufficient: Array.isArray(parsed.gapAnalysis?.insufficient)
+          ? parsed.gapAnalysis.insufficient
+          : [],
+        good: Array.isArray(parsed.gapAnalysis?.good) ? parsed.gapAnalysis.good : [],
+        excellent: Array.isArray(parsed.gapAnalysis?.excellent) ? parsed.gapAnalysis.excellent : [],
+      },
+      improvements: Array.isArray(parsed.improvements) ? parsed.improvements : [],
+      optimizedAnswer: parsed.optimizedAnswer || "",
+      coachMessage: parsed.coachMessage || "继续加油！",
+      // 兼容旧版字段
+      score: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
+      good: parsed.dimensions?.highlights?.strongPoints || ["已完成回答"],
+      improve:
+        parsed.dimensions?.content?.missing?.concat(parsed.dimensions?.structure?.issues || []) ||
+        [],
+      suggestion: parsed.improvements?.[0]?.action || "请根据建议改进",
+      starAnswer: parsed.optimizedAnswer || "",
     };
+
+    return feedback;
   } catch (error) {
     console.error("Failed to parse AI feedback:", error, result.content);
     // 返回默认反馈
     return {
+      totalScore: 60,
+      dimensions: {
+        content: { score: 60, feedback: "AI解析出错", missing: [] },
+        structure: { score: 60, feedback: "AI解析出错", issues: [] },
+        expression: { score: 60, feedback: "AI解析出错", suggestions: [] },
+        highlights: { score: 60, feedback: "AI解析出错", strongPoints: [] },
+      },
+      gapAnalysis: { missing: [], insufficient: [], good: [], excellent: [] },
+      improvements: [],
+      optimizedAnswer: "",
+      coachMessage: "AI解析出错，请重试",
+      // 兼容旧版
       score: 60,
       good: ["已收到你的回答"],
       improve: ["AI 解析出错，请重试"],
@@ -121,13 +288,14 @@ export async function generateFeedbackWithError(
   question: string,
   keyPoints: string,
   userAnswer: string,
+  metadata?: QuestionMetadata,
   provider?: string
 ): Promise<
   | { success: true; feedback: InterviewFeedback }
   | { success: false; error: string; errorCode?: string; retryable: boolean }
 > {
   try {
-    const feedback = await generateFeedback(question, keyPoints, userAnswer, provider);
+    const feedback = await generateFeedback(question, keyPoints, userAnswer, metadata, provider);
     return { success: true, feedback };
   } catch (error) {
     if (error instanceof AIError) {

@@ -57,11 +57,86 @@ export function classifyAIError(status: number, errorText: string): AIErrorCode 
   return "UNKNOWN";
 }
 
-// 面试点评结果
-export interface InterviewFeedback {
+// 多维度评分项
+export interface DimensionScore {
   score: number;
-  good: string[];
-  improve: string[];
-  suggestion: string;
+  feedback: string;
+}
+
+// 内容完整性维度（覆盖考察点、具体案例、数据支撑）
+export interface ContentDimension extends DimensionScore {
+  missing: string[];
+}
+
+// 结构逻辑性维度（STAR法则、条理清晰）
+export interface StructureDimension extends DimensionScore {
+  issues: string[];
+}
+
+// 表达专业性维度（用词准确、无冗余、自信度）
+export interface ExpressionDimension extends DimensionScore {
+  suggestions: string[];
+}
+
+// 差异化亮点维度（独特洞察、超预期表现）
+export interface HighlightsDimension extends DimensionScore {
+  strongPoints: string[];
+}
+
+// 四维能力评估
+export interface DimensionScores {
+  content: ContentDimension;
+  structure: StructureDimension;
+  expression: ExpressionDimension;
+  highlights: HighlightsDimension;
+}
+
+// 差距分析项
+export interface GapItem {
+  location: string;
+  description: string;
+  suggestion?: string;
+}
+
+// 差距分析结果
+export interface GapAnalysis {
+  missing: GapItem[];
+  insufficient: GapItem[];
+  good: GapItem[];
+  excellent: GapItem[];
+}
+
+// 可执行改进建议
+export interface ImprovementAction {
+  priority: "high" | "medium" | "low";
+  action: string;
+  expectedGain: string;
+}
+
+// 面试点评结果（新版 - 面试教练级）
+export interface InterviewFeedback {
+  // 总分（0-100）
+  totalScore: number;
+
+  // 四维能力评估
+  dimensions: DimensionScores;
+
+  // 差距分析（对比参考答案）
+  gapAnalysis: GapAnalysis;
+
+  // 可执行改进清单
+  improvements: ImprovementAction[];
+
+  // 优化版回答示例（基于用户风格改进）
+  optimizedAnswer: string;
+
+  // 教练寄语
+  coachMessage: string;
+
+  // 兼容旧版字段
+  score?: number;
+  good?: string[];
+  improve?: string[];
+  suggestion?: string;
   starAnswer?: string;
 }

@@ -190,6 +190,12 @@ export default function QuestionDetailPage() {
           question: question.title,
           keyPoints: question.keyPoints,
           answer: answer,
+          // 新增：完整的题目元数据，用于AI深度评估
+          type: question.type,
+          difficulty: question.difficulty,
+          referenceAnswer: question.referenceAnswer,
+          commonMistakes: question.commonMistakes,
+          framework: question.framework,
         }),
       });
 
@@ -207,12 +213,22 @@ export default function QuestionDetailPage() {
           questionId: question.id,
           questionTitle: question.title,
           answer: answer,
-          score: data.score,
+          score: data.totalScore || data.score,
           feedback: {
-            good: data.good,
-            improve: data.improve,
-            suggestion: data.suggestion,
-            starAnswer: data.starAnswer,
+            // 新版多维度反馈
+            dimensions: data.dimensions,
+            gapAnalysis: data.gapAnalysis,
+            improvements: data.improvements,
+            optimizedAnswer: data.optimizedAnswer,
+            coachMessage: data.coachMessage,
+            // 兼容旧版字段
+            good: data.good || data.dimensions?.highlights?.strongPoints || [],
+            improve: data.improve || [
+              ...(data.dimensions?.content?.missing || []),
+              ...(data.dimensions?.structure?.issues || []),
+            ],
+            suggestion: data.suggestion || data.improvements?.[0]?.action || "",
+            starAnswer: data.starAnswer || data.optimizedAnswer,
           },
         });
         console.log("[Practice Saved] Record saved successfully");
@@ -456,21 +472,81 @@ export default function QuestionDetailPage() {
           <div className="space-y-6">
             {/* Large score display */}
             <div className="text-center py-12">
-              <div className={`font-display text-[8rem] md:text-[10rem] font-bold leading-none tracking-tighter ${getScoreColor(feedback.score)} animate-score-reveal`}>
-                {feedback.score}
+              <div className={`font-display text-[8rem] md:text-[10rem] font-bold leading-none tracking-tighter ${getScoreColor(feedback.totalScore || feedback.score)} animate-score-reveal`}>
+                {feedback.totalScore || feedback.score}
               </div>
-              <div className="text-body-lg text-foreground-muted mt-2">{getScoreLabel(feedback.score, locale)}</div>
+              <div className="text-body-lg text-foreground-muted mt-2">{getScoreLabel(feedback.totalScore || feedback.score, locale)}</div>
 
               {/* Progress bar */}
               <div className="w-full max-w-xs mx-auto mt-8">
                 <div className="h-1 bg-surface rounded-full overflow-hidden">
                   <div
                     className="h-full bg-current transition-all duration-1000"
-                    style={{ width: `${feedback.score}%` }}
+                    style={{ width: `${feedback.totalScore || feedback.score}%` }}
                   />
                 </div>
               </div>
             </div>
+
+            {/* Multi-dimensional Scores - NEW */}
+            {feedback.dimensions && (
+              <div className="bg-surface rounded-2xl p-6 md:p-8">
+                <h4 className="font-display text-heading font-semibold text-foreground mb-6 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  {locale === "zh" ? "四维能力评估" : "4D Assessment"}
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Content */}
+                  <div className="bg-background rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-foreground-muted">{locale === "zh" ? "内容完整性" : "Content"}</span>
+                      <span className="text-lg font-bold text-foreground">{feedback.dimensions.content.score}</span>
+                    </div>
+                    <div className="h-2 bg-surface rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${feedback.dimensions.content.score}%` }} />
+                    </div>
+                    <p className="text-xs text-foreground-muted mt-2">{feedback.dimensions.content.feedback}</p>
+                  </div>
+                  {/* Structure */}
+                  <div className="bg-background rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-foreground-muted">{locale === "zh" ? "结构逻辑性" : "Structure"}</span>
+                      <span className="text-lg font-bold text-foreground">{feedback.dimensions.structure.score}</span>
+                    </div>
+                    <div className="h-2 bg-surface rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${feedback.dimensions.structure.score}%` }} />
+                    </div>
+                    <p className="text-xs text-foreground-muted mt-2">{feedback.dimensions.structure.feedback}</p>
+                  </div>
+                  {/* Expression */}
+                  <div className="bg-background rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-foreground-muted">{locale === "zh" ? "表达专业性" : "Expression"}</span>
+                      <span className="text-lg font-bold text-foreground">{feedback.dimensions.expression.score}</span>
+                    </div>
+                    <div className="h-2 bg-surface rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${feedback.dimensions.expression.score}%` }} />
+                    </div>
+                    <p className="text-xs text-foreground-muted mt-2">{feedback.dimensions.expression.feedback}</p>
+                  </div>
+                  {/* Highlights */}
+                  <div className="bg-background rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-foreground-muted">{locale === "zh" ? "差异化亮点" : "Highlights"}</span>
+                      <span className="text-lg font-bold text-foreground">{feedback.dimensions.highlights.score}</span>
+                    </div>
+                    <div className="h-2 bg-surface rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500 rounded-full" style={{ width: `${feedback.dimensions.highlights.score}%` }} />
+                    </div>
+                    <p className="text-xs text-foreground-muted mt-2">{feedback.dimensions.highlights.feedback}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* My answer */}
             <div className="bg-surface rounded-2xl p-6 md:p-8">
@@ -503,6 +579,77 @@ export default function QuestionDetailPage() {
               </ul>
             </div>
 
+            {/* Gap Analysis - NEW */}
+            {feedback.gapAnalysis && (
+              <div className="bg-surface rounded-2xl p-6 md:p-8">
+                <h4 className="font-display text-heading font-semibold text-foreground mb-6 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  {locale === "zh" ? "差距分析" : "Gap Analysis"}
+                </h4>
+                <div className="space-y-4">
+                  {/* Missing */}
+                  {feedback.gapAnalysis.missing?.length > 0 && (
+                    <div className="bg-red-50 rounded-xl p-4">
+                      <h5 className="text-sm font-semibold text-red-600 mb-2">🔴 {locale === "zh" ? "缺失" : "Missing"}</h5>
+                      <ul className="space-y-2">
+                        {feedback.gapAnalysis.missing.map((item, i) => (
+                          <li key={i} className="text-sm text-foreground">
+                            <span className="font-medium">{item.location}:</span> {item.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {/* Insufficient */}
+                  {feedback.gapAnalysis.insufficient?.length > 0 && (
+                    <div className="bg-amber-50 rounded-xl p-4">
+                      <h5 className="text-sm font-semibold text-amber-600 mb-2">🟡 {locale === "zh" ? "不足" : "Insufficient"}</h5>
+                      <ul className="space-y-2">
+                        {feedback.gapAnalysis.insufficient.map((item, i) => (
+                          <li key={i} className="text-sm text-foreground">
+                            <span className="font-medium">{item.location}:</span> {item.description}
+                            {item.suggestion && (
+                              <span className="block text-foreground-muted mt-1">💡 {item.suggestion}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {/* Good */}
+                  {feedback.gapAnalysis.good?.length > 0 && (
+                    <div className="bg-green-50 rounded-xl p-4">
+                      <h5 className="text-sm font-semibold text-green-600 mb-2">🟢 {locale === "zh" ? "良好" : "Good"}</h5>
+                      <ul className="space-y-2">
+                        {feedback.gapAnalysis.good.map((item, i) => (
+                          <li key={i} className="text-sm text-foreground">
+                            <span className="font-medium">{item.location}:</span> {item.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {/* Excellent */}
+                  {feedback.gapAnalysis.excellent?.length > 0 && (
+                    <div className="bg-purple-50 rounded-xl p-4">
+                      <h5 className="text-sm font-semibold text-purple-600 mb-2">🌟 {locale === "zh" ? "亮点" : "Excellent"}</h5>
+                      <ul className="space-y-2">
+                        {feedback.gapAnalysis.excellent.map((item, i) => (
+                          <li key={i} className="text-sm text-foreground">
+                            <span className="font-medium">{item.location}:</span> {item.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Areas to improve */}
             <div className="bg-surface rounded-2xl p-6 md:p-8">
               <h4 className="font-display text-heading font-semibold text-foreground mb-6 flex items-center gap-3">
@@ -514,7 +661,7 @@ export default function QuestionDetailPage() {
                 {t.question.improvements}
               </h4>
               <ul className="space-y-4">
-                {feedback.improve.map((item, i) => (
+                {feedback.improve?.map((item, i) => (
                   <li key={i} className="flex items-start gap-4 text-foreground">
                     <span className="w-2 h-2 bg-warning rounded-full mt-2 shrink-0" />
                     <span>{item}</span>
@@ -523,21 +670,81 @@ export default function QuestionDetailPage() {
               </ul>
             </div>
 
-            {/* Suggestions */}
-            <div className="bg-surface rounded-2xl p-6 md:p-8">
-              <h4 className="font-display text-heading font-semibold text-foreground mb-6 flex items-center gap-3">
-                <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-                {t.question.suggestions}
-              </h4>
-              <p className="text-foreground leading-relaxed">{feedback.suggestion}</p>
-            </div>
+            {/* Actionable Improvements - NEW */}
+            {feedback.improvements && feedback.improvements.length > 0 && (
+              <div className="bg-surface rounded-2xl p-6 md:p-8">
+                <h4 className="font-display text-heading font-semibold text-foreground mb-6 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                  </div>
+                  {locale === "zh" ? "可执行改进清单" : "Actionable Improvements"}
+                </h4>
+                <ul className="space-y-4">
+                  {feedback.improvements.map((item, i) => (
+                    <li key={i} className="flex items-start gap-4">
+                      <span className={`px-2 py-1 rounded text-xs font-medium shrink-0 ${
+                        item.priority === "high"
+                          ? "bg-red-100 text-red-600"
+                          : item.priority === "medium"
+                          ? "bg-amber-100 text-amber-600"
+                          : "bg-blue-100 text-blue-600"
+                      }`}>
+                        {item.priority === "high"
+                          ? locale === "zh" ? "高" : "High"
+                          : item.priority === "medium"
+                          ? locale === "zh" ? "中" : "Med"
+                          : locale === "zh" ? "低" : "Low"}
+                      </span>
+                      <div className="flex-1">
+                        <p className="text-foreground">{item.action}</p>
+                        <p className="text-sm text-foreground-muted mt-1">
+                          {locale === "zh" ? "预期收益" : "Expected"}: {item.expectedGain}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-            {/* STAR example */}
-            {feedback.starAnswer && (
+            {/* Optimized Answer - NEW */}
+            {feedback.optimizedAnswer && (
+              <div className="bg-surface rounded-2xl p-6 md:p-8">
+                <h4 className="font-display text-heading font-semibold text-foreground mb-6 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  </div>
+                  {locale === "zh" ? "优化版回答（基于你的风格）" : "Optimized Answer (Your Style)"}
+                </h4>
+                <p className="text-foreground whitespace-pre-wrap leading-relaxed">{feedback.optimizedAnswer}</p>
+              </div>
+            )}
+
+            {/* Coach Message - NEW */}
+            {feedback.coachMessage && (
+              <div className="bg-accent/5 rounded-2xl p-6 md:p-8 border border-accent/10">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-display text-heading font-semibold text-foreground mb-2">
+                      {locale === "zh" ? "教练寄语" : "Coach's Message"}
+                    </h4>
+                    <p className="text-foreground leading-relaxed italic">"{feedback.coachMessage}"</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STAR example - Legacy support */}
+            {feedback.starAnswer && !feedback.optimizedAnswer && (
               <div className="bg-surface rounded-2xl p-6 md:p-8">
                 <h4 className="font-display text-heading font-semibold text-foreground mb-6 flex items-center gap-3">
                   <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
