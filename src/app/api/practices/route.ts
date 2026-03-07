@@ -34,9 +34,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "100");
     const offset = parseInt(searchParams.get("offset") || "0");
+    const questionId = searchParams.get("questionId");
 
     const practices = await db.practice.findMany({
-      where: { userId },
+      where: {
+        userId,
+        ...(questionId && { questionId }),
+      },
       include: {
         question: {
           select: {

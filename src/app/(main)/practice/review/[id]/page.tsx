@@ -39,6 +39,30 @@ const translations = {
     removed: "删除",
     unchanged: "未变",
     compareHint: "通过对比你的回答和 AI 优化版，学习如何改进表达方式",
+    // 多维度评估
+    multiDimensionalAssessment: "多维能力评估",
+    contentCompleteness: "内容完整性",
+    structureLogic: "结构逻辑性",
+    expressionProfession: "表达专业性",
+    differentiationHighlights: "差异化亮点",
+    gapAnalysis: "差距分析",
+    missing: "缺失",
+    insufficient: "不足",
+    good: "良好",
+    excellent: "亮点",
+    actionItems: "改进行动清单",
+    highPriority: "高优先级",
+    mediumPriority: "中优先级",
+    lowPriority: "低优先级",
+    coachMessage: "教练寄语",
+    // Phase 3: 进步曲线
+    progressCurve: "进步曲线",
+    practiceCount: "练习次数",
+    bestScore: "最佳分数",
+    averageScore: "平均分数",
+    improvement: "进步幅度",
+    firstScore: "首次分数",
+    latestScore: "最新分数",
   },
   en: {
     title: "Practice Review",
@@ -68,8 +92,185 @@ const translations = {
     removed: "Removed",
     unchanged: "Unchanged",
     compareHint: "Compare your answer with the AI optimized version to learn how to improve",
+    // Multi-dimensional Assessment
+    multiDimensionalAssessment: "Multi-dimensional Assessment",
+    contentCompleteness: "Content Completeness",
+    structureLogic: "Structure & Logic",
+    expressionProfession: "Expression Professionalism",
+    differentiationHighlights: "Differentiation Highlights",
+    gapAnalysis: "Gap Analysis",
+    missing: "Missing",
+    insufficient: "Insufficient",
+    good: "Good",
+    excellent: "Excellent",
+    actionItems: "Action Items",
+    highPriority: "High Priority",
+    mediumPriority: "Medium Priority",
+    lowPriority: "Low Priority",
+    coachMessage: "Coach's Message",
+    // Phase 3: Progress
+    progressCurve: "Progress Curve",
+    practiceCount: "Practice Count",
+    bestScore: "Best Score",
+    averageScore: "Average Score",
+    improvement: "Improvement",
+    firstScore: "First Score",
+    latestScore: "Latest Score",
   },
 };
+
+// 进步曲线组件
+function ProgressCurve({ history, locale }: { history: Array<{ attempt: number; score: number; date: string }>; locale: string }) {
+  const t = translations[locale === "zh" ? "zh" : "en"];
+
+  if (history.length < 2) return null;
+
+  const maxScore = 100;
+  const minScore = 0;
+  const range = maxScore - minScore;
+
+  // 计算统计数据
+  const firstScore = history[0]?.score || 0;
+  const latestScore = history[history.length - 1]?.score || 0;
+  const bestScore = Math.max(...history.map(h => h.score));
+  const averageScore = Math.round(history.reduce((sum, h) => sum + h.score, 0) / history.length);
+  const improvement = latestScore - firstScore;
+
+  // 简单的折线图表
+  const width = 100;
+  const height = 60;
+  const padding = 10;
+
+  const points = history.map((item, index) => {
+    const x = padding + (index / (history.length - 1)) * (width - 2 * padding);
+    const y = height - padding - ((item.score - minScore) / range) * (height - 2 * padding);
+    return { x, y, score: item.score };
+  });
+
+  const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+          {t.progressCurve}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* 统计卡片 */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="bg-surface rounded-xl p-4 text-center">
+            <p className="text-xs text-foreground-muted mb-1">{t.practiceCount}</p>
+            <p className="font-display text-2xl font-bold text-foreground">{history.length}</p>
+          </div>
+          <div className="bg-surface rounded-xl p-4 text-center">
+            <p className="text-xs text-foreground-muted mb-1">{t.bestScore}</p>
+            <p className={`font-display text-2xl font-bold ${bestScore >= 80 ? 'text-emerald-500' : bestScore >= 60 ? 'text-amber-500' : 'text-rose-500'}`}>
+              {bestScore}
+            </p>
+          </div>
+          <div className="bg-surface rounded-xl p-4 text-center">
+            <p className="text-xs text-foreground-muted mb-1">{t.averageScore}</p>
+            <p className={`font-display text-2xl font-bold ${averageScore >= 80 ? 'text-emerald-500' : averageScore >= 60 ? 'text-amber-500' : 'text-rose-500'}`}>
+              {averageScore}
+            </p>
+          </div>
+        </div>
+
+        {/* 进步对比 */}
+        <div className="flex items-center justify-between mb-4 px-4">
+          <div className="text-center">
+            <p className="text-xs text-foreground-muted mb-1">{t.firstScore}</p>
+            <p className="font-display text-xl font-bold text-foreground">{firstScore}</p>
+          </div>
+          <div className="flex-1 mx-4 flex items-center justify-center">
+            <div className={`text-sm font-medium px-3 py-1 rounded-full ${
+              improvement > 0 ? 'bg-emerald-100 text-emerald-700' :
+              improvement < 0 ? 'bg-rose-100 text-rose-700' : 'bg-foreground-muted/10 text-foreground-muted'
+            }`}>
+              {improvement > 0 ? '+' : ''}{improvement} {locale === 'zh' ? '分' : 'pts'}
+            </div>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-foreground-muted mb-1">{t.latestScore}</p>
+            <p className={`font-display text-xl font-bold ${latestScore >= 80 ? 'text-emerald-500' : latestScore >= 60 ? 'text-amber-500' : 'text-rose-500'}`}>
+              {latestScore}
+            </p>
+          </div>
+        </div>
+
+        {/* 折线图 */}
+        <div className="bg-surface rounded-xl p-4">
+          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-32" preserveAspectRatio="none">
+            {/* 背景网格线 */}
+            {[0, 25, 50, 75, 100].map((level) => {
+              const y = height - padding - ((level - minScore) / range) * (height - 2 * padding);
+              return (
+                <line
+                  key={level}
+                  x1={padding}
+                  y1={y}
+                  x2={width - padding}
+                  y2={y}
+                  stroke="currentColor"
+                  strokeWidth="0.5"
+                  className="text-border"
+                  strokeDasharray="2,2"
+                />
+              );
+            })}
+
+            {/* 折线 */}
+            <path
+              d={pathData}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-accent"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* 数据点 */}
+            {points.map((p, i) => (
+              <g key={i}>
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r="3"
+                  className={`${p.score >= 80 ? 'fill-emerald-500' : p.score >= 60 ? 'fill-amber-500' : 'fill-rose-500'}`}
+                  stroke="white"
+                  strokeWidth="1"
+                />
+                {/* 分数标签 */}
+                <text
+                  x={p.x}
+                  y={p.y - 6}
+                  textAnchor="middle"
+                  className="text-[8px] fill-foreground-muted"
+                >
+                  {p.score}
+                </text>
+              </g>
+            ))}
+          </svg>
+
+          {/* X轴标签 */}
+          <div className="flex justify-between text-xs text-foreground-muted mt-2 px-2">
+            {history.map((h, i) => (
+              <span key={i}>
+                {locale === 'zh' ? `第${i + 1}次` : `#${i + 1}`}
+              </span>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 // 简单的差异对比算法
 function computeDiff(original: string, optimized: string): Array<{type: 'same' | 'added' | 'removed', text: string}> {
@@ -164,6 +365,283 @@ function DiffView({ original, optimized, locale }: { original: string; optimized
             {item.text || ' '}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// 多维度评估组件
+function MultiDimensionalFeedback({ feedback, locale }: { feedback: PracticeRecord['feedback']; locale: string }) {
+  const t = translations[locale === "zh" ? "zh" : "en"];
+
+  if (!feedback?.dimensions) return null;
+
+  const { content, structure, expression, highlights } = feedback.dimensions;
+
+  const dimensionCards = [
+    { key: 'content', label: t.contentCompleteness, data: content, color: 'bg-blue-500', icon: '📝' },
+    { key: 'structure', label: t.structureLogic, data: structure, color: 'bg-purple-500', icon: '🏗️' },
+    { key: 'expression', label: t.expressionProfession, data: expression, color: 'bg-amber-500', icon: '💬' },
+    { key: 'highlights', label: t.differentiationHighlights, data: highlights, color: 'bg-emerald-500', icon: '⭐' },
+  ];
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          {t.multiDimensionalAssessment}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* 四维度评分卡片 */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {dimensionCards.map((dim) => (
+            <div key={dim.key} className="bg-surface rounded-xl p-4 border border-border">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">{dim.icon}</span>
+                <span className="text-xs font-medium text-foreground-muted">{dim.label}</span>
+              </div>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className={`font-display text-2xl font-bold ${
+                  dim.data.score >= 80 ? 'text-emerald-500' :
+                  dim.data.score >= 60 ? 'text-amber-500' : 'text-rose-500'
+                }`}>
+                  {dim.data.score}
+                </span>
+                <span className="text-xs text-foreground-muted">/100</span>
+              </div>
+              <div className="w-full bg-border rounded-full h-1.5 mb-2">
+                <div
+                  className={`h-1.5 rounded-full ${dim.color}`}
+                  style={{ width: `${dim.data.score}%` }}
+                />
+              </div>
+              <p className="text-xs text-foreground-muted line-clamp-2">{dim.data.feedback}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* 详细信息 */}
+        <div className="space-y-4">
+          {content.missing && content.missing.length > 0 && (
+            <div className="bg-rose-50 rounded-lg p-3 border border-rose-100">
+              <h4 className="text-sm font-medium text-rose-700 mb-2">{t.contentCompleteness} - {locale === 'zh' ? '缺失点' : 'Missing'}</h4>
+              <ul className="space-y-1">
+                {content.missing.map((item, idx) => (
+                  <li key={idx} className="text-sm text-rose-600 flex items-start gap-2">
+                    <span>•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {structure.issues && structure.issues.length > 0 && (
+            <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+              <h4 className="text-sm font-medium text-amber-700 mb-2">{t.structureLogic} - {locale === 'zh' ? '问题' : 'Issues'}</h4>
+              <ul className="space-y-1">
+                {structure.issues.map((item, idx) => (
+                  <li key={idx} className="text-sm text-amber-600 flex items-start gap-2">
+                    <span>•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {expression.suggestions && expression.suggestions.length > 0 && (
+            <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+              <h4 className="text-sm font-medium text-blue-700 mb-2">{t.expressionProfession} - {locale === 'zh' ? '建议' : 'Suggestions'}</h4>
+              <ul className="space-y-1">
+                {expression.suggestions.map((item, idx) => (
+                  <li key={idx} className="text-sm text-blue-600 flex items-start gap-2">
+                    <span>•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {highlights.strongPoints && highlights.strongPoints.length > 0 && (
+            <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
+              <h4 className="text-sm font-medium text-emerald-700 mb-2">{t.differentiationHighlights} - {locale === 'zh' ? '亮点' : 'Highlights'}</h4>
+              <ul className="space-y-1">
+                {highlights.strongPoints.map((item, idx) => (
+                  <li key={idx} className="text-sm text-emerald-600 flex items-start gap-2">
+                    <span>✓</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// 差距分析组件
+function GapAnalysisView({ feedback, locale }: { feedback: PracticeRecord['feedback']; locale: string }) {
+  const t = translations[locale === "zh" ? "zh" : "en"];
+
+  if (!feedback?.gapAnalysis) return null;
+
+  const { missing, insufficient, good, excellent } = feedback.gapAnalysis;
+
+  if (missing.length === 0 && insufficient.length === 0 && good.length === 0 && excellent.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          {t.gapAnalysis}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {missing.length > 0 && (
+            <div className="border-l-4 border-rose-400 pl-4">
+              <h4 className="text-sm font-medium text-rose-600 mb-2 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-rose-100 flex items-center justify-center text-xs">🔴</span>
+                {t.missing} ({missing.length})
+              </h4>
+              <ul className="space-y-2">
+                {missing.map((item, idx) => (
+                  <li key={idx} className="text-sm text-foreground-muted">
+                    <span className="text-rose-500 font-medium">{item.location}:</span> {item.description}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {insufficient.length > 0 && (
+            <div className="border-l-4 border-amber-400 pl-4">
+              <h4 className="text-sm font-medium text-amber-600 mb-2 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center text-xs">🟡</span>
+                {t.insufficient} ({insufficient.length})
+              </h4>
+              <ul className="space-y-2">
+                {insufficient.map((item, idx) => (
+                  <li key={idx} className="text-sm text-foreground-muted">
+                    <span className="text-amber-500 font-medium">{item.location}:</span> {item.description}
+                    {item.suggestion && (
+                      <p className="text-xs text-amber-600 mt-1">💡 {item.suggestion}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {good.length > 0 && (
+            <div className="border-l-4 border-emerald-400 pl-4">
+              <h4 className="text-sm font-medium text-emerald-600 mb-2 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-xs">🟢</span>
+                {t.good} ({good.length})
+              </h4>
+              <ul className="space-y-2">
+                {good.map((item, idx) => (
+                  <li key={idx} className="text-sm text-foreground-muted">
+                    <span className="text-emerald-500 font-medium">{item.location}:</span> {item.description}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {excellent.length > 0 && (
+            <div className="border-l-4 border-purple-400 pl-4">
+              <h4 className="text-sm font-medium text-purple-600 mb-2 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center text-xs">🌟</span>
+                {t.excellent} ({excellent.length})
+              </h4>
+              <ul className="space-y-2">
+                {excellent.map((item, idx) => (
+                  <li key={idx} className="text-sm text-foreground-muted">
+                    <span className="text-purple-500 font-medium">{item.location}:</span> {item.description}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// 改进行动清单组件
+function ActionItems({ feedback, locale }: { feedback: PracticeRecord['feedback']; locale: string }) {
+  const t = translations[locale === "zh" ? "zh" : "en"];
+
+  if (!feedback?.improvements || feedback.improvements.length === 0) return null;
+
+  const priorityConfig = {
+    high: { label: t.highPriority, color: 'bg-rose-100 text-rose-700 border-rose-200' },
+    medium: { label: t.mediumPriority, color: 'bg-amber-100 text-amber-700 border-amber-200' },
+    low: { label: t.lowPriority, color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  };
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold flex items-center gap-2">
+          <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          {t.actionItems}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {feedback.improvements.map((item, idx) => (
+            <div key={idx} className="flex items-start gap-3 p-3 bg-surface rounded-lg border border-border">
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${priorityConfig[item.priority].color}`}>
+                {priorityConfig[item.priority].label}
+              </span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">{item.action}</p>
+                <p className="text-xs text-emerald-600 mt-1">📈 {item.expectedGain}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// 教练寄语组件
+function CoachMessage({ feedback, locale }: { feedback: PracticeRecord['feedback']; locale: string }) {
+  const t = translations[locale === "zh" ? "zh" : "en"];
+
+  if (!feedback?.coachMessage) return null;
+
+  return (
+    <div className="bg-accent/5 rounded-2xl p-6 border border-accent/10 mb-6">
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center shrink-0">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+        </div>
+        <div>
+          <h4 className="font-display text-heading font-semibold text-foreground mb-2">{t.coachMessage}</h4>
+          <p className="text-foreground leading-relaxed italic">&ldquo;{feedback.coachMessage}&rdquo;</p>
+        </div>
       </div>
     </div>
   );
@@ -267,6 +745,7 @@ export default function PracticeReviewPage() {
   const [loading, setLoading] = useState(true);
   const [questionExists, setQuestionExists] = useState(true);
   const [showCompare, setShowCompare] = useState(false);
+  const [progressHistory, setProgressHistory] = useState<Array<{ attempt: number; score: number; date: string }>>([]);
 
   const t = translations[locale === "zh" ? "zh" : "en"];
   const recordId = params.id as string;
@@ -283,6 +762,25 @@ export default function PracticeReviewPage() {
             setQuestionExists(response.ok);
           } catch {
             setQuestionExists(false);
+          }
+
+          // Phase 3: 加载该题目的练习历史（进步曲线数据）
+          try {
+            const historyResponse = await fetch(`/api/practices/question/${data.questionId}`);
+            if (historyResponse.ok) {
+              const historyData = await historyResponse.json();
+              if (historyData.practices) {
+                setProgressHistory(
+                  historyData.practices.map((p: { createdAt: string; score: number }, index: number) => ({
+                    attempt: index + 1,
+                    score: p.score,
+                    date: p.createdAt,
+                  }))
+                );
+              }
+            }
+          } catch (error) {
+            console.error("Failed to load progress history:", error);
           }
         }
       } catch (error) {
@@ -386,6 +884,11 @@ export default function PracticeReviewPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Phase 3: Progress Curve - 进步曲线 */}
+        {progressHistory.length > 1 && (
+          <ProgressCurve history={progressHistory} locale={locale} />
+        )}
 
         {/* View Toggle */}
         {(record.feedback?.optimizedAnswer || record.feedback?.starAnswer) && (
@@ -515,6 +1018,26 @@ export default function PracticeReviewPage() {
                     {record.feedback.starAnswer}
                   </div>
                 </div>
+              )}
+
+              {/* 多维度评估 - Phase 1 */}
+              {record.feedback.dimensions && (
+                <MultiDimensionalFeedback feedback={record.feedback} locale={locale} />
+              )}
+
+              {/* 差距分析 - Phase 1 */}
+              {record.feedback.gapAnalysis && (
+                <GapAnalysisView feedback={record.feedback} locale={locale} />
+              )}
+
+              {/* 改进行动清单 - Phase 1 */}
+              {record.feedback.improvements && (
+                <ActionItems feedback={record.feedback} locale={locale} />
+              )}
+
+              {/* 教练寄语 - Phase 1 */}
+              {record.feedback.coachMessage && (
+                <CoachMessage feedback={record.feedback} locale={locale} />
               )}
             </CardContent>
           </Card>

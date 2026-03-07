@@ -99,6 +99,24 @@ export default function QuestionDetailPage() {
   const [answer, setAnswer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{
+    // 新版多维度反馈
+    totalScore?: number;
+    dimensions?: {
+      content: { score: number; feedback: string; missing?: string[] };
+      structure: { score: number; feedback: string; issues?: string[] };
+      expression: { score: number; feedback: string; suggestions?: string[] };
+      highlights: { score: number; feedback: string; strongPoints?: string[] };
+    };
+    gapAnalysis?: {
+      missing: Array<{ location: string; description: string; suggestion?: string }>;
+      insufficient: Array<{ location: string; description: string; suggestion?: string }>;
+      good: Array<{ location: string; description: string }>;
+      excellent: Array<{ location: string; description: string }>;
+    };
+    improvements?: Array<{ priority: "high" | "medium" | "low"; action: string; expectedGain: string }>;
+    optimizedAnswer?: string;
+    coachMessage?: string;
+    // 旧版字段（向后兼容）
     score: number;
     good: string[];
     improve: string[];
@@ -114,15 +132,66 @@ export default function QuestionDetailPage() {
   const [favorited, setFavorited] = useState(false);
   const [voiceLanguage, setVoiceLanguage] = useState<"zh" | "en">("zh");
 
+  // Phase 3: 刻意练习 - 练习历史
+  const [practiceHistory, setPracticeHistory] = useState<Array<{
+    id: string;
+    answer: string;
+    score: number;
+    createdAt: string;
+  }>>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState<string | null>(null);
+
   // Load favorite status
   useEffect(() => {
     setFavorited(isFavorite(questionId));
+  }, [questionId]);
+
+  // Load practice history for this question
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const response = await fetch(`/api/practices?questionId=${questionId}&limit=10`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.practices) {
+            setPracticeHistory(data.practices.map((p: { id: string; answer: string; score: number; createdAt: string }) => ({
+              id: p.id,
+              answer: p.answer,
+              score: p.score,
+              createdAt: p.createdAt,
+            })));
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load practice history:", error);
+      }
+    }
+    loadHistory();
   }, [questionId]);
 
   // Toggle favorite
   const handleToggleFavorite = () => {
     const newState = toggleFavorite(questionId);
     setFavorited(newState);
+  };
+
+  // Phase 3: 选择历史答案进行改进
+  const handleSelectHistory = (historyId: string) => {
+    const history = practiceHistory.find(h => h.id === historyId);
+    if (history) {
+      setAnswer(history.answer);
+      setSelectedHistory(historyId);
+      setShowHistory(false);
+      // 滚动到输入区域
+      textareaRef.current?.focus();
+    }
+  };
+
+  // Phase 3: 清除选择
+  const handleClearSelection = () => {
+    setSelectedHistory(null);
+    setAnswer("");
   };
 
   // Timer
@@ -202,7 +271,13 @@ export default function QuestionDetailPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Request failed");
+        console.error("Feedback API error:", response.status, data);
+        throw new Error(data.error || data.message || `Request failed with status ${response.status}`);
+      }
+
+      // 验证返回的数据格式
+      if (!data || typeof data !== 'object') {
+        throw new Error("Invalid response format from server");
       }
 
       setFeedback(data);
@@ -240,7 +315,11 @@ export default function QuestionDetailPage() {
       checkAndUnlockAchievements();
     } catch (err) {
       console.error("Feedback error:", err);
-      setError(err instanceof Error ? err.message : "Failed to get feedback, please try again");
+      const errorMessage = err instanceof Error ? err.message : "Failed to get feedback";
+      setError(locale === "zh"
+        ? `获取反馈失败: ${errorMessage}，请稍后重试`
+        : `Failed to get feedback: ${errorMessage}, please try again later`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -340,6 +419,71 @@ export default function QuestionDetailPage() {
               <span className="text-sm text-foreground">{question.keyPoints}</span>
             </div>
           </div>
+
+          {/* Phase 3: 练习历史面板 */}
+          {practiceHistory.length > 0 && (
+            <div className="mt-6">
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="flex items-center gap-2 text-sm text-accent hover:text-accent-dark transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {locale === 'zh'
+                  ? `已练习 ${practiceHistory.length} 次，最佳 ${Math.max(...practiceHistory.map(h => h.score))} 分`
+                  : `Practiced ${practiceHistory.length} times, best score ${Math.max(...practiceHistory.map(h => h.score))}`
+                }
+                <svg
+                  className={`w-4 h-4 transition-transform ${showHistory ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {showHistory && (
+                <div className="mt-3 p-4 bg-surface rounded-2xl border border-border">
+                  <p className="text-xs text-foreground-muted mb-3">
+                    {locale === 'zh' ? '选择历史答案进行改进：' : 'Select a previous answer to improve:'}
+                  </p>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {practiceHistory.map((history, index) => (
+                      <div
+                        key={history.id}
+                        onClick={() => handleSelectHistory(history.id)}
+                        className={`p-3 rounded-xl cursor-pointer transition-all ${
+                          selectedHistory === history.id
+                            ? 'bg-accent/10 border-2 border-accent'
+                            : 'bg-background border-2 border-transparent hover:border-border'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-foreground-muted">
+                            {locale === 'zh' ? `第 ${index + 1} 次` : `Attempt ${index + 1}`}
+                          </span>
+                          <span className={`text-sm font-bold ${
+                            history.score >= 80 ? 'text-emerald-500' :
+                            history.score >= 60 ? 'text-amber-500' : 'text-rose-500'
+                          }`}>
+                            {history.score} 分
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground line-clamp-2">
+                          {history.answer.slice(0, 100)}...
+                        </p>
+                        <p className="text-xs text-foreground-muted mt-1">
+                          {new Date(history.createdAt).toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Answer area */}
@@ -347,6 +491,25 @@ export default function QuestionDetailPage() {
           <div className="space-y-4">
             {/* Answer input */}
             <div className="bg-surface rounded-2xl p-6 md:p-8">
+              {/* 已选择历史答案提示 */}
+              {selectedHistory && (
+                <div className="mb-4 p-3 bg-accent/5 rounded-xl border border-accent/10 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm text-foreground">
+                      {locale === 'zh' ? '已加载历史答案，在此基础上改进吧！' : 'Loaded previous answer. Improve on it!'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleClearSelection}
+                    className="text-xs text-foreground-muted hover:text-foreground transition-colors"
+                  >
+                    {locale === 'zh' ? '清除' : 'Clear'}
+                  </button>
+                </div>
+              )}
               <VoiceTextarea
                 value={answer}
                 onChange={setAnswer}
