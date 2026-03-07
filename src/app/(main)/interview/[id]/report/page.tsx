@@ -359,6 +359,34 @@ export default function InterviewReportPage() {
   );
 }
 
+// 维度评分徽章组件
+function DimensionBadge({
+  label,
+  score,
+  tooltip,
+}: {
+  label: string;
+  score: number;
+  tooltip?: string;
+}) {
+  const colorClass =
+    score >= 80
+      ? "bg-success/10 text-success border-success/20"
+      : score >= 60
+        ? "bg-warning/10 text-warning border-warning/20"
+        : "bg-error/10 text-error border-error/20";
+
+  return (
+    <div
+      className={`px-3 py-2 rounded-xl border ${colorClass} text-center`}
+      title={tooltip}
+    >
+      <div className="font-display text-lg font-bold">{score}</div>
+      <div className="text-xs opacity-75">{label}</div>
+    </div>
+  );
+}
+
 function DimensionScore({ label, score }: { label: string; score: number }) {
   return (
     <div className="flex items-center gap-4">
@@ -442,6 +470,32 @@ function QuestionDetailCard({
               </div>
             </div>
 
+            {/* 四维评分 - Phase 5 新增 */}
+            {answer.feedback.dimensions && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <DimensionBadge
+                  label={locale === "zh" ? "内容" : "Content"}
+                  score={answer.feedback.dimensions.content.score}
+                  tooltip={answer.feedback.dimensions.content.feedback}
+                />
+                <DimensionBadge
+                  label={locale === "zh" ? "结构" : "Structure"}
+                  score={answer.feedback.dimensions.structure.score}
+                  tooltip={answer.feedback.dimensions.structure.feedback}
+                />
+                <DimensionBadge
+                  label={locale === "zh" ? "表达" : "Expression"}
+                  score={answer.feedback.dimensions.expression.score}
+                  tooltip={answer.feedback.dimensions.expression.feedback}
+                />
+                <DimensionBadge
+                  label={locale === "zh" ? "亮点" : "Highlights"}
+                  score={answer.feedback.dimensions.highlights.score}
+                  tooltip={answer.feedback.dimensions.highlights.feedback}
+                />
+              </div>
+            )}
+
             {/* Feedback */}
             <div className="grid md:grid-cols-2 gap-4">
               {answer.feedback.good.length > 0 && (
@@ -477,10 +531,48 @@ function QuestionDetailCard({
               )}
             </div>
 
+            {/* 优化版回答 - Phase 5 新增 */}
+            {answer.feedback.optimizedAnswer && (
+              <div className="p-3 bg-accent/5 rounded-xl">
+                <h5 className="text-sm font-medium text-accent mb-2">
+                  {locale === "zh" ? "优化版回答示例" : "Optimized Answer Example"}
+                </h5>
+                <p className="text-sm text-foreground whitespace-pre-wrap">{answer.feedback.optimizedAnswer}</p>
+              </div>
+            )}
+
+            {/* 改进行动清单 - Phase 5 新增 */}
+            {answer.feedback.improvements && answer.feedback.improvements.length > 0 && (
+              <div className="p-3 bg-background rounded-xl border border-border">
+                <h5 className="text-sm font-medium text-foreground mb-2">
+                  {locale === "zh" ? "改进行动清单" : "Action Items"}
+                </h5>
+                <ul className="space-y-2">
+                  {answer.feedback.improvements.map((imp, idx) => (
+                    <li key={idx} className="text-sm flex items-start gap-2">
+                      <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                        imp.priority === 'high' ? 'bg-error/10 text-error' :
+                        imp.priority === 'medium' ? 'bg-warning/10 text-warning' :
+                        'bg-success/10 text-success'
+                      }`}>
+                        {imp.priority === 'high' ? (locale === 'zh' ? '高' : 'High') :
+                         imp.priority === 'medium' ? (locale === 'zh' ? '中' : 'Med') :
+                         (locale === 'zh' ? '低' : 'Low')}
+                      </span>
+                      <div className="flex-1">
+                        <p className="text-foreground">{imp.action}</p>
+                        <p className="text-foreground-muted text-xs">{imp.expectedGain}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Suggestion */}
             <div className="p-3 bg-accent/5 rounded-xl">
               <h5 className="text-sm font-medium text-accent mb-1">
-                {locale === "zh" ? "建议" : "Suggestion"}
+                {locale === "zh" ? "教练建议" : "Coach Suggestion"}
               </h5>
               <p className="text-sm text-foreground">{answer.feedback.suggestion}</p>
             </div>

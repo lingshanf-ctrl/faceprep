@@ -118,7 +118,7 @@ function AbilityRadar({ abilities }: { abilities: { name: string; value: number 
       {/* Background grid */}
       {[0.2, 0.4, 0.6, 0.8, 1].map((level) => (
         <polygon
-          key={level}
+          key={`grid-${level}`}
           points={abilities
             .map((_, index) => {
               const angle = index * angleStep - Math.PI / 2;

@@ -28,6 +28,22 @@ export function getAIProvider(provider?: string): AIProvider {
         model: "qwen-turbo",
       });
 
+    case "kimi":
+      return new OpenAICompatibleProvider({
+        name: "kimi",
+        apiKey: process.env.KIMI_API_KEY || "",
+        baseUrl: "https://api.moonshot.ai/v1",
+        model: "kimi-k2.5",
+      });
+
+    case "kimi-code":
+      return new OpenAICompatibleProvider({
+        name: "kimi-code",
+        apiKey: process.env.KIMI_CODE_API_KEY || "",
+        baseUrl: "https://api.kimi.com/coding/v1",
+        model: "kimi-k2.5",
+      });
+
     default:
       return new DeepSeekProvider();
   }

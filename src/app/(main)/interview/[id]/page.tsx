@@ -13,56 +13,47 @@ import {
   InterviewSession,
 } from "@/lib/interview-store";
 
-// 模拟AI评估答案
+// 真实 AI 评估答案
 async function evaluateAnswer(
-  question: { title: string; type: string; keyPoints: string },
+  question: { title: string; type: string; keyPoints: string; difficulty?: number; referenceAnswer?: string; framework?: string },
   answer: string
-): Promise<{ score: number; good: string[]; improve: string[]; suggestion: string }> {
-  // 模拟API延迟
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+): Promise<{ score: number; good: string[]; improve: string[]; suggestion: string; dimensions?: any; improvements?: any[]; optimizedAnswer?: string }> {
+  try {
+    const response = await fetch("/api/interview/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: {
+          title: question.title,
+          keyPoints: question.keyPoints,
+        },
+        answer,
+        metadata: {
+          type: question.type,
+          difficulty: question.difficulty || 2,
+          referenceAnswer: question.referenceAnswer,
+          framework: question.framework,
+        },
+      }),
+    });
 
-  const wordCount = answer.length;
-  const hasStructure =
-    answer.includes("首先") ||
-    answer.includes("第一") ||
-    answer.includes("1.") ||
-    answer.includes("第一步");
-  const hasExample =
-    answer.includes("比如") ||
-    answer.includes("例如") ||
-    answer.includes("像");
-  const hasConclusion =
-    answer.includes("总结") ||
-    answer.includes("总之") ||
-    answer.includes("所以");
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "评估失败");
+    }
 
-  let score = 70;
-  if (wordCount > 100) score += 5;
-  if (wordCount > 200) score += 5;
-  if (hasStructure) score += 5;
-  if (hasExample) score += 5;
-  if (hasConclusion) score += 5;
-
-  // 根据题型调整
-  if (question.type === "TECHNICAL") {
-    if (answer.includes("原理") || answer.includes("机制")) score += 5;
+    const data = await response.json();
+    return data.feedback;
+  } catch (error) {
+    console.error("AI evaluation failed:", error);
+    // 降级到简单评估
+    return {
+      score: 70,
+      good: ["回答已提交"],
+      improve: ["AI 评估暂时不可用，请稍后再试"],
+      suggestion: "建议按照 STAR 法则组织回答：情境、任务、行动、结果",
+    };
   }
-
-  score = Math.min(95, Math.max(60, score));
-
-  const good: string[] = ["内容完整"];
-  if (hasStructure) good.push("回答结构清晰");
-  if (hasExample) good.push("举例恰当");
-
-  const improve: string[] = [];
-  if (!hasExample) improve.push("可以加入更多具体例子");
-  if (!hasConclusion) improve.push("建议添加总结性陈述");
-
-  const suggestion = hasStructure
-    ? "回答得很好，继续保持！"
-    : "建议按照 STAR 法则组织回答：情境、任务、行动、结果";
-
-  return { score, good, improve, suggestion };
 }
 
 export default function InterviewPage() {
@@ -125,17 +116,32 @@ export default function InterviewPage() {
     setIsEvaluating(true);
 
     // 评估答案
-    const feedback = await evaluateAnswer(currentQuestion, answer);
+    // 转换难度为数字
+    const difficultyMap: Record<string, number> = { easy: 1, medium: 2, hard: 3 };
+    const questionWithMeta = {
+      ...currentQuestion,
+      difficulty: difficultyMap[currentQuestion.difficulty] || 2,
+    };
+
+    const feedback = await evaluateAnswer(questionWithMeta, answer);
 
     // 计算用时
     const duration = Math.floor((Date.now() - questionStartTime) / 1000);
 
-    // 提交答案
+    // 提交答案（包含完整维度数据供报告使用）
     const interviewAnswer = {
       questionId: currentQuestion.id,
       answer,
       score: feedback.score,
-      feedback,
+      feedback: {
+        good: feedback.good,
+        improve: feedback.improve,
+        suggestion: feedback.suggestion,
+        // 保存完整维度数据供报告使用
+        dimensions: feedback.dimensions,
+        improvements: feedback.improvements,
+        optimizedAnswer: feedback.optimizedAnswer,
+      },
       duration,
       startedAt: new Date(questionStartTime).toISOString(),
       completedAt: new Date().toISOString(),

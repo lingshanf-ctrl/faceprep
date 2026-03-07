@@ -52,8 +52,13 @@ export function classifyAIError(status: number, errorText: string): AIErrorCode 
   if (status === 401) return "INVALID_API_KEY";
   if (status === 429) return "RATE_LIMIT";
   if (status === 402) return "INSUFFICIENT_BALANCE";
+  // 400错误可能是欠费（如阿里云 qwen）
+  if (status === 400 && errorText.includes("Arrearage")) return "INSUFFICIENT_BALANCE";
+  if (status === 400 && errorText.includes("Access denied")) return "INVALID_API_KEY";
   if (status === 403 && errorText.includes("content")) return "CONTENT_FILTERED";
-  if (status === 0 || !navigator.onLine) return "NETWORK_ERROR";
+  if (status === 0) return "NETWORK_ERROR";
+  // Only check navigator.onLine in browser environment
+  if (typeof navigator !== "undefined" && !navigator.onLine) return "NETWORK_ERROR";
   return "UNKNOWN";
 }
 

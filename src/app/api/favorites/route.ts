@@ -56,9 +56,9 @@ export async function GET(request: NextRequest) {
       });
 
       // 过滤掉已收藏的
-      const favoriteIds = new Set(favorites.map((f) => f.questionId));
+      const favoriteIds = new Set(favorites.map((f) => f.questionId).filter((id): id is string => id !== null));
       lowScoreQuestions = practices
-        .filter((p) => !favoriteIds.has(p.questionId))
+        .filter((p) => p.questionId && !favoriteIds.has(p.questionId))
         .map((p) => ({
           ...p,
           isLowScore: true,

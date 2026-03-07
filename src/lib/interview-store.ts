@@ -17,6 +17,19 @@ export interface InterviewAnswer {
     good: string[];
     improve: string[];
     suggestion: string;
+    // AI 评估的完整维度数据
+    dimensions?: {
+      content: { score: number; feedback: string; missing: string[] };
+      structure: { score: number; feedback: string; issues: string[] };
+      expression: { score: number; feedback: string; suggestions: string[] };
+      highlights: { score: number; feedback: string; strongPoints: string[] };
+    };
+    improvements?: Array<{
+      priority: "high" | "medium" | "low";
+      action: string;
+      expectedGain: string;
+    }>;
+    optimizedAnswer?: string;
   };
   duration: number;
   startedAt: string;

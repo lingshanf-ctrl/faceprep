@@ -107,15 +107,18 @@ export class DeepSeekProvider implements AIProvider {
         );
       }
 
-      const data = await response.json();
+      const data = await response.json() as {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+      };
 
       return {
-        content: data.choices[0]?.message?.content || "",
+        content: data.choices?.[0]?.message?.content || "",
         usage: data.usage
           ? {
-              promptTokens: data.usage.prompt_tokens,
-              completionTokens: data.usage.completion_tokens,
-              totalTokens: data.usage.total_tokens,
+              promptTokens: data.usage.prompt_tokens ?? 0,
+              completionTokens: data.usage.completion_tokens ?? 0,
+              totalTokens: data.usage.total_tokens ?? 0,
             }
           : undefined,
       };

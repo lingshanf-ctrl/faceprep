@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
         orderBy: { _count: { questionId: 'desc' } },
         take: 10,
       }).then(async (results) => {
-        const questionIds = results.map(r => r.questionId);
+        const questionIds = results.map(r => r.questionId).filter((id): id is string => id !== null);
         const questions = await db.question.findMany({
           where: { id: { in: questionIds } },
           select: { id: true, title: true, category: true },

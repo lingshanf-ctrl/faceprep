@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
           status: 503
         },
         INSUFFICIENT_BALANCE: {
-          message: "AI 服务额度不足，请联系管理员",
+          message: "AI 服务余额不足，请充值或切换其他 AI 提供商",
           status: 503
         },
         CONTENT_FILTERED: {

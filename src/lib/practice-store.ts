@@ -1,19 +1,60 @@
 // 练习记录存储 - 使用后端 API + IndexedDB 离线缓存
 import { practicesApi, statsApi } from "./api-client";
 
+// 多维度评分
+export interface DimensionScores {
+  content: { score: number; feedback: string; missing?: string[] };
+  structure: { score: number; feedback: string; issues?: string[] };
+  expression: { score: number; feedback: string; suggestions?: string[] };
+  highlights: { score: number; feedback: string; strongPoints?: string[] };
+}
+
+// 差距分析项
+export interface GapItem {
+  location: string;
+  description: string;
+  suggestion?: string;
+}
+
+// 差距分析
+export interface GapAnalysis {
+  missing: GapItem[];
+  insufficient: GapItem[];
+  good: GapItem[];
+  excellent: GapItem[];
+}
+
+// 改进行动
+export interface ImprovementAction {
+  priority: "high" | "medium" | "low";
+  action: string;
+  expectedGain: string;
+}
+
 // 重新导出类型
 export interface PracticeRecord {
   id: string;
   questionId: string;
   questionTitle: string;
+  questionCategory?: string;
+  questionType?: string;
   answer: string;
   score: number;
   feedback: {
+    // 新版多维度反馈
+    dimensions?: DimensionScores;
+    gapAnalysis?: GapAnalysis;
+    improvements?: ImprovementAction[];
+    optimizedAnswer?: string;
+    coachMessage?: string;
+    totalScore?: number;
+    // 旧版字段（向后兼容）
     good: string[];
     improve: string[];
     suggestion: string;
     starAnswer?: string;
   };
+  duration?: number;
   createdAt: string;
 }
 
