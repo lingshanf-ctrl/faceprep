@@ -175,7 +175,7 @@ export const translations = {
 
     // Practice
     practice: {
-      title: '练习模式',
+      title: '开始练习',
       subtitle: '{count} 道题目可选，选择适合你的练习方式',
       random: {
         title: '快速练习',
@@ -489,7 +489,7 @@ export const translations = {
 
     // Practice
     practice: {
-      title: 'Practice Mode',
+      title: 'Start Practice',
       subtitle: '{count} questions available, choose your practice style',
       random: {
         title: 'Quick Practice',

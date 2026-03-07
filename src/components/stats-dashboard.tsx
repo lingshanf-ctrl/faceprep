@@ -12,6 +12,7 @@ interface StatsData {
   recentTrend: number[];
   streak: number;
   isAnonymous: boolean;
+  todayPractices?: number;
 }
 
 export function StatsDashboard() {
@@ -78,7 +79,8 @@ export function StatsDashboard() {
         totalPractices={stats.totalPractices}
         averageScore={stats.averageScore}
         highestScore={stats.highestScore}
-        streak={stats.streak}
+        todayPractices={stats.todayPractices || 0}
+        dailyGoal={3}
       />
 
       {/* 趋势图表和连续打卡 */}

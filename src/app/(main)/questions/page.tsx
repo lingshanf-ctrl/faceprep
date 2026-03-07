@@ -19,6 +19,11 @@ import {
 } from "@/lib/question-parser";
 import { createInterviewSession, InterviewQuestion } from "@/lib/interview-store";
 import {
+  CategoryCard,
+  categoryGroups,
+  subCategoryMap,
+} from "@/components/category-card";
+import {
   BookOpen,
   Plus,
   Trash2,
@@ -562,37 +567,102 @@ function QuestionsContent() {
           </div>
         )}
 
-        {/* 题目列表 */}
-        {filteredQuestions.length === 0 ? (
-          <EmptyState
-            hasFilters={hasFilters}
-            activeTab={activeTab}
-            locale={locale}
-            onClearFilters={clearFilters}
-            onAddQuestion={() => setShowAddModal(true)}
-          />
-        ) : (
-          <div className="space-y-3">
-            {filteredQuestions.map((question, index) => (
-              <QuestionCard
-                key={question.id}
-                question={question}
-                index={index}
-                activeTab={activeTab}
-                locale={locale}
-                isPracticed={practiceStatus[question.id]?.practiced}
-                highestScore={practiceStatus[question.id]?.highestScore}
-                practiceCount={practiceStatus[question.id]?.count}
-                isSelected={selectedCustomQuestions.has(question.id)}
-                onToggleSelect={() => toggleQuestionSelection(question.id)}
-                onDelete={() => handleDeleteCustom(question.id)}
-              />
-            ))}
+        {/* 官方题库 - 分类大卡片 */}
+        {activeTab === "library" && (
+          <div className="grid md:grid-cols-2 gap-6">
+            {categoryGroups.map((group) => {
+              // 计算该分类下的题目统计
+              const groupQuestions = systemQuestions.filter((q) =>
+                group.categories.includes(q.category)
+              );
+              const questionCount = groupQuestions.length;
+              const practicedCount = groupQuestions.filter(
+                (q) => practiceStatus[q.id]?.practiced
+              ).length;
+              const scores = groupQuestions
+                .filter((q) => practiceStatus[q.id]?.practiced)
+                .map((q) => practiceStatus[q.id]?.highestScore || 0);
+              const averageScore = scores.length > 0
+                ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+                : 0;
+
+              // 子分类统计
+              const subCategories = group.categories
+                .map((cat) => {
+                  const count = groupQuestions.filter((q) => q.category === cat).length;
+                  return {
+                    id: cat,
+                    name: locale === "zh" ? subCategoryMap[cat]?.zh : subCategoryMap[cat]?.en,
+                    count,
+                  };
+                })
+                .filter((sub) => sub.count > 0);
+
+              return (
+                <CategoryCard
+                  key={group.id}
+                  id={group.id}
+                  title={locale === "zh" ? group.title.zh : group.title.en}
+                  subtitle={locale === "zh" ? group.subtitle.zh : group.subtitle.en}
+                  icon={group.icon}
+                  color={group.color}
+                  questionCount={questionCount}
+                  practicedCount={practicedCount}
+                  averageScore={averageScore}
+                  subCategories={subCategories}
+                  locale={locale}
+                />
+              );
+            })}
           </div>
         )}
 
-        {/* 官方题库统计 */}
-        {activeTab === "library" && stats.totalCount > 0 && (
+        {/* 我的专属题库 - 题目列表 */}
+        {activeTab === "custom" && (
+          <>
+            {filteredQuestions.length === 0 ? (
+              <EmptyState
+                hasFilters={hasFilters}
+                activeTab={activeTab}
+                locale={locale}
+                onClearFilters={clearFilters}
+                onAddQuestion={() => setShowAddModal(true)}
+              />
+            ) : (
+              <div className="space-y-3">
+                {filteredQuestions.map((question, index) => (
+                  <QuestionCard
+                    key={question.id}
+                    question={question}
+                    index={index}
+                    activeTab={activeTab}
+                    locale={locale}
+                    isPracticed={practiceStatus[question.id]?.practiced}
+                    highestScore={practiceStatus[question.id]?.highestScore}
+                    practiceCount={practiceStatus[question.id]?.count}
+                    isSelected={selectedCustomQuestions.has(question.id)}
+                    onToggleSelect={() => toggleQuestionSelection(question.id)}
+                    onDelete={() => handleDeleteCustom(question.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 官方题库统计 - 在分类卡片下方 */}
+        {activeTab === "library" && (
+          <div className="mt-8 text-center">
+            <p className="text-sm text-foreground-muted">
+              {locale === "zh"
+                ? `共 ${systemQuestions.length} 道精选题目，已完成 ${stats.practicedCount} 道`
+                : `${systemQuestions.length} curated questions, ${stats.practicedCount} practiced`}
+            </p>
+          </div>
+        )}
+
+        {/* 我的专属题库统计 */}
+        {activeTab === "custom" && stats.totalCount > 0 && (
           <div className="mt-12">
             <div className="bg-gradient-to-br from-foreground to-foreground/90 rounded-2xl p-6 text-white shadow-xl">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">

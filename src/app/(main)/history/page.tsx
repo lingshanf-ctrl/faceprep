@@ -151,7 +151,7 @@ function AbilityRadar({ abilities }: { abilities: { name: string; value: number 
         const y = center + labelRadius * Math.sin(angle);
         return (
           <text
-            key={ability.name}
+            key={`label-${index}`}
             x={x}
             y={y}
             textAnchor="middle"
@@ -519,7 +519,7 @@ function PracticeHistory({ locale, t }: { locale: string; t: any }) {
 }
 
 // Interview History Component
-function InterviewHistory({ locale }: { locale: string }) {
+function InterviewHistory({ locale, t }: { locale: string; t: any }) {
   const [interviewSessions, setInterviewSessions] = useState<InterviewSession[]>([]);
   const [interviewStats, setInterviewStats] = useState({
     totalInterviews: 0,
@@ -603,7 +603,7 @@ function InterviewHistory({ locale }: { locale: string }) {
                   {session.title}
                 </h4>
                 <div className="flex items-center gap-4 mt-2 text-sm text-foreground-muted">
-                  <span>{new Date(session.completedAt || "").toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US")}</span>
+                  <span>{formatDateLabel(session.completedAt || "", locale, t)}</span>
                   <span>•</span>
                   <span>
                     {session.questions.length} {locale === "zh" ? "道题" : "questions"}
@@ -714,7 +714,7 @@ export default function HistoryPage() {
         </div>
 
         {/* Content */}
-        {activeTab === "practice" ? <PracticeHistory locale={locale} t={t} /> : <InterviewHistory locale={locale} />}
+        {activeTab === "practice" ? <PracticeHistory locale={locale} t={t} /> : <InterviewHistory locale={locale} t={t} />}
       </div>
     </div>
   );

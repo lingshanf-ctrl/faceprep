@@ -1,12 +1,13 @@
 "use client";
 
-import { TrendingUp, Target, Award, Flame } from "lucide-react";
+import { TrendingUp, Target, Award, CalendarCheck } from "lucide-react";
 
 interface StatsCardsProps {
   totalPractices: number;
   averageScore: number;
   highestScore: number;
-  streak: number;
+  todayPractices: number;
+  dailyGoal?: number;
 }
 
 interface StatCardProps {
@@ -47,13 +48,21 @@ export function StatsCards({
   totalPractices,
   averageScore,
   highestScore,
-  streak,
+  todayPractices,
+  dailyGoal = 3,
 }: StatsCardsProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
+        icon={<CalendarCheck className="w-5 h-5" />}
+        label="今日练习"
+        value={todayPractices}
+        suffix={`/${dailyGoal}`}
+        color="orange"
+      />
+      <StatCard
         icon={<Target className="w-5 h-5" />}
-        label="练习次数"
+        label="累计练习"
         value={totalPractices}
         suffix="次"
         color="blue"
@@ -71,13 +80,6 @@ export function StatsCards({
         value={highestScore}
         suffix="分"
         color="purple"
-      />
-      <StatCard
-        icon={<Flame className="w-5 h-5" />}
-        label="连续练习"
-        value={streak}
-        suffix="天"
-        color="orange"
       />
     </div>
   );

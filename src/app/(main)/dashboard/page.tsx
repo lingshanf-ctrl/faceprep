@@ -251,7 +251,8 @@ export default function DashboardPage() {
             totalPractices={stats.totalPractices}
             averageScore={stats.averageScore}
             highestScore={stats.highestScore}
-            streak={streak}
+            todayPractices={todayPractices}
+            dailyGoal={dailyGoal}
           />
         </div>
 
