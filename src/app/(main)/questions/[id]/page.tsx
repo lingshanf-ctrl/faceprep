@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { getQuestionById, questions } from "@/data/questions";
+import { getQuestionById, questions as staticQuestions } from "@/data/questions";
 import { savePracticeRecord } from "@/lib/practice-store";
 import { isFavorite, toggleFavorite } from "@/lib/favorites-store";
 import { checkAndUnlockAchievements } from "@/lib/achievement-store";
@@ -54,44 +54,54 @@ export default function QuestionDetailPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { locale, t } = useLanguage();
 
-  const question = useMemo(() => getQuestionById(questionId), [questionId]);
+  // 从静态数据获取题目
+  const staticQuestion = useMemo(() => getQuestionById(questionId), [questionId]);
 
-  // 如果题目不存在，显示错误
-  if (!question) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-6 py-12 text-center">
-          <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h1 className="font-display text-heading-xl font-semibold text-foreground mb-3">
-            {locale === 'zh' ? '题目不存在' : 'Question Not Found'}
-          </h1>
-          <p className="text-foreground-muted mb-8">
-            {locale === 'zh' ? '该题目可能已被删除或ID无效' : 'This question may have been deleted or the ID is invalid'}
-          </p>
-          <Link href="/questions" className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-full font-medium hover:bg-accent-dark transition-all">
-            {locale === 'zh' ? '返回题库' : 'Back to Questions'}
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // 状态管理
+  const [question, setQuestion] = useState(staticQuestion);
+  const [loading, setLoading] = useState(!staticQuestion);
+  const [loadError, setLoadError] = useState(false);
 
-  // Calculate question index and total
+  // 从 API 获取题目（当静态数据不存在时）
+  useEffect(() => {
+    if (staticQuestion) {
+      setQuestion(staticQuestion);
+      return;
+    }
+
+    async function fetchQuestion() {
+      try {
+        const res = await fetch(`/api/questions/${questionId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.question) {
+            setQuestion(data.question);
+          } else {
+            setLoadError(true);
+          }
+        } else {
+          setLoadError(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch question:", err);
+        setLoadError(true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchQuestion();
+  }, [questionId, staticQuestion]);
+
+  // Calculate question index and total (仅从静态数据)
   const questionIndex = useMemo(() => {
-    return questions.findIndex(q => q.id === questionId) + 1;
+    return staticQuestions.findIndex(q => q.id === questionId) + 1;
   }, [questionId]);
 
   const nextQuestionId = useMemo(() => {
-    const currentIndex = questions.findIndex(q => q.id === questionId);
-    if (currentIndex < questions.length - 1) {
-      return questions[currentIndex + 1].id;
+    const currentIndex = staticQuestions.findIndex(q => q.id === questionId);
+    if (currentIndex < staticQuestions.length - 1) {
+      return staticQuestions[currentIndex + 1].id;
     }
     return null;
   }, [questionId]);
@@ -170,6 +180,17 @@ export default function QuestionDetailPage() {
     loadHistory();
   }, [questionId]);
 
+  // Timer
+  useEffect(() => {
+    if (feedback) return;
+
+    const timer = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [startTime, feedback]);
+
   // Toggle favorite
   const handleToggleFavorite = () => {
     const newState = toggleFavorite(questionId);
@@ -194,17 +215,6 @@ export default function QuestionDetailPage() {
     setAnswer("");
   };
 
-  // Timer
-  useEffect(() => {
-    if (feedback) return;
-
-    const timer = setInterval(() => {
-      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [startTime, feedback]);
-
   // Format time
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -212,27 +222,41 @@ export default function QuestionDetailPage() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Question not found
-  if (!question) {
+  // ============ 所有 Hook 结束，下面是条件渲染 ============
+
+  // 加载中状态
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-background">
+        <div className="max-w-3xl mx-auto px-6 py-12 text-center">
+          <div className="w-12 h-12 border-4 border-accent/20 border-t-accent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-foreground-muted">{locale === 'zh' ? '加载中...' : 'Loading...'}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 如果题目不存在，显示错误
+  if (loadError || !question) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-3xl mx-auto px-6 py-12 text-center">
           <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <h1 className="font-display text-heading-xl font-semibold text-foreground mb-3">
-            {locale === "zh" ? "题目未找到" : "Question Not Found"}
+            {locale === 'zh' ? '题目不存在' : 'Question Not Found'}
           </h1>
           <p className="text-foreground-muted mb-8">
-            {locale === "zh" ? "该题目可能已被删除或链接不正确" : "The question may have been removed or the link is incorrect"}
+            {locale === 'zh' ? '该题目可能已被删除或ID无效' : 'This question may have been deleted or the ID is invalid'}
           </p>
-          <Link
-            href="/questions"
-            className="inline-flex px-8 py-4 bg-accent text-white rounded-full font-medium hover:bg-accent-dark transition-all hover:shadow-glow"
-          >
-            {t.question.backToQuestions}
+          <Link href="/questions" className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-full font-medium hover:bg-accent-dark transition-all">
+            {locale === 'zh' ? '返回题库' : 'Back to Questions'}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
           </Link>
         </div>
       </div>
@@ -349,10 +373,12 @@ export default function QuestionDetailPage() {
           </button>
 
           <div className="flex items-center gap-4">
-            {/* Progress indicator */}
-            <span className="text-sm text-foreground-muted">
-              {questionIndex} / {questions.length}
-            </span>
+            {/* Progress indicator (仅对静态题目显示) */}
+            {questionIndex > 0 && (
+              <span className="text-sm text-foreground-muted">
+                {questionIndex} / {staticQuestions.length}
+              </span>
+            )}
 
             {/* Timer */}
             {!feedback && (

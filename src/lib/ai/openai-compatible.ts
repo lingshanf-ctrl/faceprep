@@ -1,4 +1,4 @@
-import { AIProvider, AICompletionOptions, AICompletionResult, AIError, classifyAIError } from "./types";
+import { AIProvider, AICompletionOptions, AICompletionResult, AIError, AIStreamOptions, classifyAIError } from "./types";
 
 const API_TIMEOUT = 30000; // 30秒超时
 const MAX_RETRIES = 2;     // 最大重试次数
@@ -156,5 +156,119 @@ export class OpenAICompatibleProvider implements AIProvider {
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // 流式响应方法
+  async stream(
+    options: AIStreamOptions,
+    abortSignal?: AbortSignal
+  ): Promise<void> {
+    if (!this.apiKey) {
+      const error = new AIError(`${this.name} API key not configured`, "INVALID_API_KEY", false);
+      options.onError?.(error);
+      throw error;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT * 2); // 流式请求双倍超时
+
+    if (abortSignal) {
+      abortSignal.addEventListener("abort", () => controller.abort());
+    }
+
+    let fullContent = "";
+
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: options.messages,
+          temperature: options.temperature ?? 0.7,
+          max_tokens: options.maxTokens ?? 2000,
+          stream: true, // 启用流式响应
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        const errorCode = classifyAIError(response.status, errorText);
+        const error = new AIError(
+          `${this.name} API error: ${response.status} - ${errorText}`,
+          errorCode,
+          errorCode === "RATE_LIMIT" || errorCode === "NETWORK_ERROR"
+        );
+        options.onError?.(error);
+        throw error;
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        const error = new AIError("No response body", "NETWORK_ERROR", true);
+        options.onError?.(error);
+        throw error;
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // 解析 SSE 数据
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // 保留未完成的行
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === "data: [DONE]") continue;
+
+          if (trimmed.startsWith("data: ")) {
+            try {
+              const json = JSON.parse(trimmed.slice(6));
+              const chunk = json.choices?.[0]?.delta?.content || "";
+              if (chunk) {
+                fullContent += chunk;
+                options.onChunk(chunk);
+              }
+            } catch {
+              // 忽略解析错误的行
+            }
+          }
+        }
+      }
+
+      options.onComplete?.(fullContent);
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (error instanceof AIError) {
+        throw error;
+      }
+
+      if (error instanceof Error && error.name === "AbortError") {
+        const timeoutError = new AIError("Stream request timeout", "TIMEOUT", true);
+        options.onError?.(timeoutError);
+        throw timeoutError;
+      }
+
+      const networkError = new AIError(
+        `${this.name} stream failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "NETWORK_ERROR",
+        true
+      );
+      options.onError?.(networkError);
+      throw networkError;
+    }
   }
 }

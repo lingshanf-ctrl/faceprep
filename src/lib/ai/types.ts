@@ -23,6 +23,15 @@ export interface AICompletionResult {
 export interface AIProvider {
   name: string;
   complete(options: AICompletionOptions, abortSignal?: AbortSignal): Promise<AICompletionResult>;
+  // 流式响应支持（可选）
+  stream?(options: AIStreamOptions, abortSignal?: AbortSignal): Promise<void>;
+}
+
+// 流式响应选项
+export interface AIStreamOptions extends AICompletionOptions {
+  onChunk: (chunk: string) => void;
+  onComplete?: (fullContent: string) => void;
+  onError?: (error: AIError) => void;
 }
 
 // AI 错误类型

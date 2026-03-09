@@ -5,139 +5,47 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import {
-  getInterviewSession,
+  getInterviewSessionAsync,
   InterviewSession,
   InterviewAnswer,
+  fetchAIEvaluation,
+  updateSessionWithAIEvaluationAsync,
 } from "@/lib/interview-store";
+
+// 评估状态类型
+interface EvaluationStatus {
+  total: number;
+  completed: number;
+  pending: number;
+  processing: number;
+  failed: number;
+  answers: {
+    questionId: string;
+    questionTitle: string;
+    status: string;
+    error: string | null;
+    retries: number;
+  }[];
+}
 
 // 分数颜色
 function getScoreColor(score: number) {
-  if (score >= 80) return "text-success";
-  if (score >= 60) return "text-warning";
-  return "text-error";
+  if (score >= 80) return "text-emerald-600";
+  if (score >= 60) return "text-amber-500";
+  return "text-rose-500";
 }
 
 function getScoreBgColor(score: number) {
-  if (score >= 80) return "bg-success/10";
-  if (score >= 60) return "bg-warning/10";
-  return "bg-error/10";
+  if (score >= 80) return "bg-emerald-50 border-emerald-100";
+  if (score >= 60) return "bg-amber-50 border-amber-100";
+  return "bg-rose-50 border-rose-100";
 }
 
-// 雷达图组件
-function RadarChart({ scores }: { scores: InterviewSession["dimensionScores"] }) {
-  const dimensions = [
-    { key: "technical", label: "技术能力" },
-    { key: "project", label: "项目经验" },
-    { key: "behavioral", label: "行为面试" },
-    { key: "communication", label: "沟通表达" },
-  ];
-
-  const maxScore = 100;
-  const centerX = 100;
-  const centerY = 100;
-  const radius = 80;
-
-  // 计算点的位置
-  const getPoint = (index: number, score: number) => {
-    const angle = (Math.PI * 2 * index) / dimensions.length - Math.PI / 2;
-    const r = (score / maxScore) * radius;
-    return {
-      x: centerX + r * Math.cos(angle),
-      y: centerY + r * Math.sin(angle),
-    };
-  };
-
-  const points = dimensions.map((dim, idx) =>
-    getPoint(idx, scores[dim.key as keyof typeof scores])
-  );
-
-  const pathData = points
-    .map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`)
-    .join(" ") + " Z";
-
-  return (
-    <div className="relative w-64 h-64 mx-auto">
-      <svg viewBox="0 0 200 200" className="w-full h-full">
-        {/* 背景网格 */}
-        {[25, 50, 75, 100].map((level) => (
-          <polygon
-            key={level}
-            points={dimensions
-              .map((_, idx) => {
-                const p = getPoint(idx, level);
-                return `${p.x},${p.y}`;
-              })
-              .join(" ")}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="0.5"
-            className="text-border"
-          />
-        ))}
-
-        {/* 轴线 */}
-        {dimensions.map((_, idx) => {
-          const p = getPoint(idx, 100);
-          return (
-            <line
-              key={idx}
-              x1={centerX}
-              y1={centerY}
-              x2={p.x}
-              y2={p.y}
-              stroke="currentColor"
-              strokeWidth="0.5"
-              className="text-border"
-            />
-          );
-        })}
-
-        {/* 数据区域 */}
-        <path
-          d={pathData}
-          fill="currentColor"
-          fillOpacity="0.2"
-          stroke="currentColor"
-          strokeWidth="2"
-          className="text-accent"
-        />
-
-        {/* 数据点 */}
-        {points.map((p, idx) => (
-          <circle
-            key={idx}
-            cx={p.x}
-            cy={p.y}
-            r="4"
-            fill="currentColor"
-            className="text-accent"
-          />
-        ))}
-      </svg>
-
-      {/* 维度标签 */}
-      <div className="absolute inset-0">
-        {dimensions.map((dim, idx) => {
-          const angle = (Math.PI * 2 * idx) / dimensions.length - Math.PI / 2;
-          const labelRadius = radius + 20;
-          const x = centerX + labelRadius * Math.cos(angle);
-          const y = centerY + labelRadius * Math.sin(angle);
-          return (
-            <div
-              key={dim.key}
-              className="absolute text-xs text-foreground-muted transform -translate-x-1/2 -translate-y-1/2"
-              style={{
-                left: `${(x / 200) * 100}%`,
-                top: `${(y / 200) * 100}%`,
-              }}
-            >
-              {dim.label}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+function getScoreLevel(score: number, locale: string) {
+  if (score >= 90) return locale === "zh" ? "优秀" : "Excellent";
+  if (score >= 80) return locale === "zh" ? "良好" : "Good";
+  if (score >= 60) return locale === "zh" ? "及格" : "Fair";
+  return locale === "zh" ? "需提升" : "Needs Work";
 }
 
 export default function InterviewReportPage() {
@@ -147,30 +55,145 @@ export default function InterviewReportPage() {
   const interviewId = params.id as string;
 
   const [session, setSession] = useState<InterviewSession | null>(null);
+  const [activeTab, setActiveTab] = useState<"overview" | "details">("overview");
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
+  const [isGeneratingAIReport, setIsGeneratingAIReport] = useState(false);
+
+  // 评估状态轮询
+  const [evaluationStatus, setEvaluationStatus] = useState<EvaluationStatus | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
-    const loadedSession = getInterviewSession(interviewId);
-    if (!loadedSession) {
-      router.push("/practice");
-      return;
+    async function loadSession() {
+      const loadedSession = await getInterviewSessionAsync(interviewId);
+      if (!loadedSession) {
+        router.push("/practice");
+        return;
+      }
+
+      if (loadedSession.status !== "completed") {
+        router.push(`/interview/${interviewId}`);
+        return;
+      }
+
+      setSession(loadedSession);
+
+      // 如果没有 AI 评价，异步获取
+      if (!loadedSession.aiEvaluation && loadedSession.answers.length > 0) {
+        setIsGeneratingAIReport(true);
+        const aiEvaluation = await fetchAIEvaluation(loadedSession);
+        if (aiEvaluation) {
+          const updated = await updateSessionWithAIEvaluationAsync(interviewId, aiEvaluation);
+          if (updated) {
+            setSession(updated);
+          }
+        }
+        setIsGeneratingAIReport(false);
+      }
     }
 
-    if (loadedSession.status !== "completed") {
-      router.push(`/interview/${interviewId}`);
-      return;
-    }
-
-    setSession(loadedSession);
+    loadSession();
   }, [interviewId, router]);
+
+  // 获取评估状态
+  const fetchEvaluationStatus = async () => {
+    try {
+      const response = await fetch(`/api/interview/evaluation-status?sessionId=${interviewId}`);
+      if (response.ok) {
+        const status = await response.json();
+        setEvaluationStatus(status);
+        return status;
+      }
+    } catch (error) {
+      console.error("获取评估状态失败:", error);
+    }
+    return null;
+  };
+
+  // 处理待评估的答案
+  const processEvaluations = async () => {
+    try {
+      const response = await fetch("/api/interview/process-evaluations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: interviewId }),
+      });
+      if (response.ok) {
+        // 刷新会话数据
+        const updatedSession = await getInterviewSessionAsync(interviewId);
+        if (updatedSession) {
+          setSession(updatedSession);
+        }
+      }
+    } catch (error) {
+      console.error("处理评估失败:", error);
+    }
+  };
+
+  // 重试失败的评估
+  const retryFailedEvaluations = async () => {
+    setIsRetrying(true);
+    try {
+      // 重置所有失败的评估
+      await fetch("/api/interview/evaluation-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: interviewId, retryAll: true }),
+      });
+      // 触发评估处理
+      await processEvaluations();
+      // 刷新状态
+      await fetchEvaluationStatus();
+    } catch (error) {
+      console.error("重试评估失败:", error);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  // 评估状态轮询
+  useEffect(() => {
+    if (!session) return;
+
+    // 初始获取状态
+    fetchEvaluationStatus().then((status) => {
+      if (status && (status.pending > 0 || status.processing > 0)) {
+        setIsPolling(true);
+        // 触发评估处理
+        processEvaluations();
+      }
+    });
+  }, [session?.id]);
+
+  // 轮询检测评估进度
+  useEffect(() => {
+    if (!isPolling || !session) return;
+
+    const pollInterval = setInterval(async () => {
+      const status = await fetchEvaluationStatus();
+      if (status) {
+        // 如果所有评估都完成或失败，停止轮询并刷新数据
+        if (status.pending === 0 && status.processing === 0) {
+          setIsPolling(false);
+          // 刷新会话数据以获取最新反馈
+          const updatedSession = await getInterviewSessionAsync(interviewId);
+          if (updatedSession) {
+            setSession(updatedSession);
+          }
+        }
+      }
+    }, 3000); // 每 3 秒轮询一次
+
+    return () => clearInterval(pollInterval);
+  }, [isPolling, session?.id, interviewId]);
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-foreground-muted">
-            {locale === "zh" ? "加载中..." : "Loading..."}
-          </p>
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+          <span className="text-foreground-muted">{locale === "zh" ? "加载中..." : "Loading..."}</span>
         </div>
       </div>
     );
@@ -182,231 +205,483 @@ export default function InterviewReportPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const totalDuration = session.answers.reduce((acc, a) => acc + (a.duration || 0), 0);
+  const avgScore = Math.round(session.answers.reduce((acc, a) => acc + a.score, 0) / session.answers.length);
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div
-            className={`inline-flex items-center justify-center w-32 h-32 rounded-full ${getScoreBgColor(
-              session.overallScore
-            )} mb-6`}
-          >
-            <span
-              className={`font-display text-display-xl font-bold ${getScoreColor(
-                session.overallScore
-              )}`}
-            >
-              {session.overallScore}
-            </span>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Hero Header */}
+      <div className="bg-white border-b border-slate-100">
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-foreground-muted mb-6">
+            <Link href="/history" className="hover:text-accent transition-colors">
+              {locale === "zh" ? "学习记录" : "History"}
+            </Link>
+            <span>/</span>
+            <span className="text-foreground">{locale === "zh" ? "面试报告" : "Interview Report"}</span>
           </div>
-          <h1 className="font-display text-display font-bold text-foreground tracking-tight mb-2">
-            {session.title}
-          </h1>
-          <p className="text-foreground-muted">
-            {locale === "zh"
-              ? `完成于 ${new Date(session.completedAt || "").toLocaleDateString("zh-CN")}`
-              : `Completed on ${new Date(session.completedAt || "").toLocaleDateString()}`}
-          </p>
-        </div>
 
-        {/* Overall Feedback */}
-        <div className="bg-surface rounded-3xl p-8 border border-border mb-8">
-          <h2 className="font-display text-heading-xl font-semibold text-foreground mb-4">
-            {locale === "zh" ? "整体评价" : "Overall Assessment"}
-          </h2>
-          <p className="text-foreground-muted text-body-lg mb-8">
-            {session.overallFeedback}
-          </p>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+            {/* Title & Meta */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3 truncate">{session.title}</h1>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-foreground-muted">
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  {new Date(session.completedAt || "").toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {formatDuration(totalDuration)}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  {session.questions.length} {locale === "zh" ? "道题" : "questions"}
+                </span>
+              </div>
+            </div>
 
-          {/* Radar Chart */}
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <RadarChart scores={session.dimensionScores} />
-
-            {/* Dimension Scores */}
-            <div className="space-y-4">
-              <DimensionScore
-                label={locale === "zh" ? "技术能力" : "Technical"}
-                score={session.dimensionScores.technical}
-              />
-              <DimensionScore
-                label={locale === "zh" ? "项目经验" : "Project Experience"}
-                score={session.dimensionScores.project}
-              />
-              <DimensionScore
-                label={locale === "zh" ? "行为面试" : "Behavioral"}
-                score={session.dimensionScores.behavioral}
-              />
-              <DimensionScore
-                label={locale === "zh" ? "沟通表达" : "Communication"}
-                score={session.dimensionScores.communication}
-              />
+            {/* Score Card */}
+            <div className={`flex-shrink-0 px-6 py-4 rounded-2xl border ${getScoreBgColor(session.overallScore)}`}>
+              <div className="text-center">
+                <div className={`text-4xl font-bold mb-1 ${getScoreColor(session.overallScore)}`}>
+                  {session.overallScore}
+                </div>
+                <div className={`text-sm font-medium ${getScoreColor(session.overallScore)}`}>
+                  {getScoreLevel(session.overallScore, locale)}
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Strengths & Improvements */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-success/5 rounded-2xl p-6 border border-success/10">
-            <h3 className="font-display text-heading font-semibold text-success mb-4">
-              {locale === "zh" ? "优势" : "Strengths"}
-            </h3>
-            <ul className="space-y-2">
-              {session.strengths.map((strength, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-foreground">
-                  <svg
-                    className="w-5 h-5 text-success flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  {strength}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="bg-warning/5 rounded-2xl p-6 border border-warning/10">
-            <h3 className="font-display text-heading font-semibold text-warning mb-4">
-              {locale === "zh" ? "改进建议" : "Areas to Improve"}
-            </h3>
-            <ul className="space-y-2">
-              {session.improvements.map((improvement, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-foreground">
-                  <svg
-                    className="w-5 h-5 text-warning flex-shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                  {improvement}
-                </li>
-              ))}
-            </ul>
+      {/* AI Status Banner */}
+      {isGeneratingAIReport && (
+        <div className="bg-accent/5 border-b border-accent/10">
+          <div className="max-w-4xl mx-auto px-6 py-3">
+            <div className="flex items-center gap-3 text-sm text-accent">
+              <div className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+              <span>{locale === "zh" ? "AI 正在生成深度分析报告..." : "AI is generating analysis..."}</span>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Next Steps */}
-        <div className="bg-accent/5 rounded-2xl p-6 border border-accent/10 mb-8">
-          <h3 className="font-display text-heading font-semibold text-accent mb-4">
-            {locale === "zh" ? "后续建议" : "Next Steps"}
-          </h3>
-          <ul className="space-y-2">
-            {session.nextSteps.map((step, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-foreground">
-                <span className="text-accent">{idx + 1}.</span>
-                {step}
+      {/* 评估进度 Banner */}
+      {evaluationStatus && (evaluationStatus.pending > 0 || evaluationStatus.processing > 0) && (
+        <div className="bg-blue-50 border-b border-blue-100">
+          <div className="max-w-4xl mx-auto px-6 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-sm text-blue-700">
+                <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                <span>
+                  {locale === "zh"
+                    ? `AI 正在分析答案... (${evaluationStatus.completed}/${evaluationStatus.total})`
+                    : `AI analyzing answers... (${evaluationStatus.completed}/${evaluationStatus.total})`}
+                </span>
+              </div>
+              <div className="w-32 h-2 bg-blue-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 transition-all duration-300"
+                  style={{ width: `${(evaluationStatus.completed / evaluationStatus.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 评估失败 Banner */}
+      {evaluationStatus && evaluationStatus.failed > 0 && evaluationStatus.pending === 0 && evaluationStatus.processing === 0 && (
+        <div className="bg-rose-50 border-b border-rose-100">
+          <div className="max-w-4xl mx-auto px-6 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-sm text-rose-700">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span>
+                  {locale === "zh"
+                    ? `${evaluationStatus.failed} 道题评估失败`
+                    : `${evaluationStatus.failed} answer(s) failed to evaluate`}
+                </span>
+              </div>
+              <button
+                onClick={retryFailedEvaluations}
+                disabled={isRetrying}
+                className="px-3 py-1 text-sm font-medium text-rose-700 bg-rose-100 hover:bg-rose-200 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isRetrying
+                  ? locale === "zh"
+                    ? "重试中..."
+                    : "Retrying..."
+                  : locale === "zh"
+                    ? "重试"
+                    : "Retry"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab Navigation */}
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-slate-100">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-all ${
+                activeTab === "overview"
+                  ? "text-accent border-accent"
+                  : "text-foreground-muted border-transparent hover:text-foreground"
+              }`}
+            >
+              {locale === "zh" ? "总览" : "Overview"}
+            </button>
+            <button
+              onClick={() => setActiveTab("details")}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-all ${
+                activeTab === "details"
+                  ? "text-accent border-accent"
+                  : "text-foreground-muted border-transparent hover:text-foreground"
+              }`}
+            >
+              {locale === "zh" ? "答题详情" : "Question Details"}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {activeTab === "overview" ? (
+          <OverviewTab session={session} locale={locale} />
+        ) : (
+          <DetailsTab
+            session={session}
+            locale={locale}
+            expandedQuestion={expandedQuestion}
+            setExpandedQuestion={setExpandedQuestion}
+          />
+        )}
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-12 pt-8 border-t border-slate-100">
+          <Link
+            href="/practice"
+            className="flex-1 py-3 px-6 bg-white border border-slate-200 text-foreground rounded-xl font-medium hover:bg-slate-50 transition-all text-center"
+          >
+            {locale === "zh" ? "继续练习" : "Continue Practice"}
+          </Link>
+          <Link
+            href="/history"
+            className="flex-1 py-3 px-6 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark transition-all text-center"
+          >
+            {locale === "zh" ? "返回记录" : "Back to History"}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Overview Tab Component
+function OverviewTab({ session, locale }: { session: InterviewSession; locale: string }) {
+  return (
+    <div className="space-y-8">
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard
+          label={locale === "zh" ? "技术能力" : "Technical"}
+          value={session.dimensionScores.technical}
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+              />
+            </svg>
+          }
+        />
+        <StatCard
+          label={locale === "zh" ? "项目经验" : "Project"}
+          value={session.dimensionScores.project}
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          }
+        />
+        <StatCard
+          label={locale === "zh" ? "行为面试" : "Behavioral"}
+          value={session.dimensionScores.behavioral}
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+          }
+        />
+        <StatCard
+          label={locale === "zh" ? "沟通表达" : "Communication"}
+          value={session.dimensionScores.communication}
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+          }
+        />
+      </div>
+
+      {/* Job Match - if available */}
+      {session.aiEvaluation?.jobMatch && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+          <div className="flex items-start gap-4">
+            <div
+              className={`flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center ${getScoreBgColor(session.aiEvaluation.jobMatch.score)}`}
+            >
+              <span className={`text-2xl font-bold ${getScoreColor(session.aiEvaluation.jobMatch.score)}`}>
+                {session.aiEvaluation.jobMatch.score}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground mb-1">
+                {locale === "zh" ? "岗位匹配度" : "Job Match Score"}
+              </h3>
+              <p className="text-sm text-foreground-muted leading-relaxed">{session.aiEvaluation.jobMatch.analysis}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overall Feedback */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">{locale === "zh" ? "整体评价" : "Overall Assessment"}</h2>
+        <p className="text-foreground-muted leading-relaxed">{session.overallFeedback}</p>
+      </div>
+
+      {/* Strengths & Improvements */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Strengths */}
+        <div className="bg-emerald-50/50 rounded-2xl border border-emerald-100 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-emerald-700">{locale === "zh" ? "表现亮点" : "Strengths"}</h3>
+          </div>
+          <ul className="space-y-3">
+            {session.strengths.map((strength, idx) => (
+              <li key={idx} className="flex items-start gap-3 text-sm text-foreground">
+                <span className="flex-shrink-0 w-5 h-5 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-medium">
+                  {idx + 1}
+                </span>
+                <span className="leading-relaxed">{strength}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Question Details */}
-        <div className="mb-12">
-          <h2 className="font-display text-heading-xl font-semibold text-foreground mb-6">
-            {locale === "zh" ? "答题详情" : "Question Details"}
-          </h2>
-          <div className="space-y-4">
-            {session.answers.map((answer, idx) => (
-              <QuestionDetailCard
-                key={answer.questionId}
-                index={idx}
-                answer={answer}
-                question={session.questions.find((q) => q.id === answer.questionId)}
-                isExpanded={expandedQuestion === answer.questionId}
-                onToggle={() =>
-                  setExpandedQuestion(
-                    expandedQuestion === answer.questionId ? null : answer.questionId
-                  )
-                }
-                locale={locale}
-              />
+        {/* Improvements */}
+        <div className="bg-amber-50/50 rounded-2xl border border-amber-100 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-amber-700">{locale === "zh" ? "提升空间" : "Areas to Improve"}</h3>
+          </div>
+          <ul className="space-y-3">
+            {session.improvements.map((improvement, idx) => (
+              <li key={idx} className="flex items-start gap-3 text-sm text-foreground">
+                <span className="flex-shrink-0 w-5 h-5 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-xs font-medium">
+                  {idx + 1}
+                </span>
+                <span className="leading-relaxed">{improvement}</span>
+              </li>
             ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Coach Summary */}
+      {session.aiEvaluation?.coachSummary && (
+        <div className="bg-gradient-to-r from-accent/5 to-accent/10 rounded-2xl border border-accent/10 p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0 w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
+              <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground mb-2">{locale === "zh" ? "教练寄语" : "Coach's Words"}</h3>
+              <p className="text-foreground-muted italic leading-relaxed">"{session.aiEvaluation.coachSummary}"</p>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link
-            href="/practice"
-            className="flex-1 py-4 bg-surface border border-border text-foreground rounded-full font-semibold hover:bg-accent/5 transition-all text-center"
-          >
-            {locale === "zh" ? "返回练习" : "Back to Practice"}
-          </Link>
-          <Link
-            href="/history"
-            className="flex-1 py-4 bg-accent text-white rounded-full font-semibold hover:bg-accent-dark transition-all text-center"
-          >
-            {locale === "zh" ? "查看历史" : "View History"}
-          </Link>
+      {/* Next Steps */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <h3 className="font-semibold text-foreground mb-4">{locale === "zh" ? "后续建议" : "Next Steps"}</h3>
+        <div className="space-y-3">
+          {session.nextSteps.map((step, idx) => (
+            <div key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl">
+              <span className="flex-shrink-0 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-xs font-medium">
+                {idx + 1}
+              </span>
+              <p className="text-sm text-foreground leading-relaxed">{step}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
 
-// 维度评分徽章组件
-function DimensionBadge({
+// Details Tab Component
+function DetailsTab({
+  session,
+  locale,
+  expandedQuestion,
+  setExpandedQuestion,
+}: {
+  session: InterviewSession;
+  locale: string;
+  expandedQuestion: string | null;
+  setExpandedQuestion: (id: string | null) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Progress bar */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+        <div className="flex items-center justify-between text-sm mb-2">
+          <span className="text-foreground-muted">{locale === "zh" ? "答题进度" : "Progress"}</span>
+          <span className="font-medium text-foreground">
+            {session.answers.length}/{session.questions.length}
+          </span>
+        </div>
+        <div className="flex gap-1">
+          {session.questions.map((q, idx) => {
+            const answer = session.answers.find((a) => a.questionId === q.id);
+            const score = answer?.score || 0;
+            return (
+              <div
+                key={q.id}
+                className={`flex-1 h-2 rounded-full ${
+                  score >= 80 ? "bg-emerald-400" : score >= 60 ? "bg-amber-400" : score > 0 ? "bg-rose-400" : "bg-slate-200"
+                }`}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Question Cards */}
+      {session.answers.map((answer, idx) => (
+        <QuestionCard
+          key={`${answer.questionId}-${idx}`}
+          index={idx}
+          answer={answer}
+          question={session.questions.find((q) => q.id === answer.questionId)}
+          isExpanded={expandedQuestion === `${answer.questionId}-${idx}`}
+          onToggle={() =>
+            setExpandedQuestion(expandedQuestion === `${answer.questionId}-${idx}` ? null : `${answer.questionId}-${idx}`)
+          }
+          locale={locale}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Stat Card Component
+function StatCard({
   label,
-  score,
-  tooltip,
+  value,
+  icon,
 }: {
   label: string;
-  score: number;
-  tooltip?: string;
+  value: number;
+  icon: React.ReactNode;
 }) {
-  const colorClass =
-    score >= 80
-      ? "bg-success/10 text-success border-success/20"
-      : score >= 60
-        ? "bg-warning/10 text-warning border-warning/20"
-        : "bg-error/10 text-error border-error/20";
-
   return (
-    <div
-      className={`px-3 py-2 rounded-xl border ${colorClass} text-center`}
-      title={tooltip}
-    >
-      <div className="font-display text-lg font-bold">{score}</div>
-      <div className="text-xs opacity-75">{label}</div>
-    </div>
-  );
-}
-
-function DimensionScore({ label, score }: { label: string; score: number }) {
-  return (
-    <div className="flex items-center gap-4">
-      <span className="text-sm text-foreground-muted w-20">{label}</span>
-      <div className="flex-1 h-2 bg-background rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full ${
-            score >= 80 ? "bg-success" : score >= 60 ? "bg-warning" : "bg-error"
-          }`}
-          style={{ width: `${score}%` }}
-        />
+    <div className="bg-white rounded-xl border border-slate-200 p-4">
+      <div className="flex items-center gap-2 text-foreground-muted mb-2">
+        {icon}
+        <span className="text-xs font-medium">{label}</span>
       </div>
-      <span className={`font-semibold w-12 text-right ${getScoreColor(score)}`}>
-        {score}
-      </span>
+      <div className="flex items-end gap-2">
+        <span className={`text-2xl font-bold ${getScoreColor(value)}`}>{value}</span>
+        <span className="text-xs text-foreground-muted mb-1">/100</span>
+      </div>
     </div>
   );
 }
 
-function QuestionDetailCard({
+// Question Card Component
+function QuestionCard({
   index,
   answer,
   question,
@@ -423,107 +698,107 @@ function QuestionDetailCard({
 }) {
   if (!question) return null;
 
+  const typeLabels: Record<string, string> = {
+    INTRO: locale === "zh" ? "自我介绍" : "Intro",
+    PROJECT: locale === "zh" ? "项目经历" : "Project",
+    TECHNICAL: locale === "zh" ? "技术问题" : "Technical",
+    BEHAVIORAL: locale === "zh" ? "行为面试" : "Behavioral",
+    HR: locale === "zh" ? "HR面试" : "HR",
+  };
+
   return (
-    <div className="bg-surface rounded-2xl border border-border overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="w-full p-5 flex items-center gap-4 hover:bg-accent/5 transition-colors"
-      >
-        <span className="flex-shrink-0 w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center text-sm font-medium text-accent">
-          {index + 1}
-        </span>
-        <div className="flex-1 text-left">
-          <p className="font-medium text-foreground line-clamp-1">{question.title}</p>
-        </div>
-        <span
-          className={`font-display text-heading font-bold ${getScoreColor(answer.score)}`}
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      {/* Header */}
+      <button onClick={onToggle} className="w-full p-4 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+        <div
+          className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-sm font-medium ${
+            answer.score >= 80
+              ? "bg-emerald-100 text-emerald-600"
+              : answer.score >= 60
+                ? "bg-amber-100 text-amber-600"
+                : "bg-rose-100 text-rose-500"
+          }`}
         >
           {answer.score}
-        </span>
+        </div>
+        <div className="flex-1 text-left min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs px-2 py-0.5 bg-slate-100 text-foreground-muted rounded-full">
+              {typeLabels[question.type] || question.type}
+            </span>
+            <span className="text-xs text-foreground-muted">Q{index + 1}</span>
+          </div>
+          <p className="font-medium text-foreground truncate">{question.title}</p>
+        </div>
         <svg
-          className={`w-5 h-5 text-foreground-muted transition-transform ${
-            isExpanded ? "rotate-180" : ""
-          }`}
+          className={`w-5 h-5 text-foreground-muted transition-transform ${isExpanded ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
+      {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-5 pb-5 border-t border-border">
+        <div className="px-4 pb-4 border-t border-slate-100">
           <div className="pt-4 space-y-4">
             {/* Your Answer */}
             <div>
-              <h4 className="text-sm font-medium text-foreground-muted mb-2">
+              <h4 className="text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
                 {locale === "zh" ? "你的回答" : "Your Answer"}
               </h4>
-              <div className="p-4 bg-background rounded-xl">
-                <p className="text-foreground whitespace-pre-wrap">{answer.answer}</p>
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{answer.answer}</p>
               </div>
             </div>
 
-            {/* 四维评分 - Phase 5 新增 */}
+            {/* Dimension Scores */}
             {answer.feedback.dimensions && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+              <div className="grid grid-cols-4 gap-2">
                 <DimensionBadge
                   label={locale === "zh" ? "内容" : "Content"}
                   score={answer.feedback.dimensions.content.score}
-                  tooltip={answer.feedback.dimensions.content.feedback}
                 />
                 <DimensionBadge
                   label={locale === "zh" ? "结构" : "Structure"}
                   score={answer.feedback.dimensions.structure.score}
-                  tooltip={answer.feedback.dimensions.structure.feedback}
                 />
                 <DimensionBadge
                   label={locale === "zh" ? "表达" : "Expression"}
                   score={answer.feedback.dimensions.expression.score}
-                  tooltip={answer.feedback.dimensions.expression.feedback}
                 />
                 <DimensionBadge
                   label={locale === "zh" ? "亮点" : "Highlights"}
                   score={answer.feedback.dimensions.highlights.score}
-                  tooltip={answer.feedback.dimensions.highlights.feedback}
                 />
               </div>
             )}
 
-            {/* Feedback */}
-            <div className="grid md:grid-cols-2 gap-4">
+            {/* Good & Improve */}
+            <div className="grid md:grid-cols-2 gap-3">
               {answer.feedback.good.length > 0 && (
-                <div className="p-3 bg-success/5 rounded-xl">
-                  <h5 className="text-sm font-medium text-success mb-2">
-                    {locale === "zh" ? "优点" : "Strengths"}
-                  </h5>
-                  <ul className="space-y-1">
+                <div className="p-3 bg-emerald-50 rounded-xl">
+                  <h5 className="text-xs font-medium text-emerald-700 mb-2">{locale === "zh" ? "优点" : "Strengths"}</h5>
+                  <ul className="space-y-1.5">
                     {answer.feedback.good.map((item, idx) => (
-                      <li key={idx} className="text-sm text-foreground flex items-start gap-2">
-                        <span className="text-success">✓</span>
-                        {item}
+                      <li key={idx} className="text-xs text-foreground flex items-start gap-2">
+                        <span className="text-emerald-500 mt-0.5">+</span>
+                        <span className="leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-
               {answer.feedback.improve.length > 0 && (
-                <div className="p-3 bg-warning/5 rounded-xl">
-                  <h5 className="text-sm font-medium text-warning mb-2">
-                    {locale === "zh" ? "改进" : "Improvements"}
-                  </h5>
-                  <ul className="space-y-1">
+                <div className="p-3 bg-amber-50 rounded-xl">
+                  <h5 className="text-xs font-medium text-amber-700 mb-2">{locale === "zh" ? "改进" : "Improvements"}</h5>
+                  <ul className="space-y-1.5">
                     {answer.feedback.improve.map((item, idx) => (
-                      <li key={idx} className="text-sm text-foreground flex items-start gap-2">
-                        <span className="text-warning">!</span>
-                        {item}
+                      <li key={idx} className="text-xs text-foreground flex items-start gap-2">
+                        <span className="text-amber-500 mt-0.5">!</span>
+                        <span className="leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -531,47 +806,21 @@ function QuestionDetailCard({
               )}
             </div>
 
-            {/* 优化版回答 - Phase 5 新增 */}
+            {/* Optimized Answer */}
             {answer.feedback.optimizedAnswer && (
-              <div className="p-3 bg-accent/5 rounded-xl">
-                <h5 className="text-sm font-medium text-accent mb-2">
-                  {locale === "zh" ? "优化版回答示例" : "Optimized Answer Example"}
+              <div className="p-3 bg-accent/5 rounded-xl border border-accent/10">
+                <h5 className="text-xs font-medium text-accent mb-2">
+                  {locale === "zh" ? "优化示例" : "Optimized Example"}
                 </h5>
-                <p className="text-sm text-foreground whitespace-pre-wrap">{answer.feedback.optimizedAnswer}</p>
+                <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+                  {answer.feedback.optimizedAnswer}
+                </p>
               </div>
             )}
 
-            {/* 改进行动清单 - Phase 5 新增 */}
-            {answer.feedback.improvements && answer.feedback.improvements.length > 0 && (
-              <div className="p-3 bg-background rounded-xl border border-border">
-                <h5 className="text-sm font-medium text-foreground mb-2">
-                  {locale === "zh" ? "改进行动清单" : "Action Items"}
-                </h5>
-                <ul className="space-y-2">
-                  {answer.feedback.improvements.map((imp, idx) => (
-                    <li key={idx} className="text-sm flex items-start gap-2">
-                      <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                        imp.priority === 'high' ? 'bg-error/10 text-error' :
-                        imp.priority === 'medium' ? 'bg-warning/10 text-warning' :
-                        'bg-success/10 text-success'
-                      }`}>
-                        {imp.priority === 'high' ? (locale === 'zh' ? '高' : 'High') :
-                         imp.priority === 'medium' ? (locale === 'zh' ? '中' : 'Med') :
-                         (locale === 'zh' ? '低' : 'Low')}
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-foreground">{imp.action}</p>
-                        <p className="text-foreground-muted text-xs">{imp.expectedGain}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Suggestion */}
-            <div className="p-3 bg-accent/5 rounded-xl">
-              <h5 className="text-sm font-medium text-accent mb-1">
+            {/* Coach Suggestion */}
+            <div className="p-3 bg-slate-50 rounded-xl">
+              <h5 className="text-xs font-medium text-foreground-muted mb-1">
                 {locale === "zh" ? "教练建议" : "Coach Suggestion"}
               </h5>
               <p className="text-sm text-foreground">{answer.feedback.suggestion}</p>
@@ -579,6 +828,24 @@ function QuestionDetailCard({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Dimension Badge Component
+function DimensionBadge({ label, score }: { label: string; score: number }) {
+  return (
+    <div
+      className={`px-3 py-2 rounded-lg text-center ${
+        score >= 80
+          ? "bg-emerald-50 border border-emerald-100"
+          : score >= 60
+            ? "bg-amber-50 border border-amber-100"
+            : "bg-rose-50 border border-rose-100"
+      }`}
+    >
+      <div className={`text-lg font-bold ${getScoreColor(score)}`}>{score}</div>
+      <div className="text-xs text-foreground-muted">{label}</div>
     </div>
   );
 }

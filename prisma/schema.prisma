@@ -127,42 +127,91 @@ model CustomQuestion {
 model InterviewSession {
   id          String   @id @default(cuid())
   userId      String
-  title       String // 面试标题
-  description String? // 岗位描述
-  status      InterviewStatus @default(IN_PROGRESS)
+  title       String   // 面试标题
+  jdText      String?  @db.Text // JD 原文
+  resumeText  String?  @db.Text // 简历原文
+
+  // 岗位信息
+  jobCompany  String?  // 公司名称
+  jobPosition String?  // 职位名称
+  jobLevel    String?  // 职级 junior/mid/senior
+
+  // 面试状态
+  status      InterviewStatus @default(PENDING)
+
+  // 题目快照 (JSON 数组)
+  questions   String?  @db.Text // JSON: InterviewQuestion[]
+
+  // 面试结果
+  overallScore     Int      @default(0)     // 总分 0-100
+  dimensionScores  String?  // JSON: { technical, behavioral, project, communication }
+  overallFeedback  String?  @db.Text        // 整体反馈
+  strengths        String?  @db.Text        // JSON: string[]
+  improvements     String?  @db.Text        // JSON: string[]
+  nextSteps        String?  @db.Text        // JSON: string[]
+
+  // AI 深度评价 (JSON)
+  aiEvaluation     String?  @db.Text        // JSON: AIOverallEvaluation
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  completedAt DateTime?
 
   user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   answers  InterviewAnswer[]
 
   @@index([userId])
   @@index([status])
+  @@index([createdAt])
 }
 
 enum InterviewStatus {
+  PENDING     // 待开始
   IN_PROGRESS // 进行中
   COMPLETED   // 已完成
   ABANDONED   // 已放弃
 }
 
+// 单题评估状态
+enum EvaluationStatus {
+  PENDING     // 等待评估
+  PROCESSING  // 评估中
+  COMPLETED   // 评估完成
+  FAILED      // 评估失败
+}
+
 // 面试答题记录
 model InterviewAnswer {
-  id        String  @id @default(cuid())
-  sessionId String
-  questionId String // 题目ID（可能是系统题或自定义题）
-  questionTitle String // 题目标题（快照）
-  answer    String? // 用户回答
-  score     Int?    // AI评分
-  feedback  String? // AI反馈
-  order     Int     // 答题顺序
-  duration  Int?    // 答题时长（秒）
-  createdAt DateTime @default(now())
+  id            String  @id @default(cuid())
+  sessionId     String
+  questionId    String  // 题目ID
+  questionTitle String  // 题目标题（快照）
+  questionType  String? // 题目类型
+  questionDifficulty String? // 题目难度
+  questionKeyPoints String? @db.Text // 考察点
+
+  answer        String? @db.Text // 用户回答
+  score         Int     @default(0) // AI评分
+  feedback      String? @db.Text // JSON: { good, improve, suggestion, dimensions, improvements, optimizedAnswer }
+
+  orderIndex    Int     // 答题顺序
+  duration      Int     @default(0) // 答题时长（秒）
+
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+
+  // AI 评估状态追踪
+  evaluationStatus      EvaluationStatus @default(PENDING)
+  evaluationError       String?          // 错误信息
+  evaluationRetries     Int              @default(0) // 重试次数
+  evaluationStartedAt   DateTime?        // 评估开始时间
+  evaluationCompletedAt DateTime?        // 评估完成时间
 
   session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
-  @@index([order])
+  @@index([orderIndex])
+  @@index([evaluationStatus])
 }
 
 // 啄木鸟反馈（Bug/建议）

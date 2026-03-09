@@ -6,55 +6,12 @@ import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { VoiceTextarea } from "@/components/voice-textarea";
 import {
-  getInterviewSession,
-  startInterview,
-  submitAnswer,
-  completeInterview,
+  getInterviewSessionAsync,
+  startInterviewAsync,
+  submitAnswerAsync,
+  completeInterviewAsync,
   InterviewSession,
 } from "@/lib/interview-store";
-
-// 真实 AI 评估答案
-async function evaluateAnswer(
-  question: { title: string; type: string; keyPoints: string; difficulty?: number; referenceAnswer?: string; framework?: string },
-  answer: string
-): Promise<{ score: number; good: string[]; improve: string[]; suggestion: string; dimensions?: any; improvements?: any[]; optimizedAnswer?: string }> {
-  try {
-    const response = await fetch("/api/interview/evaluate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question: {
-          title: question.title,
-          keyPoints: question.keyPoints,
-        },
-        answer,
-        metadata: {
-          type: question.type,
-          difficulty: question.difficulty || 2,
-          referenceAnswer: question.referenceAnswer,
-          framework: question.framework,
-        },
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "评估失败");
-    }
-
-    const data = await response.json();
-    return data.feedback;
-  } catch (error) {
-    console.error("AI evaluation failed:", error);
-    // 降级到简单评估
-    return {
-      score: 70,
-      good: ["回答已提交"],
-      improve: ["AI 评估暂时不可用，请稍后再试"],
-      suggestion: "建议按照 STAR 法则组织回答：情境、任务、行动、结果",
-    };
-  }
-}
 
 export default function InterviewPage() {
   const params = useParams();
@@ -67,34 +24,38 @@ export default function InterviewPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [voiceLanguage, setVoiceLanguage] = useState<"zh" | "en">("zh");
 
   // 加载面试会话
   useEffect(() => {
-    const loadedSession = getInterviewSession(interviewId);
-    if (!loadedSession) {
-      router.push("/practice");
-      return;
+    async function loadSession() {
+      const loadedSession = await getInterviewSessionAsync(interviewId);
+      if (!loadedSession) {
+        router.push("/practice");
+        return;
+      }
+
+      // 如果是pending状态，开始面试
+      if (loadedSession.status === "pending") {
+        await startInterviewAsync(interviewId);
+        loadedSession.status = "in_progress";
+      }
+
+      // 如果已完成，跳转到报告页
+      if (loadedSession.status === "completed") {
+        router.push(`/interview/${interviewId}/report`);
+        return;
+      }
+
+      setSession(loadedSession);
+      setCurrentQuestionIndex(loadedSession.answers.length);
+      setQuestionStartTime(Date.now());
     }
 
-    // 如果是pending状态，开始面试
-    if (loadedSession.status === "pending") {
-      startInterview(interviewId);
-      loadedSession.status = "in_progress";
-    }
-
-    // 如果已完成，跳转到报告页
-    if (loadedSession.status === "completed") {
-      router.push(`/interview/${interviewId}/report`);
-      return;
-    }
-
-    setSession(loadedSession);
-    setCurrentQuestionIndex(loadedSession.answers.length);
-    setQuestionStartTime(Date.now());
+    loadSession();
   }, [interviewId, router]);
 
   // 自动调整textarea高度
@@ -105,7 +66,24 @@ export default function InterviewPage() {
     }
   }, [answer]);
 
-  // 提交当前答案并进入下一题
+  // 后台异步评估答案 - 使用新的评估队列系统
+  const evaluateInBackground = useCallback(async (answerId?: string) => {
+    try {
+      // 调用评估处理 API
+      await fetch("/api/interview/process-evaluations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: interviewId,
+          answerId, // 如果指定了 answerId，只处理单个答案
+        }),
+      });
+    } catch (error) {
+      console.error("Background evaluation failed:", error);
+    }
+  }, [interviewId]);
+
+  // 提交当前答案并进入下一题（异步优化版）
   const handleSubmit = async () => {
     if (!answer.trim() || !session) return;
 
@@ -113,62 +91,70 @@ export default function InterviewPage() {
     if (!currentQuestion) return;
 
     setIsSubmitting(true);
-    setIsEvaluating(true);
-
-    // 评估答案
-    // 转换难度为数字
-    const difficultyMap: Record<string, number> = { easy: 1, medium: 2, hard: 3 };
-    const questionWithMeta = {
-      ...currentQuestion,
-      difficulty: difficultyMap[currentQuestion.difficulty] || 2,
-    };
-
-    const feedback = await evaluateAnswer(questionWithMeta, answer);
 
     // 计算用时
     const duration = Math.floor((Date.now() - questionStartTime) / 1000);
 
-    // 提交答案（包含完整维度数据供报告使用）
+    // 先提交答案（使用默认分数，不等待AI评估）
     const interviewAnswer = {
       questionId: currentQuestion.id,
       answer,
-      score: feedback.score,
+      score: 70, // 默认分数，等待AI评估后更新
       feedback: {
-        good: feedback.good,
-        improve: feedback.improve,
-        suggestion: feedback.suggestion,
-        // 保存完整维度数据供报告使用
-        dimensions: feedback.dimensions,
-        improvements: feedback.improvements,
-        optimizedAnswer: feedback.optimizedAnswer,
+        good: ["回答已提交，AI正在分析中..."],
+        improve: ["请稍后在报告中查看详细反馈"],
+        suggestion: "正在生成个性化建议...",
       },
       duration,
       startedAt: new Date(questionStartTime).toISOString(),
       completedAt: new Date().toISOString(),
     };
 
-    submitAnswer(interviewId, interviewAnswer);
+    await submitAnswerAsync(interviewId, interviewAnswer);
 
-    setIsEvaluating(false);
-    setIsSubmitting(false);
-
-    // 检查是否还有下一题
+    // 立即进入下一题（不等待AI评估）
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < session.questions.length) {
-      // 进入下一题
       setCurrentQuestionIndex(nextIndex);
       setAnswer("");
       setQuestionStartTime(Date.now());
+      setIsSubmitting(false);
+
+      // 后台异步触发 AI 评估（使用评估队列系统）
+      evaluateInBackground();
     } else {
-      // 完成面试
-      completeInterview(interviewId);
-      router.push(`/interview/${interviewId}/report`);
+      // 完成面试 - 标记为正在完成，防止重复点击
+      setIsCompleting(true);
+
+      try {
+        // 先触发后台评估（不等待完成）
+        evaluateInBackground();
+
+        // 完成面试并跳转到报告页
+        const completed = await completeInterviewAsync(interviewId);
+
+        if (completed) {
+          // 使用 replace 而不是 push，防止用户返回到面试页面
+          router.replace(`/interview/${interviewId}/report`);
+        } else {
+          // 完成失败，允许用户重试
+          setIsCompleting(false);
+          alert(locale === "zh" ? "完成面试失败，请重试" : "Failed to complete interview, please retry");
+        }
+      } catch (error) {
+        console.error("Complete interview error:", error);
+        setIsCompleting(false);
+        alert(locale === "zh" ? "完成面试失败，请重试" : "Failed to complete interview, please retry");
+      }
     }
   };
 
   // 跳过当前题目
-  const handleSkip = () => {
-    if (!session) return;
+  const handleSkip = async () => {
+    if (!session || isSubmitting) return;
+
+    // 防止重复提交
+    setIsSubmitting(true);
 
     const currentQuestion = session.questions[currentQuestionIndex];
     const duration = Math.floor((Date.now() - questionStartTime) / 1000);
@@ -187,16 +173,32 @@ export default function InterviewPage() {
       completedAt: new Date().toISOString(),
     };
 
-    submitAnswer(interviewId, interviewAnswer);
+    await submitAnswerAsync(interviewId, interviewAnswer);
 
     const nextIndex = currentQuestionIndex + 1;
     if (nextIndex < session.questions.length) {
       setCurrentQuestionIndex(nextIndex);
       setAnswer("");
       setQuestionStartTime(Date.now());
+      setIsSubmitting(false);
     } else {
-      completeInterview(interviewId);
-      router.push(`/interview/${interviewId}/report`);
+      // 立即完成面试并跳转
+      setIsCompleting(true);
+
+      try {
+        const completed = await completeInterviewAsync(interviewId);
+
+        if (completed) {
+          router.replace(`/interview/${interviewId}/report`);
+        } else {
+          setIsCompleting(false);
+          alert(locale === "zh" ? "完成面试失败，请重试" : "Failed to complete interview, please retry");
+        }
+      } catch (error) {
+        console.error("Complete interview error:", error);
+        setIsCompleting(false);
+        alert(locale === "zh" ? "完成面试失败，请重试" : "Failed to complete interview, please retry");
+      }
     }
   };
 
@@ -304,42 +306,35 @@ export default function InterviewPage() {
                 </span>
               </span>
             }
-            disabled={isSubmitting}
+            disabled={isSubmitting || isCompleting}
             language={voiceLanguage}
             onLanguageChange={setVoiceLanguage}
             footer={
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleSkip}
-                  disabled={isSubmitting}
-                  className="px-6 py-3 text-foreground-muted hover:text-foreground transition-colors"
+                  disabled={isSubmitting || isCompleting}
+                  className="px-6 py-3 text-foreground-muted hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {locale === "zh" ? "跳过" : "Skip"}
+                  {isSubmitting || isCompleting
+                    ? (locale === "zh" ? "处理中..." : "Processing...")
+                    : (locale === "zh" ? "跳过" : "Skip")
+                  }
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={!answer.trim() || isSubmitting}
+                  disabled={!answer.trim() || isSubmitting || isCompleting}
                   className="px-8 py-3 bg-accent text-white rounded-full font-medium hover:bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
                 >
-                  {isSubmitting ? (
+                  {isSubmitting || isCompleting ? (
                     <>
-                      {isEvaluating ? (
-                        <>
-                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          {locale === "zh" ? "评估中..." : "Evaluating..."}
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          {locale === "zh" ? "提交中..." : "Submitting..."}
-                        </>
-                      )}
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      {isCompleting
+                        ? (locale === "zh" ? "完成中..." : "Completing...")
+                        : (locale === "zh" ? "提交中..." : "Submitting...")}
                     </>
                   ) : (
                     <>

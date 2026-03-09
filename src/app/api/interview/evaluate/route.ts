@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateFeedback, QuestionMetadata } from "@/lib/ai";
 
-// 面试答案评估 API
+// 面试答案评估 API - 使用深度评估模式
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       framework: metadata?.framework,
     };
 
-    // 调用 AI 生成反馈
+    // 调用 AI 生成深度反馈
     const feedback = await generateFeedback(
       question.title,
       question.keyPoints || "",

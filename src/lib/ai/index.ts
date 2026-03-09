@@ -1,8 +1,10 @@
 import { AIProvider, InterviewFeedback, AIError } from "./types";
 import { DeepSeekProvider } from "./deepseek";
 import { OpenAICompatibleProvider } from "./openai-compatible";
+import { FAST_EVAL_SYSTEM_PROMPT, FAST_EVAL_USER_PROMPT } from "./prompts";
 
 export * from "./types";
+export { FAST_EVAL_SYSTEM_PROMPT, FAST_EVAL_USER_PROMPT } from "./prompts";
 
 // 获取 AI 提供商
 export function getAIProvider(provider?: string): AIProvider {
@@ -177,6 +179,114 @@ export interface QuestionMetadata {
   referenceAnswer?: string;
   commonMistakes?: string;
   framework?: string;
+}
+
+// 快速生成面试点评（用于模拟面试场景，5-10秒响应）
+export async function generateQuickFeedback(
+  question: string,
+  keyPoints: string,
+  userAnswer: string,
+  metadata?: QuestionMetadata,
+  provider?: string
+): Promise<InterviewFeedback> {
+  const ai = getAIProvider(provider);
+
+  // 构建精简 prompt
+  const prompt = FAST_EVAL_USER_PROMPT
+    .replace("{question}", question)
+    .replace("{keyPoints}", keyPoints)
+    .replace("{userAnswer}", userAnswer);
+
+  const result = await ai.complete({
+    messages: [
+      { role: "system", content: FAST_EVAL_SYSTEM_PROMPT },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.7,
+    maxTokens: 800, // 从3000降至800，大幅减少响应时间
+  });
+
+  // 解析 JSON 响应
+  try {
+    let jsonStr = result.content;
+    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1];
+    }
+
+    const parsed = JSON.parse(jsonStr.trim());
+
+    // 构建标准反馈格式（简化版）
+    const feedback: InterviewFeedback = {
+      totalScore: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
+      dimensions: {
+        content: {
+          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.content?.score) || 60)),
+          feedback: parsed.dimensions?.content?.feedback || "内容评估",
+          missing: [],
+        },
+        structure: {
+          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.structure?.score) || 60)),
+          feedback: parsed.dimensions?.structure?.feedback || "结构评估",
+          issues: [],
+        },
+        expression: {
+          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.expression?.score) || 60)),
+          feedback: parsed.dimensions?.expression?.feedback || "表达评估",
+          suggestions: [],
+        },
+        highlights: {
+          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.highlights?.score) || 60)),
+          feedback: parsed.dimensions?.highlights?.feedback || "亮点评估",
+          strongPoints: Array.isArray(parsed.good) ? parsed.good : [],
+        },
+      },
+      gapAnalysis: {
+        missing: [],
+        insufficient: [],
+        good: [],
+        excellent: [],
+      },
+      improvements: Array.isArray(parsed.improve)
+        ? parsed.improve.map((item: string) => ({
+            priority: "medium" as const,
+            action: item,
+            expectedGain: "提升回答质量",
+          }))
+        : [],
+      optimizedAnswer: "",
+      coachMessage: parsed.suggestion || "继续加油！",
+      // 兼容旧版字段
+      score: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
+      good: Array.isArray(parsed.good) ? parsed.good : ["已完成回答"],
+      improve: Array.isArray(parsed.improve) ? parsed.improve : ["请继续努力"],
+      suggestion: parsed.suggestion || "请根据建议改进",
+      starAnswer: "",
+    };
+
+    return feedback;
+  } catch (error) {
+    console.error("Failed to parse AI quick feedback:", error, result.content);
+    // 返回默认反馈
+    return {
+      totalScore: 60,
+      dimensions: {
+        content: { score: 60, feedback: "AI解析出错", missing: [] },
+        structure: { score: 60, feedback: "AI解析出错", issues: [] },
+        expression: { score: 60, feedback: "AI解析出错", suggestions: [] },
+        highlights: { score: 60, feedback: "AI解析出错", strongPoints: [] },
+      },
+      gapAnalysis: { missing: [], insufficient: [], good: [], excellent: [] },
+      improvements: [],
+      optimizedAnswer: "",
+      coachMessage: "AI解析出错，请重试",
+      // 兼容旧版
+      score: 60,
+      good: ["已收到你的回答"],
+      improve: ["AI 解析出错，请重试"],
+      suggestion: "请重新提交回答",
+    };
+  }
 }
 
 // 生成面试点评（新版 - 面试教练级）
