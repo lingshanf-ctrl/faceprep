@@ -82,8 +82,9 @@ export const practicesApi = {
     score?: number;
     feedback?: string;
     duration?: number;
+    asyncEvaluate?: boolean;
   }) {
-    return fetchApi<{ practice: PracticeRecord }>("/practices", {
+    return fetchApi<{ practice: PracticeRecord; asyncEvaluate?: boolean }>("/practices", {
       method: "POST",
       body: JSON.stringify(data),
     });

@@ -1,12 +1,28 @@
 import { AIProvider, InterviewFeedback, AIError } from "./types";
 import { DeepSeekProvider } from "./deepseek";
 import { OpenAICompatibleProvider } from "./openai-compatible";
-import { FAST_EVAL_SYSTEM_PROMPT, FAST_EVAL_USER_PROMPT } from "./prompts";
+import {
+  FAST_EVAL_SYSTEM_PROMPT,
+  FAST_EVAL_USER_PROMPT,
+  BASIC_EVAL_SYSTEM_PROMPT,
+  BASIC_EVAL_USER_PROMPT,
+  ADVANCED_EVAL_SYSTEM_PROMPT,
+  ADVANCED_EVAL_USER_PROMPT,
+} from "./prompts";
+import { generateRuleBasedFeedback } from "../rule-engine-feedback";
 
 export * from "./types";
-export { FAST_EVAL_SYSTEM_PROMPT, FAST_EVAL_USER_PROMPT } from "./prompts";
+export {
+  FAST_EVAL_SYSTEM_PROMPT,
+  FAST_EVAL_USER_PROMPT,
+  BASIC_EVAL_SYSTEM_PROMPT,
+  BASIC_EVAL_USER_PROMPT,
+  ADVANCED_EVAL_SYSTEM_PROMPT,
+  ADVANCED_EVAL_USER_PROMPT,
+} from "./prompts";
 
 // 获取 AI 提供商
+// 获取 AI 提供商（按场景）
 export function getAIProvider(provider?: string): AIProvider {
   const selectedProvider = provider || process.env.AI_PROVIDER || "deepseek";
 
@@ -34,7 +50,7 @@ export function getAIProvider(provider?: string): AIProvider {
       return new OpenAICompatibleProvider({
         name: "kimi",
         apiKey: process.env.KIMI_API_KEY || "",
-        baseUrl: "https://api.moonshot.ai/v1",
+        baseUrl: "https://api.moonshot.cn/v1",
         model: "kimi-k2.5",
       });
 
@@ -44,6 +60,52 @@ export function getAIProvider(provider?: string): AIProvider {
         apiKey: process.env.KIMI_CODE_API_KEY || "",
         baseUrl: "https://api.kimi.com/coding/v1",
         model: "kimi-k2.5",
+      });
+
+    default:
+      return new DeepSeekProvider();
+  }
+}
+
+// 双模型配置
+const AI_CONFIG = {
+  // 基础分析（免费场景）- Qwen-turbo
+  basic: {
+    provider: "qwen" as const,
+    model: "qwen-turbo",
+    maxTokens: 1500,
+    temperature: 0.3,
+    timeout: 15000, // 15秒超时
+  },
+  // 深度分析（付费场景）- Kimi k2.5
+  advanced: {
+    provider: "kimi" as const,
+    model: "kimi-k2-turbo-preview",
+    maxTokens: 3000,
+    temperature: 0.5,
+    timeout: 45000, // 45秒超时
+  },
+};
+
+// 按场景获取提供商
+export function getProviderForScenario(scenario: "basic" | "advanced"): AIProvider {
+  const config = AI_CONFIG[scenario];
+
+  switch (config.provider) {
+    case "qwen":
+      return new OpenAICompatibleProvider({
+        name: "qwen-basic",
+        apiKey: process.env.QWEN_API_KEY || "",
+        baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        model: config.model,
+      });
+
+    case "kimi":
+      return new OpenAICompatibleProvider({
+        name: "kimi-advanced",
+        apiKey: process.env.KIMI_API_KEY || "",
+        baseUrl: "https://api.moonshot.cn/v1",
+        model: config.model,
       });
 
     default:
@@ -179,210 +241,181 @@ export interface QuestionMetadata {
   referenceAnswer?: string;
   commonMistakes?: string;
   framework?: string;
+  keyPoints?: string;
 }
 
-// 快速生成面试点评（用于模拟面试场景，5-10秒响应）
-export async function generateQuickFeedback(
-  question: string,
-  keyPoints: string,
-  userAnswer: string,
-  metadata?: QuestionMetadata,
-  provider?: string
-): Promise<InterviewFeedback> {
-  const ai = getAIProvider(provider);
-
-  // 构建精简 prompt
-  const prompt = FAST_EVAL_USER_PROMPT
-    .replace("{question}", question)
-    .replace("{keyPoints}", keyPoints)
-    .replace("{userAnswer}", userAnswer);
-
-  const result = await ai.complete({
-    messages: [
-      { role: "system", content: FAST_EVAL_SYSTEM_PROMPT },
-      { role: "user", content: prompt },
-    ],
-    temperature: 0.7,
-    maxTokens: 800, // 从3000降至800，大幅减少响应时间
-  });
-
-  // 解析 JSON 响应
-  try {
-    let jsonStr = result.content;
-    const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1];
-    }
-
-    const parsed = JSON.parse(jsonStr.trim());
-
-    // 构建标准反馈格式（简化版）
-    const feedback: InterviewFeedback = {
-      totalScore: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
-      dimensions: {
-        content: {
-          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.content?.score) || 60)),
-          feedback: parsed.dimensions?.content?.feedback || "内容评估",
-          missing: [],
-        },
-        structure: {
-          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.structure?.score) || 60)),
-          feedback: parsed.dimensions?.structure?.feedback || "结构评估",
-          issues: [],
-        },
-        expression: {
-          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.expression?.score) || 60)),
-          feedback: parsed.dimensions?.expression?.feedback || "表达评估",
-          suggestions: [],
-        },
-        highlights: {
-          score: Math.min(100, Math.max(0, Number(parsed.dimensions?.highlights?.score) || 60)),
-          feedback: parsed.dimensions?.highlights?.feedback || "亮点评估",
-          strongPoints: Array.isArray(parsed.good) ? parsed.good : [],
-        },
-      },
-      gapAnalysis: {
-        missing: [],
-        insufficient: [],
-        good: [],
-        excellent: [],
-      },
-      improvements: Array.isArray(parsed.improve)
-        ? parsed.improve.map((item: string) => ({
-            priority: "medium" as const,
-            action: item,
-            expectedGain: "提升回答质量",
-          }))
-        : [],
-      optimizedAnswer: "",
-      coachMessage: parsed.suggestion || "继续加油！",
-      // 兼容旧版字段
-      score: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
-      good: Array.isArray(parsed.good) ? parsed.good : ["已完成回答"],
-      improve: Array.isArray(parsed.improve) ? parsed.improve : ["请继续努力"],
-      suggestion: parsed.suggestion || "请根据建议改进",
-      starAnswer: "",
-    };
-
-    return feedback;
-  } catch (error) {
-    console.error("Failed to parse AI quick feedback:", error, result.content);
-    // 返回默认反馈
-    return {
-      totalScore: 60,
-      dimensions: {
-        content: { score: 60, feedback: "AI解析出错", missing: [] },
-        structure: { score: 60, feedback: "AI解析出错", issues: [] },
-        expression: { score: 60, feedback: "AI解析出错", suggestions: [] },
-        highlights: { score: 60, feedback: "AI解析出错", strongPoints: [] },
-      },
-      gapAnalysis: { missing: [], insufficient: [], good: [], excellent: [] },
-      improvements: [],
-      optimizedAnswer: "",
-      coachMessage: "AI解析出错，请重试",
-      // 兼容旧版
-      score: 60,
-      good: ["已收到你的回答"],
-      improve: ["AI 解析出错，请重试"],
-      suggestion: "请重新提交回答",
-    };
-  }
+// 评估选项
+export interface EvaluationOptions {
+  depth: "basic" | "advanced";
+  userType: "free" | "paid";
+  question?: string;
+  forceProvider?: "qwen" | "kimi"; // 强制指定提供商（用于降级场景）
 }
 
-// 生成面试点评（新版 - 面试教练级）
-export async function generateFeedback(
-  question: string,
-  keyPoints: string,
-  userAnswer: string,
-  metadata?: QuestionMetadata,
-  provider?: string
-): Promise<InterviewFeedback> {
-  const ai = getAIProvider(provider);
+// 构建基础分析 Prompt
+function buildBasicPrompt(answer: string, metadata: QuestionMetadata): string {
+  return BASIC_EVAL_USER_PROMPT
+    .replace("{question}", metadata.keyPoints || "面试题")
+    .replace("{type}", metadata?.type || "GENERAL")
+    .replace("{keyPoints}", metadata?.keyPoints || "无")
+    .replace("{userAnswer}", answer);
+}
 
-  // 构建完整的 prompt，传入所有元数据
-  const prompt = COACH_USER_PROMPT
-    .replace("{question}", question)
+// 构建深度分析 Prompt
+function buildAdvancedPrompt(answer: string, metadata: QuestionMetadata): string {
+  return ADVANCED_EVAL_USER_PROMPT
+    .replace("{question}", metadata.keyPoints || "面试题")
     .replace("{type}", metadata?.type || "GENERAL")
     .replace("{difficulty}", String(metadata?.difficulty || 2))
-    .replace("{keyPoints}", keyPoints)
+    .replace("{keyPoints}", metadata?.keyPoints || "无")
     .replace("{referenceAnswer}", metadata?.referenceAnswer || "请参考标准回答结构")
     .replace("{commonMistakes}", metadata?.commonMistakes || "无")
     .replace("{framework}", metadata?.framework || "使用STAR法则：情境-任务-行动-结果")
-    .replace("{userAnswer}", userAnswer);
+    .replace("{userAnswer}", answer);
+}
 
-  const result = await ai.complete({
+// 双模型反馈生成（核心函数）
+export async function generateFeedbackDualModel(
+  answer: string,
+  metadata: QuestionMetadata,
+  options: EvaluationOptions
+): Promise<InterviewFeedback> {
+  const { depth, userType, forceProvider } = options;
+
+  console.log(`[DualModel] Starting: depth=${depth}, userType=${userType}, forceProvider=${forceProvider || 'none'}`);
+
+  // 根据深度选择提供商和配置
+  let provider: AIProvider;
+  let config = AI_CONFIG[depth];
+
+  if (forceProvider) {
+    // 强制指定提供商（用于降级场景）
+    provider = getAIProvider(forceProvider);
+    console.log(`[DualModel] Using forced provider: ${forceProvider}`);
+  } else {
+    // 正常场景：根据 depth 选择
+    provider = getProviderForScenario(depth);
+  }
+
+  const actualProviderName = forceProvider || config.provider;
+  const actualModelName = forceProvider === 'qwen' ? 'qwen-turbo' : (forceProvider === 'kimi' ? 'kimi-k2.5' : config.model);
+  console.log(`[DualModel] Provider: ${actualProviderName}, Model: ${actualModelName}, Depth: ${depth}`);
+  console.log(`[DualModel] Timeout: ${config.timeout}ms, MaxTokens: ${config.maxTokens}`);
+
+  // 构建对应提示词
+  const prompt =
+    depth === "advanced"
+      ? buildAdvancedPrompt(answer, metadata)
+      : buildBasicPrompt(answer, metadata);
+
+  const systemPrompt =
+    depth === "advanced" ? ADVANCED_EVAL_SYSTEM_PROMPT : BASIC_EVAL_SYSTEM_PROMPT;
+
+  console.log(`[DualModel] Prompt length: ${prompt.length} chars, System prompt length: ${systemPrompt.length} chars`);
+  console.log(`[DualModel] Calling provider.complete...`);
+
+  const result = await provider.complete({
     messages: [
-      { role: "system", content: COACH_SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       { role: "user", content: prompt },
     ],
-    temperature: 0.7,
-    maxTokens: 3000, // 增加token以支持更详细的反馈
+    temperature: config.temperature,
+    maxTokens: config.maxTokens,
   });
+
+  console.log(`[DualModel] Provider response received. Content length: ${result.content.length} chars`);
 
   // 解析 JSON 响应
   try {
-    // 尝试提取 JSON（处理可能的 markdown 代码块）
+    console.log(`[DualModel] Parsing response...`);
     let jsonStr = result.content;
     const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
       jsonStr = jsonMatch[1];
+      console.log(`[DualModel] Extracted JSON from markdown code block`);
     }
 
     const parsed = JSON.parse(jsonStr.trim());
+    console.log(`[DualModel] JSON parsed successfully. totalScore: ${parsed.totalScore}`);
 
-    // 构建标准反馈格式
+    // 根据深度构建不同格式的反馈
+    const isAdvanced = depth === "advanced";
+    console.log(`[DualModel] isAdvanced: ${isAdvanced}, building feedback structure...`);
+
     const feedback: InterviewFeedback = {
       totalScore: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
       dimensions: {
         content: {
           score: Math.min(100, Math.max(0, Number(parsed.dimensions?.content?.score) || 60)),
           feedback: parsed.dimensions?.content?.feedback || "内容评估",
-          missing: Array.isArray(parsed.dimensions?.content?.missing)
-            ? parsed.dimensions.content.missing
-            : [],
+          missing: isAdvanced
+            ? (parsed.dimensions?.content?.missing || [])
+            : (parsed.keyFindings?.weaknesses || []),
         },
         structure: {
           score: Math.min(100, Math.max(0, Number(parsed.dimensions?.structure?.score) || 60)),
           feedback: parsed.dimensions?.structure?.feedback || "结构评估",
-          issues: Array.isArray(parsed.dimensions?.structure?.issues)
-            ? parsed.dimensions.structure.issues
-            : [],
+          issues: isAdvanced ? (parsed.dimensions?.structure?.issues || []) : [],
         },
         expression: {
           score: Math.min(100, Math.max(0, Number(parsed.dimensions?.expression?.score) || 60)),
           feedback: parsed.dimensions?.expression?.feedback || "表达评估",
-          suggestions: Array.isArray(parsed.dimensions?.expression?.suggestions)
-            ? parsed.dimensions.expression.suggestions
-            : [],
+          suggestions: isAdvanced
+            ? (parsed.dimensions?.expression?.suggestions || [])
+            : (parsed.keyFindings?.weaknesses || []),
         },
         highlights: {
           score: Math.min(100, Math.max(0, Number(parsed.dimensions?.highlights?.score) || 60)),
           feedback: parsed.dimensions?.highlights?.feedback || "亮点评估",
-          strongPoints: Array.isArray(parsed.dimensions?.highlights?.strongPoints)
-            ? parsed.dimensions.highlights.strongPoints
-            : [],
+          strongPoints: isAdvanced
+            ? (parsed.dimensions?.highlights?.strongPoints || [])
+            : (parsed.keyFindings?.strengths || []),
         },
       },
-      gapAnalysis: {
-        missing: Array.isArray(parsed.gapAnalysis?.missing) ? parsed.gapAnalysis.missing : [],
-        insufficient: Array.isArray(parsed.gapAnalysis?.insufficient)
-          ? parsed.gapAnalysis.insufficient
+      gapAnalysis: isAdvanced
+        ? {
+            missing: parsed.gapAnalysis?.missing || [],
+            insufficient: parsed.gapAnalysis?.insufficient || [],
+            good: parsed.gapAnalysis?.good || [],
+            excellent: parsed.gapAnalysis?.excellent || [],
+          }
+        : {
+            missing: [],
+            insufficient: [],
+            good: [],
+            excellent: [],
+          },
+      improvements: isAdvanced
+        ? (parsed.improvements || [])
+        : parsed.quickAdvice
+          ? [{ priority: "medium" as const, action: parsed.quickAdvice, expectedGain: "提升回答质量" }]
           : [],
-        good: Array.isArray(parsed.gapAnalysis?.good) ? parsed.gapAnalysis.good : [],
-        excellent: Array.isArray(parsed.gapAnalysis?.excellent) ? parsed.gapAnalysis.excellent : [],
-      },
-      improvements: Array.isArray(parsed.improvements) ? parsed.improvements : [],
-      optimizedAnswer: parsed.optimizedAnswer || "",
-      coachMessage: parsed.coachMessage || "继续加油！",
+      optimizedAnswer: isAdvanced ? (parsed.optimizedAnswer || "") : "",
+      coachMessage: isAdvanced
+        ? (parsed.coachMessage || parsed.suggestion || "继续加油！")
+        : (parsed.quickAdvice || "继续加油！"),
       // 兼容旧版字段
       score: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
-      good: parsed.dimensions?.highlights?.strongPoints || ["已完成回答"],
-      improve:
-        parsed.dimensions?.content?.missing?.concat(parsed.dimensions?.structure?.issues || []) ||
-        [],
-      suggestion: parsed.improvements?.[0]?.action || "请根据建议改进",
-      starAnswer: parsed.optimizedAnswer || "",
+      good: isAdvanced
+        ? (parsed.dimensions?.highlights?.strongPoints || ["已完成回答"])
+        : (parsed.keyFindings?.strengths || ["已完成回答"]),
+      improve: isAdvanced
+        ? (parsed.dimensions?.content?.missing?.concat(parsed.dimensions?.structure?.issues || []) ||
+          ["请继续努力"])
+        : (parsed.keyFindings?.weaknesses || ["请继续努力"]),
+      suggestion: isAdvanced
+        ? (parsed.improvements?.[0]?.action || parsed.suggestion || "请根据建议改进")
+        : (parsed.quickAdvice || "请根据建议改进"),
+      starAnswer: isAdvanced ? (parsed.optimizedAnswer || "") : "",
+      // 新增：记录使用的模型信息
+      evaluationModel: forceProvider || config.provider,
+      evaluationDepth: depth,
+      // 记录目标用户类型
+      targetUserType: options.userType,
     };
+
+    console.log(`[DualModel] Feedback built. evaluationModel: ${feedback.evaluationModel}, evaluationDepth: ${feedback.evaluationDepth}`);
+    console.log(`[DualModel] Dimensions: content=${feedback.dimensions.content.score}, structure=${feedback.dimensions.structure.score}, expression=${feedback.dimensions.expression.score}, highlights=${feedback.dimensions.highlights.score}`);
 
     return feedback;
   } catch (error) {
@@ -405,6 +438,10 @@ export async function generateFeedback(
       good: ["已收到你的回答"],
       improve: ["AI 解析出错，请重试"],
       suggestion: "请重新提交回答",
+      starAnswer: "",
+      evaluationModel: forceProvider || config.provider,
+      evaluationDepth: depth,
+      targetUserType: options.userType,
     };
   }
 }
@@ -462,4 +499,249 @@ export async function generateFeedbackWithError(
       retryable: true,
     };
   }
+}
+
+// 降级策略：将规则引擎反馈转换为 InterviewFeedback 格式
+function convertRuleEngineToFeedback(
+  ruleFeedback: import("../rule-engine-feedback").SimplifiedFeedback
+): InterviewFeedback {
+  return {
+    totalScore: ruleFeedback.basicScore,
+    dimensions: {
+      content: {
+        score: Math.round(ruleFeedback.basicScore * 0.4),
+        feedback: ruleFeedback.keyPointsCovered.join("、") || "内容评估",
+        missing: ruleFeedback.keyPointsMissed,
+      },
+      structure: {
+        score: Math.round(ruleFeedback.basicScore * 0.3),
+        feedback: ruleFeedback.structureHints.join("、") || "结构评估",
+        issues: ruleFeedback.structureHints,
+      },
+      expression: {
+        score: Math.round(ruleFeedback.basicScore * 0.3),
+        feedback: ruleFeedback.lengthMessage || "表达评估",
+        suggestions: ruleFeedback.generalTips,
+      },
+      highlights: {
+        score: 60,
+        feedback: "亮点评估",
+        strongPoints: ruleFeedback.keyPointsCovered.slice(0, 2),
+      },
+    },
+    gapAnalysis: {
+      missing: [],
+      insufficient: [],
+      good: [],
+      excellent: [],
+    },
+    improvements: ruleFeedback.improvementPriority?.map((item) => ({
+      priority: "medium" as const,
+      action: item,
+      expectedGain: "提升回答质量",
+    })) || [],
+    optimizedAnswer: "",
+    coachMessage: ruleFeedback.upgradePrompt,
+    // 兼容旧版字段
+    score: ruleFeedback.basicScore,
+    good: ruleFeedback.keyPointsCovered,
+    improve: ruleFeedback.keyPointsMissed,
+    suggestion: ruleFeedback.upgradePrompt,
+    starAnswer: "",
+    // 标记为规则引擎生成
+    evaluationModel: "rule-engine",
+    evaluationDepth: "basic",
+    targetUserType: "free",
+  };
+}
+
+// 双模型反馈生成（带降级策略）
+export async function generateFeedbackWithFallback(
+  answer: string,
+  metadata: QuestionMetadata,
+  options: EvaluationOptions
+): Promise<InterviewFeedback> {
+  const { depth, userType } = options;
+
+  console.log(`[Feedback] Starting generation: depth=${depth}, userType=${userType}`);
+  console.log(`[Feedback] AI Config: provider=${AI_CONFIG[depth].provider}, model=${AI_CONFIG[depth].model}`);
+  console.log(`[Feedback] Env check: KIMI_API_KEY=${process.env.KIMI_API_KEY ? 'set (length=' + process.env.KIMI_API_KEY.length + ')' : 'NOT SET'}, QWEN_API_KEY=${process.env.QWEN_API_KEY ? 'set' : 'NOT SET'}`);
+
+  try {
+    // 先尝试指定模型
+    console.log(`[Feedback] Attempting ${depth} model (${AI_CONFIG[depth].provider})`);
+    const result = await generateFeedbackDualModel(answer, metadata, options);
+    console.log(`[Feedback] ${depth} model succeeded. evaluationModel=${result.evaluationModel}, evaluationDepth=${result.evaluationDepth}`);
+    return result;
+  } catch (error) {
+    console.error(`[Feedback] AI model failed for ${depth}:`, error);
+    console.error(`[Feedback] Error details:`, error instanceof Error ? error.message : String(error));
+
+    if (depth === "advanced") {
+      // 深度模型失败，尝试用 qwen 运行 advanced 提示词
+      console.log("[Feedback] Kimi failed, trying advanced prompt with qwen...");
+      try {
+        const fallbackResult = await generateFeedbackDualModel(answer, metadata, {
+          depth: "advanced",
+          userType,
+          forceProvider: "qwen",
+        });
+        console.log(`[Feedback] Advanced+Qwen fallback succeeded. evaluationModel=${fallbackResult.evaluationModel}`);
+        return fallbackResult;
+      } catch (qwenError) {
+        console.error("[Feedback] Advanced+Qwen also failed:", qwenError);
+        // 最后降级到 basic
+        console.log("[Feedback] Falling back to basic model as last resort");
+        const basicResult = await generateFeedbackDualModel(answer, metadata, {
+          depth: "basic",
+          userType,
+        });
+        console.log(`[Feedback] Basic fallback completed. evaluationModel=${basicResult.evaluationModel}`);
+        return basicResult;
+      }
+    }
+
+    // 基础模型也失败，使用规则引擎
+    console.log("[Feedback] Falling back to rule engine");
+    const ruleFeedback = generateRuleBasedFeedback(answer, {
+      keyPoints: metadata.keyPoints,
+      type: metadata.type,
+    });
+
+    return convertRuleEngineToFeedback(ruleFeedback);
+  }
+}
+
+// 保持向后兼容的 generateFeedback 函数
+export async function generateFeedback(
+  question: string,
+  keyPoints: string,
+  userAnswer: string,
+  metadata?: QuestionMetadata,
+  provider?: string
+): Promise<InterviewFeedback> {
+  // 如果指定了 provider，使用旧模式
+  if (provider) {
+    const ai = getAIProvider(provider);
+
+    const prompt = COACH_USER_PROMPT
+      .replace("{question}", question)
+      .replace("{type}", metadata?.type || "GENERAL")
+      .replace("{difficulty}", String(metadata?.difficulty || 2))
+      .replace("{keyPoints}", keyPoints)
+      .replace("{referenceAnswer}", metadata?.referenceAnswer || "请参考标准回答结构")
+      .replace("{commonMistakes}", metadata?.commonMistakes || "无")
+      .replace("{framework}", metadata?.framework || "使用STAR法则：情境-任务-行动-结果")
+      .replace("{userAnswer}", userAnswer);
+
+    const result = await ai.complete({
+      messages: [
+        { role: "system", content: COACH_SYSTEM_PROMPT },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.7,
+      maxTokens: 3000,
+    });
+
+    // 解析 JSON 响应（复用原有逻辑）
+    try {
+      let jsonStr = result.content;
+      const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1];
+      }
+
+      const parsed = JSON.parse(jsonStr.trim());
+
+      return {
+        totalScore: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
+        dimensions: {
+          content: {
+            score: Math.min(100, Math.max(0, Number(parsed.dimensions?.content?.score) || 60)),
+            feedback: parsed.dimensions?.content?.feedback || "内容评估",
+            missing: Array.isArray(parsed.dimensions?.content?.missing)
+              ? parsed.dimensions.content.missing
+              : [],
+          },
+          structure: {
+            score: Math.min(100, Math.max(0, Number(parsed.dimensions?.structure?.score) || 60)),
+            feedback: parsed.dimensions?.structure?.feedback || "结构评估",
+            issues: Array.isArray(parsed.dimensions?.structure?.issues)
+              ? parsed.dimensions.structure.issues
+              : [],
+          },
+          expression: {
+            score: Math.min(100, Math.max(0, Number(parsed.dimensions?.expression?.score) || 60)),
+            feedback: parsed.dimensions?.expression?.feedback || "表达评估",
+            suggestions: Array.isArray(parsed.dimensions?.expression?.suggestions)
+              ? parsed.dimensions.expression.suggestions
+              : [],
+          },
+          highlights: {
+            score: Math.min(100, Math.max(0, Number(parsed.dimensions?.highlights?.score) || 60)),
+            feedback: parsed.dimensions?.highlights?.feedback || "亮点评估",
+            strongPoints: Array.isArray(parsed.dimensions?.highlights?.strongPoints)
+              ? parsed.dimensions.highlights.strongPoints
+              : [],
+          },
+        },
+        gapAnalysis: {
+          missing: Array.isArray(parsed.gapAnalysis?.missing) ? parsed.gapAnalysis.missing : [],
+          insufficient: Array.isArray(parsed.gapAnalysis?.insufficient)
+            ? parsed.gapAnalysis.insufficient
+            : [],
+          good: Array.isArray(parsed.gapAnalysis?.good) ? parsed.gapAnalysis.good : [],
+          excellent: Array.isArray(parsed.gapAnalysis?.excellent) ? parsed.gapAnalysis.excellent : [],
+        },
+        improvements: Array.isArray(parsed.improvements) ? parsed.improvements : [],
+        optimizedAnswer: parsed.optimizedAnswer || "",
+        coachMessage: parsed.coachMessage || "继续加油！",
+        score: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
+        good: parsed.dimensions?.highlights?.strongPoints || ["已完成回答"],
+        improve:
+          parsed.dimensions?.content?.missing?.concat(parsed.dimensions?.structure?.issues || []) ||
+          [],
+        suggestion: parsed.improvements?.[0]?.action || "请根据建议改进",
+        starAnswer: parsed.optimizedAnswer || "",
+      };
+    } catch (error) {
+      console.error("Failed to parse AI feedback:", error, result.content);
+      throw error;
+    }
+  }
+
+  // 新模式：使用双模型架构（默认深度分析）
+  return generateFeedbackWithFallback(
+    userAnswer,
+    {
+      ...metadata,
+      keyPoints: keyPoints,
+    },
+    {
+      depth: "advanced",
+      userType: "paid",
+    }
+  );
+}
+
+// 快速生成面试点评（保持向后兼容）
+export async function generateQuickFeedback(
+  question: string,
+  keyPoints: string,
+  userAnswer: string,
+  metadata?: QuestionMetadata,
+  provider?: string
+): Promise<InterviewFeedback> {
+  // 使用双模型的基础分析
+  return generateFeedbackWithFallback(
+    userAnswer,
+    {
+      ...metadata,
+      keyPoints: keyPoints,
+    },
+    {
+      depth: "basic",
+      userType: "free",
+    }
+  );
 }

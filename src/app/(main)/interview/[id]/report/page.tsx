@@ -11,6 +11,9 @@ import {
   fetchAIEvaluation,
   updateSessionWithAIEvaluationAsync,
 } from "@/lib/interview-store";
+import { LoadingState } from "@/components/ui/loading-state";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { BasicInterviewFeedback, PremiumInterviewFeedback } from "@/components/feedback";
 
 // 评估状态类型
 interface EvaluationStatus {
@@ -55,14 +58,162 @@ export default function InterviewReportPage() {
   const interviewId = params.id as string;
 
   const [session, setSession] = useState<InterviewSession | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "details">("overview");
-  const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [isGeneratingAIReport, setIsGeneratingAIReport] = useState(false);
 
   // 评估状态轮询
   const [evaluationStatus, setEvaluationStatus] = useState<EvaluationStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+
+  // 会员权限状态
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [isUnauthenticated, setIsUnauthenticated] = useState(false);
+  const [alreadyPaid, setAlreadyPaid] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [userType, setUserType] = useState<"free" | "credit_exhausted" | "monthly_expired">("free");
+  const [membershipInfo, setMembershipInfo] = useState<{
+    creditsRemaining: number | null;
+    monthlyExpiresAt: Date | null;
+  }>({ creditsRemaining: null, monthlyExpiresAt: null });
+
+  // 处理登录跳转
+  const handleLogin = () => {
+    const currentPath = window.location.pathname;
+    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+  };
+
+  // 仅检查权限，不消费（用于评估进行中的情况）
+  const checkAccessOnly = async (sessionId: string) => {
+    try {
+      const checkResponse = await fetch(`/api/membership/check-access?type=INTERVIEW_SESSION&id=${sessionId}`);
+      if (!checkResponse.ok) {
+        if (checkResponse.status === 401) {
+          setIsUnauthenticated(true);
+          setHasAccess(false);
+          setUserType("free");
+          return false;
+        }
+        setHasAccess(false);
+        setUserType("free");
+        return false;
+      }
+
+      setIsUnauthenticated(false);
+      const checkData = await checkResponse.json();
+      setMembershipInfo({
+        creditsRemaining: checkData.membershipStatus?.creditsRemaining ?? null,
+        monthlyExpiresAt: checkData.membershipStatus?.monthlyExpiresAt ?? null,
+      });
+
+      const monthlyExpired = checkData.membershipStatus?.monthlyExpiresAt &&
+        new Date(checkData.membershipStatus.monthlyExpiresAt) < new Date();
+      const creditsExhausted = checkData.membershipStatus?.creditsRemaining === 0;
+
+      if (monthlyExpired) {
+        setUserType("monthly_expired");
+      } else if (creditsExhausted) {
+        setUserType("credit_exhausted");
+      } else if (!checkData.membershipStatus?.hasMembership) {
+        setUserType("free");
+      }
+
+      const hasPermission = checkData.alreadyPaid || checkData.hasAccess;
+      setHasAccess(hasPermission);
+      return hasPermission;
+    } catch (error) {
+      console.error("Access check failed:", error);
+      setHasAccess(false);
+      setIsUnauthenticated(false);
+      setUserType("free");
+      return false;
+    }
+  };
+
+  // 检查权限并处理消费
+  const checkAccessAndConsume = async (sessionId: string, sessionTitle?: string) => {
+    try {
+      const checkResponse = await fetch(`/api/membership/check-access?type=INTERVIEW_SESSION&id=${sessionId}`);
+      if (!checkResponse.ok) {
+        // 401 表示未登录
+        if (checkResponse.status === 401) {
+          setIsUnauthenticated(true);
+          setHasAccess(false);
+          setUserType("free");
+          return false;
+        }
+        // 其他错误，默认显示简化反馈
+        setHasAccess(false);
+        setUserType("free");
+        return false;
+      }
+
+      // 已登录，重置未登录状态
+      setIsUnauthenticated(false);
+
+      const checkData = await checkResponse.json();
+      setMembershipInfo({
+        creditsRemaining: checkData.membershipStatus?.creditsRemaining ?? null,
+        monthlyExpiresAt: checkData.membershipStatus?.monthlyExpiresAt ?? null,
+      });
+
+      // 根据会员状态设置用户类型
+      const monthlyExpired = checkData.membershipStatus?.monthlyExpiresAt &&
+        new Date(checkData.membershipStatus.monthlyExpiresAt) < new Date();
+      const creditsExhausted = checkData.membershipStatus?.creditsRemaining === 0;
+
+      if (monthlyExpired) {
+        setUserType("monthly_expired");
+      } else if (creditsExhausted) {
+        setUserType("credit_exhausted");
+      } else if (!checkData.membershipStatus?.hasMembership) {
+        setUserType("free");
+      }
+
+      if (checkData.alreadyPaid) {
+        setAlreadyPaid(true);
+        setHasAccess(true);
+        return true;
+      }
+
+      if (checkData.hasAccess) {
+        const consumeResponse = await fetch("/api/membership/consume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceType: "INTERVIEW_SESSION",
+            sourceId: sessionId,
+            sourceTitle: sessionTitle,
+          }),
+        });
+
+        if (consumeResponse.ok) {
+          const consumeData = await consumeResponse.json();
+          if (consumeData.success) {
+            setHasAccess(true);
+            if (consumeData.creditsRemaining !== undefined) {
+              setMembershipInfo((prev) => ({
+                ...prev,
+                creditsRemaining: consumeData.creditsRemaining,
+              }));
+            }
+            // 触发全局事件，通知 Navbar 更新会员状态
+            window.dispatchEvent(new Event("membership:updated"));
+            return true;
+          }
+        }
+      }
+
+      setHasAccess(false);
+      return false;
+    } catch (error) {
+      console.error("Access check failed:", error);
+      // API 失败时降级显示简化反馈
+      setHasAccess(false);
+      setIsUnauthenticated(false); // 网络错误时不显示登录引导
+      setUserType("free");
+      return false;
+    }
+  };
 
   useEffect(() => {
     async function loadSession() {
@@ -79,8 +230,25 @@ export default function InterviewReportPage() {
 
       setSession(loadedSession);
 
-      // 如果没有 AI 评价，异步获取
-      if (!loadedSession.aiEvaluation && loadedSession.answers.length > 0) {
+      // Strategy A: 先获取评估状态，根据状态决定是否消费积分
+      const status = await fetchEvaluationStatus();
+      const hasPendingEvaluations = status && (status.pending > 0 || status.processing > 0);
+      const hasAIEvaluation = loadedSession.aiEvaluation ||
+        (status && status.completed === status.total && status.total > 0);
+
+      let accessGranted = false;
+
+      if (hasPendingEvaluations && !hasAIEvaluation) {
+        // 评估进行中：只检查权限，不消费积分
+        // 如果用户有权限，后续的 useEffect 会触发评估
+        accessGranted = await checkAccessOnly(interviewId);
+      } else {
+        // 评估已完成或有 AI 评价：检查权限并消费积分
+        accessGranted = await checkAccessAndConsume(interviewId, loadedSession.title);
+      }
+
+      // 如果有权限且没有 AI 评价，异步获取（仅当评估已完成时）
+      if (accessGranted && !loadedSession.aiEvaluation && loadedSession.answers.length > 0 && !hasPendingEvaluations) {
         setIsGeneratingAIReport(true);
         const aiEvaluation = await fetchAIEvaluation(loadedSession);
         if (aiEvaluation) {
@@ -158,12 +326,14 @@ export default function InterviewReportPage() {
 
     // 初始获取状态
     fetchEvaluationStatus().then((status) => {
-      if (status && (status.pending > 0 || status.processing > 0)) {
+      // Strategy A: 只有在用户有权限时才触发评估处理
+      if (status && (status.pending > 0 || status.processing > 0) && hasAccess === true) {
         setIsPolling(true);
         // 触发评估处理
         processEvaluations();
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id]);
 
   // 轮询检测评估进度
@@ -190,11 +360,12 @@ export default function InterviewReportPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-          <span className="text-foreground-muted">{locale === "zh" ? "加载中..." : "Loading..."}</span>
-        </div>
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <LoadingState
+          variant="spinner"
+          fullScreen
+          message={locale === "zh" ? "加载报告中..." : "Loading report..."}
+        />
       </div>
     );
   }
@@ -356,45 +527,28 @@ export default function InterviewReportPage() {
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm border-b border-slate-100">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="flex gap-1">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-all ${
-                activeTab === "overview"
-                  ? "text-accent border-accent"
-                  : "text-foreground-muted border-transparent hover:text-foreground"
-              }`}
-            >
-              {locale === "zh" ? "总览" : "Overview"}
-            </button>
-            <button
-              onClick={() => setActiveTab("details")}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-all ${
-                activeTab === "details"
-                  ? "text-accent border-accent"
-                  : "text-foreground-muted border-transparent hover:text-foreground"
-              }`}
-            >
-              {locale === "zh" ? "答题详情" : "Question Details"}
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {activeTab === "overview" ? (
-          <OverviewTab session={session} locale={locale} />
-        ) : (
-          <DetailsTab
+        {/* 双模型架构：免费用户显示基础版，付费用户显示专业版 */}
+        {hasAccess === false && session && (
+          <BasicInterviewFeedback
             session={session}
-            locale={locale}
-            expandedQuestion={expandedQuestion}
-            setExpandedQuestion={setExpandedQuestion}
+            isUnauthenticated={isUnauthenticated}
+            onLogin={handleLogin}
+            onUpgrade={() => setShowUpgradeModal(true)}
           />
+        )}
+
+        {hasAccess === true && session && (
+          <PremiumInterviewFeedback session={session} />
+        )}
+
+        {/* 权限检查中 */}
+        {hasAccess === null && (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+          </div>
         )}
 
         {/* Actions */}
@@ -413,6 +567,33 @@ export default function InterviewReportPage() {
           </Link>
         </div>
       </div>
+
+      {/* 升级弹窗 */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={async () => {
+          setShowUpgradeModal(false);
+          // 关闭弹窗后重新检查权限（用户可能已开通会员）
+          if (session) {
+            const accessGranted = await checkAccessAndConsume(interviewId, session.title);
+            if (accessGranted) {
+              // 如果用户现在有了权限，异步获取 AI 评价
+              if (!session.aiEvaluation && session.answers.length > 0) {
+                const aiEvaluation = await fetchAIEvaluation(session);
+                if (aiEvaluation) {
+                  const updated = await updateSessionWithAIEvaluationAsync(interviewId, aiEvaluation);
+                  if (updated) {
+                    setSession(updated);
+                  }
+                }
+              }
+            }
+          }
+        }}
+        userType={userType}
+        creditsRemaining={membershipInfo.creditsRemaining}
+        monthlyExpiresAt={membershipInfo.monthlyExpiresAt}
+      />
     </div>
   );
 }

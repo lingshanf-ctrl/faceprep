@@ -2,14 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 
+// 获取匿名ID
+function getAnonymousId(request: NextRequest): string | null {
+  return request.headers.get("X-Anonymous-Id");
+}
+
+// 获取用户ID（登录用户优先，否则使用匿名ID）
+async function getUserId(request: NextRequest): Promise<{ userId: string; isAnonymous: boolean }> {
+  const session = await getSession();
+  if (session?.id) {
+    return { userId: session.id, isAnonymous: false };
+  }
+  const anonymousId = getAnonymousId(request);
+  if (anonymousId) {
+    return { userId: anonymousId, isAnonymous: true };
+  }
+  return { userId: "", isAnonymous: true };
+}
+
 // 获取单个练习记录
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
-    if (!session?.id) {
+    const { userId, isAnonymous } = await getUserId(request);
+    if (!userId) {
       return NextResponse.json(
         { error: "请先登录", requireLogin: true },
         { status: 401 }
@@ -20,7 +38,27 @@ export async function GET(
 
     const practice = await db.practice.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        questionId: true,
+        answer: true,
+        score: true,
+        feedback: true,
+        duration: true,
+        createdAt: true,
+        // 题目快照
+        questionTitle: true,
+        questionCategory: true,
+        questionType: true,
+        questionDifficulty: true,
+        // AI 评估状态
+        evaluationStatus: true,
+        evaluationError: true,
+        evaluationRetries: true,
+        evaluationStartedAt: true,
+        evaluationCompletedAt: true,
+        // 关联题目
         question: {
           select: {
             id: true,
@@ -34,6 +72,7 @@ export async function GET(
     });
 
     if (!practice) {
+      console.log(`[Debug] Practice not found: ${id}`);
       return NextResponse.json(
         { error: "练习记录不存在" },
         { status: 404 }
@@ -41,7 +80,8 @@ export async function GET(
     }
 
     // 检查权限（只能查看自己的记录）
-    if (practice.userId !== session.id) {
+    if (practice.userId !== userId) {
+      console.log(`[Debug] Permission denied: practice.userId=${practice.userId}, request.userId=${userId}`);
       return NextResponse.json(
         { error: "无权访问此记录" },
         { status: 403 }
@@ -77,9 +117,21 @@ export async function GET(
       duration: practice.duration,
       createdAt: practice.createdAt.toISOString(),
       question: practice.question,
+      // AI 评估状态
+      evaluationStatus: practice.evaluationStatus,
+      evaluationError: practice.evaluationError,
+      evaluationRetries: practice.evaluationRetries,
+      evaluationStartedAt: practice.evaluationStartedAt?.toISOString(),
+      evaluationCompletedAt: practice.evaluationCompletedAt?.toISOString(),
     };
 
-    return NextResponse.json({ practice: mappedPractice });
+    // 匿名用户添加警告头
+    const headers = new Headers();
+    if (isAnonymous) {
+      headers.set("X-Anonymous-User", "true");
+    }
+
+    return NextResponse.json({ practice: mappedPractice }, { headers });
   } catch (error) {
     console.error("Failed to fetch practice:", error);
     return NextResponse.json(
@@ -95,8 +147,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
-    if (!session?.id) {
+    const { userId } = await getUserId(request);
+    if (!userId) {
       return NextResponse.json(
         { error: "请先登录", requireLogin: true },
         { status: 401 }
@@ -118,7 +170,7 @@ export async function DELETE(
       );
     }
 
-    if (practice.userId !== session.id) {
+    if (practice.userId !== userId) {
       return NextResponse.json(
         { error: "无权删除此记录" },
         { status: 403 }

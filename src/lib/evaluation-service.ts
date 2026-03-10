@@ -4,11 +4,57 @@
  */
 
 import { db } from "@/lib/db";
-import { generateFeedback, QuestionMetadata } from "@/lib/ai";
+import { generateFeedbackWithFallback, QuestionMetadata } from "@/lib/ai";
 
 // 评估配置
 const MAX_RETRIES = 3;
 const RETRY_DELAYS = [1000, 5000, 15000]; // 指数退避延迟（毫秒）
+
+/**
+ * 检查用户会员状态
+ */
+async function checkUserMembership(userId: string): Promise<"free" | "paid"> {
+  try {
+    // 查找用户有效的会员订单
+    const memberships = await db.membershipOrder.findMany({
+      where: {
+        userId,
+        status: "ACTIVE",
+        OR: [
+          // 月卡：在有效期内
+          {
+            type: "MONTHLY",
+            endDate: { gt: new Date() },
+          },
+          // 次卡：还有剩余次数
+          {
+            type: "CREDIT",
+            usedCredits: { lt: db.membershipOrder.fields.totalCredits },
+          },
+        ],
+      },
+    });
+
+    if (memberships.length === 0) return "free";
+
+    // 检查是否有月卡
+    const monthlyMembership = memberships.find(m => m.type === "MONTHLY" && m.endDate && m.endDate > new Date());
+    if (monthlyMembership) return "paid";
+
+    // 检查是否有次卡
+    const creditsMembership = memberships.find(m =>
+      m.type === "CREDIT" &&
+      m.totalCredits &&
+      m.usedCredits < m.totalCredits
+    );
+    if (creditsMembership) return "paid";
+
+    return "free";
+  } catch (error) {
+    console.error("[Membership Check] Error:", error);
+    return "free";
+  }
+}
 
 // 评估任务类型
 export interface EvaluationTask {
@@ -19,6 +65,7 @@ export interface EvaluationTask {
   questionKeyPoints: string;
   answer: string;
   metadata: QuestionMetadata;
+  userType?: "free" | "paid"; // 双模型架构：根据用户类型选择模型
 }
 
 // 评估结果类型
@@ -35,7 +82,7 @@ export interface EvaluationResult {
  * 执行单个答案的评估
  */
 export async function evaluateAnswer(task: EvaluationTask): Promise<EvaluationResult> {
-  const { answerId, questionTitle, questionKeyPoints, answer, metadata } = task;
+  const { answerId, questionTitle, questionKeyPoints, answer, metadata, userType: taskUserType } = task;
 
   try {
     // 更新状态为 PROCESSING
@@ -47,12 +94,34 @@ export async function evaluateAnswer(task: EvaluationTask): Promise<EvaluationRe
       },
     });
 
-    // 调用 AI 生成深度反馈
-    const feedback = await generateFeedback(
-      questionTitle,
-      questionKeyPoints || "",
+    // 如果没有提供 userType，尝试从 session 获取用户ID并检测会员状态
+    let userType = taskUserType;
+    if (!userType) {
+      // 获取 session 信息以确定用户ID
+      const session = await db.interviewSession.findUnique({
+        where: { id: task.sessionId },
+        select: { userId: true },
+      });
+      if (session?.userId) {
+        userType = await checkUserMembership(session.userId);
+      } else {
+        userType = "free";
+      }
+    }
+
+    // 根据用户类型选择模型深度
+    const depth = userType === "paid" ? "advanced" : "basic";
+
+    console.log(`[Evaluate] Answer ${answerId} using ${depth} model for ${userType} user`);
+
+    // 调用双模型反馈生成（带降级策略）
+    const feedback = await generateFeedbackWithFallback(
       answer,
-      metadata
+      {
+        ...metadata,
+        keyPoints: questionKeyPoints || "",
+      },
+      { depth, userType }
     );
 
     // 构建简化反馈格式
@@ -95,7 +164,12 @@ export async function evaluateAnswer(task: EvaluationTask): Promise<EvaluationRe
       where: { id: answerId },
       data: {
         score: feedback.totalScore,
-        feedback: JSON.stringify(simpleFeedback),
+        feedback: JSON.stringify({
+          ...simpleFeedback,
+          // 双模型信息
+          evaluationModel: feedback.evaluationModel,
+          evaluationDepth: feedback.evaluationDepth,
+        }),
         evaluationStatus: "COMPLETED",
         evaluationCompletedAt: new Date(),
         evaluationError: null,
@@ -197,8 +271,24 @@ export function getRetryDelay(retryCount: number): number {
  */
 export async function processPendingEvaluations(
   sessionId: string,
-  onProgress?: (completed: number, total: number) => void
+  options: { userType?: "free" | "paid"; onProgress?: (completed: number, total: number) => void } = {}
 ): Promise<{ completed: number; failed: number }> {
+  const { userType: taskUserType, onProgress } = options;
+
+  // 如果没有提供 userType，从 session 获取并检测会员状态
+  let userType = taskUserType;
+  if (!userType) {
+    const session = await db.interviewSession.findUnique({
+      where: { id: sessionId },
+      select: { userId: true },
+    });
+    if (session?.userId) {
+      userType = await checkUserMembership(session.userId);
+    } else {
+      userType = "free";
+    }
+  }
+
   // 获取所有待评估的答案
   const pendingAnswers = await db.interviewAnswer.findMany({
     where: {
@@ -226,7 +316,9 @@ export async function processPendingEvaluations(
       metadata: {
         type: answer.questionType || "GENERAL",
         difficulty: parseDifficulty(answer.questionDifficulty),
+        keyPoints: answer.questionKeyPoints || "",
       },
+      userType, // 双模型：传递用户类型
     };
 
     // 执行评估

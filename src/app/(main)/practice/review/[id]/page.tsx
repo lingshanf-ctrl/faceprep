@@ -8,6 +8,13 @@ import { getPracticeRecordById, PracticeRecord } from "@/lib/practice-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
+import { AIEvaluationProgress } from "@/components/ai-evaluation-progress";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { SimplifiedFeedbackView } from "@/components/simplified-feedback";
+import { generateRuleBasedFeedback, type SimplifiedFeedback } from "@/lib/rule-engine-feedback";
+import { BasicFeedbackView, PremiumFeedbackView } from "@/components/feedback";
 // import { Skeleton } from "@/components/ui/skeleton";
 
 const translations = {
@@ -737,6 +744,18 @@ function getScoreTextColor(score: number) {
   return "text-rose-600";
 }
 
+// 统一的有效反馈检查函数
+function hasValidFeedback(feedback: PracticeRecord['feedback'] | null | undefined): boolean {
+  if (!feedback) return false;
+  // 检查是否有分析中状态
+  const hasAnalyzingMessage = feedback.good?.some((g: string) =>
+    g.includes("AI正在分析中") || g.includes("分析中")
+  );
+  if (hasAnalyzingMessage) return false;
+  // 检查是否有有效反馈数据（基础版或专业版）
+  return !!(feedback.good?.length || feedback.dimensions || feedback.totalScore);
+}
+
 export default function PracticeReviewPage() {
   const params = useParams();
   const router = useRouter();
@@ -746,16 +765,253 @@ export default function PracticeReviewPage() {
   const [questionExists, setQuestionExists] = useState(true);
   const [showCompare, setShowCompare] = useState(false);
   const [progressHistory, setProgressHistory] = useState<Array<{ attempt: number; score: number; date: string }>>([]);
+  const [evaluationStatus, setEvaluationStatus] = useState<"PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  // 会员权限状态
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [isUnauthenticated, setIsUnauthenticated] = useState(false);
+  const [alreadyPaid, setAlreadyPaid] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [simplifiedFeedback, setSimplifiedFeedback] = useState<SimplifiedFeedback | null>(null);
+  const [userType, setUserType] = useState<"free" | "credit_exhausted" | "monthly_expired">("free");
+  const [membershipInfo, setMembershipInfo] = useState<{
+    creditsRemaining: number | null;
+    monthlyExpiresAt: Date | null;
+  }>({ creditsRemaining: null, monthlyExpiresAt: null });
 
   const t = translations[locale === "zh" ? "zh" : "en"];
   const recordId = params.id as string;
 
+  // 处理登录跳转
+  const handleLogin = () => {
+    const currentPath = window.location.pathname;
+    router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+  };
+
+  // 调试：监听 hasAccess 变化
+  useEffect(() => {
+    console.log("[Debug] hasAccess changed:", hasAccess, "record.feedback:", record?.feedback ? "exists" : "null");
+  }, [hasAccess, record?.feedback]);
+
+  // 加载评估状态
+  const loadEvaluationStatus = async () => {
+    try {
+      console.log("[Debug] Loading evaluation status for:", recordId);
+      const response = await fetch(`/api/practices/evaluation-status?practiceId=${recordId}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("[Debug] Evaluation status:", data.status, "progress:", data.progress);
+        setEvaluationStatus(data.status);
+
+        // 如果评估完成，刷新练习记录
+        if (data.status === "COMPLETED") {
+          const updatedRecord = await getPracticeRecordById(recordId);
+          if (updatedRecord) {
+            setRecord(updatedRecord);
+          }
+        }
+      } else {
+        const errorText = await response.text();
+        console.error("[Debug] Failed to load status:", response.status, errorText);
+      }
+    } catch (error) {
+      console.error("Failed to load evaluation status:", error);
+    }
+  };
+
+  // 仅检查权限，不消费（用于评估进行中的情况）
+  const checkAccessOnly = async (practiceId: string) => {
+    try {
+      const checkResponse = await fetch(`/api/membership/check-access?type=PRACTICE&id=${practiceId}`);
+      if (!checkResponse.ok) {
+        if (checkResponse.status === 401) {
+          setIsUnauthenticated(true);
+          setHasAccess(false);
+          setUserType("free");
+          return false;
+        }
+        setHasAccess(false);
+        setUserType("free");
+        return false;
+      }
+
+      setIsUnauthenticated(false);
+      const checkData = await checkResponse.json();
+      setMembershipInfo({
+        creditsRemaining: checkData.membershipStatus?.creditsRemaining ?? null,
+        monthlyExpiresAt: checkData.membershipStatus?.monthlyExpiresAt ?? null,
+      });
+
+      const monthlyExpired = checkData.membershipStatus?.monthlyExpiresAt &&
+        new Date(checkData.membershipStatus.monthlyExpiresAt) < new Date();
+      const creditsExhausted = checkData.membershipStatus?.creditsRemaining === 0;
+
+      if (monthlyExpired) {
+        setUserType("monthly_expired");
+      } else if (creditsExhausted) {
+        setUserType("credit_exhausted");
+      } else if (!checkData.membershipStatus?.hasMembership) {
+        setUserType("free");
+      }
+
+      // 已付费或有权限时设置为有访问权
+      const hasPermission = checkData.alreadyPaid || checkData.hasAccess;
+      if (checkData.alreadyPaid) {
+        setAlreadyPaid(true);
+      }
+      setHasAccess(hasPermission);
+      return hasPermission;
+    } catch (error) {
+      console.error("Access check failed:", error);
+      setHasAccess(false);
+      setIsUnauthenticated(false);
+      setUserType("free");
+      return false;
+    }
+  };
+
+  // 检查权限并处理消费
+  const checkAccessAndConsume = async (practiceId: string, questionTitle?: string, questionKeyPoints?: string, questionType?: string) => {
+    try {
+      // 检查访问权限
+      const checkResponse = await fetch(`/api/membership/check-access?type=PRACTICE&id=${practiceId}`);
+      if (!checkResponse.ok) {
+        // 401 表示未登录
+        if (checkResponse.status === 401) {
+          setIsUnauthenticated(true);
+          setHasAccess(false);
+          setUserType("free");
+          return false;
+        }
+        // 其他错误，默认显示简化反馈
+        setHasAccess(false);
+        setUserType("free");
+        return false;
+      }
+
+      // 已登录，重置未登录状态
+      setIsUnauthenticated(false);
+
+      const checkData = await checkResponse.json();
+      setMembershipInfo({
+        creditsRemaining: checkData.membershipStatus?.creditsRemaining ?? null,
+        monthlyExpiresAt: checkData.membershipStatus?.monthlyExpiresAt ?? null,
+      });
+
+      // 根据会员状态设置用户类型
+      const monthlyExpired = checkData.membershipStatus?.monthlyExpiresAt &&
+        new Date(checkData.membershipStatus.monthlyExpiresAt) < new Date();
+      const creditsExhausted = checkData.membershipStatus?.creditsRemaining === 0;
+
+      if (monthlyExpired) {
+        setUserType("monthly_expired");
+      } else if (creditsExhausted) {
+        setUserType("credit_exhausted");
+      } else if (!checkData.membershipStatus?.hasMembership) {
+        setUserType("free");
+      }
+
+      if (checkData.alreadyPaid) {
+        // 已付费，直接显示完整反馈
+        setAlreadyPaid(true);
+        setHasAccess(true);
+        return true;
+      }
+
+      if (checkData.hasAccess) {
+        // 有权限，消费一次
+        const consumeResponse = await fetch("/api/membership/consume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceType: "PRACTICE",
+            sourceId: practiceId,
+            sourceTitle: questionTitle,
+          }),
+        });
+
+        if (consumeResponse.ok) {
+          const consumeData = await consumeResponse.json();
+          if (consumeData.success) {
+            console.log("[Debug] Credit consumed successfully, hasAccess set to true");
+            setHasAccess(true);
+            if (consumeData.creditsRemaining !== undefined) {
+              setMembershipInfo((prev) => ({
+                ...prev,
+                creditsRemaining: consumeData.creditsRemaining,
+              }));
+            }
+            // 触发全局事件，通知 Navbar 更新会员状态
+            window.dispatchEvent(new Event("membership:updated"));
+            return true;
+          } else {
+            console.log("[Debug] Consume failed:", consumeData.error);
+          }
+        } else {
+          console.log("[Debug] Consume API error:", consumeResponse.status);
+        }
+      }
+
+      // 无权限
+      setHasAccess(false);
+      return false;
+    } catch (error) {
+      console.error("Access check failed:", error);
+      // API 失败时降级显示简化反馈，但不显示升级弹窗
+      setHasAccess(false);
+      setIsUnauthenticated(false); // 网络错误时不显示登录引导
+      setUserType("free");
+      return false;
+    }
+  };
+
+  // 重试失败的评估
+  const retryEvaluation = async () => {
+    setIsRetrying(true);
+    try {
+      const response = await fetch("/api/practices/evaluation-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ practiceId: recordId, retry: true }),
+      });
+
+      if (response.ok) {
+        // 重新加载评估状态
+        await loadEvaluationStatus();
+      } else {
+        console.error("Failed to retry evaluation:", await response.text());
+      }
+    } catch (error) {
+      console.error("重试评估失败:", error);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  // 初始加载
   useEffect(() => {
     async function loadRecord() {
       try {
         const data = await getPracticeRecordById(recordId);
+        console.log("[Debug] Loaded record:", data?.id, "status:", data?.evaluationStatus, "feedback:", data?.feedback);
         if (data) {
           setRecord(data);
+
+          // 检查评估状态 - 优先使用记录中的字段
+          if (data.evaluationStatus) {
+            setEvaluationStatus(data.evaluationStatus);
+            // 如果不是已完成状态，继续轮询
+            if (data.evaluationStatus !== "COMPLETED" && data.evaluationStatus !== "FAILED") {
+              await loadEvaluationStatus();
+            }
+          } else {
+            // 旧记录没有状态字段，通过 API 查询
+            console.log("[Debug] No evaluationStatus in record, querying API");
+            await loadEvaluationStatus();
+          }
+
           // 检查题目是否存在
           try {
             const response = await fetch(`/api/questions/${data.questionId}`);
@@ -782,6 +1038,36 @@ export default function PracticeReviewPage() {
           } catch (error) {
             console.error("Failed to load progress history:", error);
           }
+
+          // Strategy A: 区分评估状态来决定是否消费积分
+          const isEvaluationPending = data.evaluationStatus === "PENDING" || data.evaluationStatus === "PROCESSING";
+          const hasFeedback = hasValidFeedback(data.feedback);
+
+          let accessGranted = false;
+
+          if (isEvaluationPending && !hasFeedback) {
+            // 评估进行中：只检查权限，不消费积分
+            // 如果用户有权限，会显示 AIEvaluationProgress 触发评估
+            // 如果用户无权限，直接显示简化反馈，不触发 AI 评估
+            accessGranted = await checkAccessOnly(recordId);
+          } else {
+            // 评估已完成或有有效反馈：检查权限并消费积分
+            accessGranted = await checkAccessAndConsume(
+              recordId,
+              data.questionTitle,
+              undefined,
+              data.questionType
+            );
+          }
+
+          // 无权限时生成简化反馈
+          if (!accessGranted) {
+            const simplified = generateRuleBasedFeedback(data.answer || "", {
+              keyPoints: undefined,
+              type: data.questionType,
+            });
+            setSimplifiedFeedback(simplified);
+          }
         }
       } catch (error) {
         console.error("Failed to load record:", error);
@@ -791,20 +1077,13 @@ export default function PracticeReviewPage() {
     }
 
     loadRecord();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordId]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-6 py-12">
-          <div className="h-10 bg-surface rounded w-48 mb-4 animate-pulse" />
-          <div className="h-6 bg-surface rounded w-96 mb-8 animate-pulse" />
-          <div className="space-y-6">
-            <div className="h-32 bg-surface rounded w-full animate-pulse" />
-            <div className="h-48 bg-surface rounded w-full animate-pulse" />
-            <div className="h-64 bg-surface rounded w-full animate-pulse" />
-          </div>
-        </div>
+        <LoadingState variant="skeleton" fullScreen message={t.loading} />
       </div>
     );
   }
@@ -812,20 +1091,16 @@ export default function PracticeReviewPage() {
   if (!record) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-4xl mx-auto px-6 py-12">
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="font-display text-heading-xl font-semibold text-foreground mb-3">{t.notFound}</h2>
-            <Link href="/history">
-              <Button className="mt-4">
-                {t.backToHistory}
-              </Button>
-            </Link>
-          </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-12">
+          <EmptyState
+            icon="😕"
+            title={t.notFound}
+            description={t.questionDeleted}
+            action={{
+              label: t.backToHistory,
+              href: "/history"
+            }}
+          />
         </div>
       </div>
     );
@@ -833,7 +1108,7 @@ export default function PracticeReviewPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-12">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
@@ -859,39 +1134,107 @@ export default function PracticeReviewPage() {
           </p>
         </div>
 
-        {/* Score Card */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
+        {/* 判断是否应该显示评估进度：状态为 PENDING/PROCESSING 且没有有效反馈数据 且 用户有权限查看AI分析 */}
+        {(() => {
+          const hasFeedback = hasValidFeedback(record.feedback);
+
+          console.log("[Debug] Render check - evaluationStatus:", evaluationStatus, "hasValidFeedback:", hasFeedback, "hasAccess:", hasAccess, "feedback:", record.feedback);
+
+          // 双模型架构：所有用户都触发AI评估，根据用户类型选择不同模型
+          // 免费用户 → Qwen-turbo 基础分析
+          // 付费用户 → Kimi k2.5 深度分析
+          // 需要显示进度：状态未完成 且 没有有效反馈
+          const shouldShowProgress = (evaluationStatus === "PENDING" || evaluationStatus === "PROCESSING") &&
+            !hasFeedback;
+
+          return shouldShowProgress;
+        })() ? (
+          <AIEvaluationProgress
+            practiceId={recordId}
+            onCompleted={async () => {
+              setEvaluationStatus("COMPLETED");
+              // 刷新记录以获取最新结果
+              const updatedRecord = await getPracticeRecordById(recordId);
+              if (updatedRecord) {
+                setRecord(updatedRecord);
+                // AI 分析完成后检查权限
+                const accessGranted = await checkAccessAndConsume(
+                  recordId,
+                  updatedRecord.questionTitle,
+                  undefined,
+                  updatedRecord.questionType
+                );
+                // 付费用户：反馈数据应该已经在 updatedRecord 中
+                // 无需额外操作，setRecord(updatedRecord) 已经更新了状态
+                if (!accessGranted) {
+                  // 免费用户：生成简化反馈
+                  const simplified = generateRuleBasedFeedback(updatedRecord.answer || "", {
+                    keyPoints: undefined,
+                    type: updatedRecord.questionType,
+                  });
+                  setSimplifiedFeedback(simplified);
+                }
+              }
+            }}
+            onFailed={() => {
+              setEvaluationStatus("FAILED");
+            }}
+          />
+        ) : null}
+
+        {/* 评估失败 Banner */}
+        {evaluationStatus === "FAILED" && (
+          <div className="bg-rose-50 border border-rose-100 rounded-2xl p-6 mb-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-foreground-muted text-sm mb-1">{t.score}</p>
-                <div className="flex items-baseline gap-2">
-                  <span className={`font-display text-5xl font-bold ${getScoreTextColor(record.score)}`}>
-                    {record.score}
-                  </span>
-                  <span className="text-foreground-muted">/ 100</span>
+              <div className="flex items-center gap-3 text-sm text-rose-700">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div>
+                  <p className="font-medium">
+                    {locale === "zh" ? "AI 分析失败" : "AI Analysis Failed"}
+                  </p>
+                  <p className="text-xs text-rose-600 mt-1">
+                    {locale === "zh" ? "抱歉，AI 分析遇到了问题。您可以重试或稍后再试。" : "Sorry, AI analysis encountered an issue. You can retry or try again later."}
+                  </p>
                 </div>
               </div>
-              <div className={`w-20 h-20 rounded-full ${getScoreColor(record.score)} flex items-center justify-center text-white font-bold text-2xl`}>
-                {record.score >= 80 ? "A" : record.score >= 60 ? "B" : "C"}
-              </div>
+              <button
+                onClick={retryEvaluation}
+                disabled={isRetrying}
+                className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRetrying
+                  ? locale === "zh"
+                    ? "重试中..."
+                    : "Retrying..."
+                  : locale === "zh"
+                    ? "重试"
+                    : "Retry"}
+              </button>
             </div>
-            <div className="mt-4 w-full bg-border rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all duration-500 ${getScoreColor(record.score)}`}
-                style={{ width: `${record.score}%` }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
 
-        {/* Phase 3: Progress Curve - 进步曲线 */}
-        {progressHistory.length > 1 && (
+        {/* Phase 3: Progress Curve - 进步曲线 (有有效反馈或评估完成时显示) */}
+        {(() => {
+          const hasFeedback = hasValidFeedback(record.feedback);
+          return (hasFeedback || evaluationStatus === "COMPLETED") && progressHistory.length > 1;
+        })() && (
           <ProgressCurve history={progressHistory} locale={locale} />
         )}
 
-        {/* View Toggle */}
-        {(record.feedback?.optimizedAnswer || record.feedback?.starAnswer) && (
+        {/* View Toggle (有有效反馈或评估完成时显示) */}
+        {(() => {
+          const hasFeedback = hasValidFeedback(record.feedback);
+          return (hasFeedback || evaluationStatus === "COMPLETED") &&
+            (record.feedback?.optimizedAnswer || record.feedback?.starAnswer);
+        })() && (
           <div className="flex justify-end mb-4">
             <Button
               variant="outline"
@@ -918,20 +1261,29 @@ export default function PracticeReviewPage() {
           </div>
         )}
 
-        {/* Compare View or Normal View */}
-        {showCompare && (record.feedback?.optimizedAnswer || record.feedback?.starAnswer) ? (
+        {/* Compare View or Normal View (仅在评估完成后显示) */}
+        {(() => {
+          const hasFeedback = hasValidFeedback(record.feedback);
+          return (hasFeedback || evaluationStatus === "COMPLETED") && showCompare &&
+            (record.feedback?.optimizedAnswer || record.feedback?.starAnswer);
+        })() ? (
           <CompareView record={record} locale={locale} />
         ) : (
           <React.Fragment>
-            {/* Your Answer */}
+            {/* Your Answer (始终显示) - 带分数徽章 */}
             <Card className="mb-6">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg font-semibold flex items-center gap-2">
                   <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   {t.yourAnswer}
                 </CardTitle>
+                {/* 分数徽章 - 右上角 */}
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${getScoreColor(record.score)} bg-opacity-10`}>
+                  <span className="text-sm font-medium text-foreground-muted">得分</span>
+                  <span className={`font-bold ${getScoreTextColor(record.score)}`}>{record.score}</span>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="bg-surface rounded-xl p-4 whitespace-pre-wrap text-foreground leading-relaxed">
@@ -940,124 +1292,100 @@ export default function PracticeReviewPage() {
               </CardContent>
             </Card>
 
-            {/* AI Feedback */}
-            {record.feedback && (
-              <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                {t.feedback}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Good Points */}
-              {record.feedback.good && record.feedback.good.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-emerald-600 mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {t.goodPoints}
-                  </h4>
-                  <ul className="space-y-2">
-                    {record.feedback.good.map((point, index) => (
-                      <li key={index} className="flex items-start gap-2 text-foreground">
-                        <span className="text-emerald-500 mt-1">•</span>
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            {/* AI Feedback - 双模型架构：根据权限显示不同版本 */}
+            {/* 评估失败时根据权限显示不同降级方案 */}
+            {evaluationStatus === "FAILED" && (
+              <>
+                {hasAccess ? (
+                  /* 付费用户 - 即使失败也尝试显示专业版（可能有部分数据） */
+                  record.feedback ? (
+                    <PremiumFeedbackView feedback={record.feedback} />
+                  ) : (
+                    /* 付费用户但无反馈数据时显示错误提示 */
+                    <Card className="mb-6 border-amber-200 bg-amber-50">
+                      <CardContent className="pt-6">
+                        <p className="text-amber-700">
+                          {locale === "zh"
+                            ? "AI 分析遇到问题，但您的评分次数不会扣除。请重试或联系客服。"
+                            : "AI analysis encountered an issue, but your credit was not deducted. Please retry or contact support."}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )
+                ) : (
+                  /* 免费用户 - 显示简化反馈 */
+                  simplifiedFeedback && (
+                    <SimplifiedFeedbackView
+                      feedback={simplifiedFeedback}
+                      onUpgrade={() => setShowUpgradeModal(true)}
+                      isUnauthenticated={isUnauthenticated}
+                      onLogin={handleLogin}
+                    />
+                  )
+                )}
+              </>
+            )}
 
-              {/* Improvements */}
-              {record.feedback.improve && record.feedback.improve.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-amber-600 mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    {t.improvements}
-                  </h4>
-                  <ul className="space-y-2">
-                    {record.feedback.improve.map((point, index) => (
-                      <li key={index} className="flex items-start gap-2 text-foreground">
-                        <span className="text-amber-500 mt-1">•</span>
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Suggestion */}
-              {record.feedback.suggestion && (
-                <div className="bg-accent/5 rounded-xl p-4 border border-accent/10">
-                  <h4 className="font-medium text-accent mb-2 flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    {t.suggestion}
-                  </h4>
-                  <p className="text-foreground leading-relaxed">{record.feedback.suggestion}</p>
-                </div>
-              )}
-
-              {/* Star Answer */}
-              {record.feedback.starAnswer && (
-                <div>
-                  <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                    {t.starAnswer}
-                  </h4>
-                  <div className="bg-surface rounded-xl p-4 text-foreground-muted text-sm leading-relaxed border border-border">
-                    {record.feedback.starAnswer}
-                  </div>
-                </div>
-              )}
-
-              {/* 多维度评估 - Phase 1 */}
-              {record.feedback.dimensions && (
-                <MultiDimensionalFeedback feedback={record.feedback} locale={locale} />
-              )}
-
-              {/* 差距分析 - Phase 1 */}
-              {record.feedback.gapAnalysis && (
-                <GapAnalysisView feedback={record.feedback} locale={locale} />
-              )}
-
-              {/* 改进行动清单 - Phase 1 */}
-              {record.feedback.improvements && (
-                <ActionItems feedback={record.feedback} locale={locale} />
-              )}
-
-              {/* 教练寄语 - Phase 1 */}
-              {record.feedback.coachMessage && (
-                <CoachMessage feedback={record.feedback} locale={locale} />
-              )}
-            </CardContent>
-          </Card>
+            {/* 完整 AI Feedback (评估完成后显示) */}
+            {/* 双模型架构：免费用户显示基础版，付费用户显示专业版 */}
+            {(() => {
+              const hasFeedback = hasValidFeedback(record.feedback);
+              return (hasFeedback || evaluationStatus === "COMPLETED") && record.feedback && evaluationStatus !== "FAILED";
+            })() && (
+              <>
+                {hasAccess ? (
+                  /* 付费用户 - 专业版深度反馈 */
+                  <PremiumFeedbackView feedback={record.feedback} />
+                ) : (
+                  /* 免费用户 - 基础版反馈 + 升级引导 */
+                  <BasicFeedbackView
+                    feedback={record.feedback}
+                    isUnauthenticated={isUnauthenticated}
+                    onLogin={handleLogin}
+                    onUpgrade={() => setShowUpgradeModal(true)}
+                  />
+                )}
+              </>
             )}
           </React.Fragment>
         )}
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-border">
           <Link href="/history" className="flex-1">
             <Button variant="outline" className="w-full">
               {t.backToHistory}
             </Button>
           </Link>
-          {questionExists ? (
+          {(() => {
+            const hasFeedback = hasValidFeedback(record.feedback);
+            // 未登录用户或无权限用户可以重新练习（使用简化反馈）
+            const canPractice = hasAccess === false || hasFeedback || evaluationStatus === "COMPLETED";
+            return canPractice && questionExists;
+          })() ? (
             <Link href={`/questions/${record.questionId}`} className="flex-1">
               <Button className="w-full bg-accent hover:bg-accent-dark">
                 {t.practiceAgain}
               </Button>
             </Link>
+          ) : (() => {
+            const hasFeedback = hasValidFeedback(record.feedback);
+            return !hasFeedback && evaluationStatus !== "COMPLETED";
+          })() ? (
+            <div className="flex-1">
+              <Button className="w-full" disabled variant="secondary">
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  {locale === "zh" ? "AI分析中..." : "AI Analyzing..."}
+                </span>
+              </Button>
+              <p className="text-xs text-foreground-muted text-center mt-2">
+                {locale === "zh" ? "请等待AI分析完成后再练习" : "Please wait for AI analysis to complete"}
+              </p>
+            </div>
           ) : (
             <div className="flex-1">
               <Button className="w-full" disabled variant="secondary">
@@ -1073,6 +1401,26 @@ export default function PracticeReviewPage() {
           )}
         </div>
       </div>
+
+      {/* 升级弹窗 */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={async () => {
+          setShowUpgradeModal(false);
+          // 关闭弹窗后重新检查权限（用户可能已开通会员）
+          if (record) {
+            await checkAccessAndConsume(
+              recordId,
+              record.questionTitle,
+              undefined,
+              record.questionType
+            );
+          }
+        }}
+        userType={userType}
+        creditsRemaining={membershipInfo.creditsRemaining}
+        monthlyExpiresAt={membershipInfo.monthlyExpiresAt}
+      />
     </div>
   );
 }

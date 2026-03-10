@@ -13,7 +13,9 @@ export default function AICustomPage() {
   const [jdText, setJdText] = useState("");
   const [resumeText, setResumeText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[] | null>(null);
+  const [savedQuestionIds, setSavedQuestionIds] = useState<string[]>([]);
   const [generationTips, setGenerationTips] = useState<string[]>([]);
   const [generationMode, setGenerationMode] = useState<"ai" | "rule">("ai");
   const [isFallback, setIsFallback] = useState(false);
@@ -26,7 +28,6 @@ export default function AICustomPage() {
     setIsFallback(false);
 
     try {
-      // 调用后端 API 生成题目
       const response = await fetch("/api/interview/generate-questions", {
         method: "POST",
         headers: {
@@ -47,6 +48,8 @@ export default function AICustomPage() {
       }
 
       const data = await response.json();
+      await saveQuestionsToDatabase(data.questions);
+
       setGeneratedQuestions(data.questions);
       setGenerationTips(data.tips);
       setIsFallback(data.isFallback);
@@ -54,12 +57,14 @@ export default function AICustomPage() {
       console.error("生成题目失败:", err);
       setError(err instanceof Error ? err.message : "生成失败，请重试");
 
-      // 如果 API 失败，降级到本地规则引擎
       const generated = generateInterviewQuestions({
         jdText,
         resumeText: resumeText || undefined,
         questionCount: 5
       });
+
+      await saveQuestionsToDatabase(generated);
+
       const tips = getGenerationTips(jdText, resumeText || undefined);
       setGeneratedQuestions(generated);
       setGenerationTips(tips);
@@ -68,19 +73,47 @@ export default function AICustomPage() {
     }
   };
 
-  // 开始单题练习
-  const startSinglePractice = (questionId: string) => {
-    if (generatedQuestions) {
-      sessionStorage.setItem('ai-generated-questions', JSON.stringify(generatedQuestions));
-      router.push(`/practice/ai/${questionId}`);
+  const saveQuestionsToDatabase = async (questions: GeneratedQuestion[]) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/ai-questions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          questions,
+          jdText,
+          resumeText,
+          generationMode,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("保存题目失败");
+      }
+
+      const data = await response.json();
+      if (data.questions) {
+        setSavedQuestionIds(data.questions.map((q: { id: string }) => q.id));
+      }
+    } catch (err) {
+      console.error("保存题目失败:", err);
+      setError("题目生成成功但保存失败，请重试");
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  // 开始整套面试
+  const startSinglePractice = () => {
+    if (savedQuestionIds.length > 0) {
+      router.push(`/practice/ai/${savedQuestionIds[0]}`);
+    }
+  };
+
   const startFullInterview = async () => {
     if (!generatedQuestions || generatedQuestions.length === 0) return;
 
-    // 提取公司和岗位信息
     const companyMatch = jdText.match(/(?:公司|单位)[：:]?\s*([^\n，。]+)/);
     const positionMatch = jdText.match(/(?:职位|岗位)[：:]?\s*([^\n]+)/);
 
@@ -109,8 +142,7 @@ export default function AICustomPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-6 py-12">
-        {/* Header */}
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 md:py-12">
         <div className="mb-8">
           <Link
             href="/practice"
@@ -129,11 +161,9 @@ export default function AICustomPage() {
           </p>
         </div>
 
-        {/* Content */}
         <div className="bg-surface rounded-3xl p-8 border border-border">
           {!generatedQuestions ? (
             <div className="space-y-6">
-              {/* 生成模式选择 */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-3">
                   {locale === 'zh' ? '生成模式' : 'Generation Mode'}
@@ -178,7 +208,6 @@ export default function AICustomPage() {
                 </div>
               </div>
 
-              {/* JD 输入 */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-3">
                   {locale === 'zh' ? '岗位描述 (JD)' : 'Job Description'}
@@ -188,14 +217,13 @@ export default function AICustomPage() {
                   value={jdText}
                   onChange={(e) => setJdText(e.target.value)}
                   placeholder={locale === 'zh' ? '粘贴目标岗位的 JD 内容，AI 将基于岗位要求生成相关题目...' : 'Paste the job description here...'}
-                  className="w-full h-40 px-4 py-4 bg-background border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:border-accent resize-none transition-colors"
+                  className="w-full h-32 px-4 py-4 bg-background border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:border-accent resize-none transition-colors"
                 />
                 <p className="text-xs text-foreground-muted mt-2">
                   {locale === 'zh' ? '提示：包含岗位职责、技能要求等信息可获得更精准的结果' : 'Tip: Include role responsibilities and skill requirements for better results'}
                 </p>
               </div>
 
-              {/* 简历输入 (可选) */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-3">
                   {locale === 'zh' ? '个人简历' : 'Your Resume'}
@@ -205,30 +233,33 @@ export default function AICustomPage() {
                   value={resumeText}
                   onChange={(e) => setResumeText(e.target.value)}
                   placeholder={locale === 'zh' ? '粘贴你的简历内容，AI 将结合你的经历生成更匹配的题目...' : 'Paste your resume for more personalized questions...'}
-                  className="w-full h-32 px-4 py-4 bg-background border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:border-accent resize-none transition-colors"
+                  className="w-full h-24 px-4 py-4 bg-background border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:border-accent resize-none transition-colors"
                 />
               </div>
 
-              {/* 错误提示 */}
               {error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                   {error}
                 </div>
               )}
 
-              {/* 生成按钮 */}
               <button
                 onClick={handleGenerate}
-                disabled={!jdText.trim() || isGenerating}
-                className="w-full py-4 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 mt-8"
+                disabled={!jdText.trim() || isGenerating || isSaving}
+                className="w-full py-4 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               >
-                {isGenerating ? (
+                {isGenerating || isSaving ? (
                   <>
                     <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    {locale === 'zh' ? (generationMode === 'ai' ? 'AI 生成中...' : '生成中...') : 'Generating...'}
+                    {isSaving
+                      ? (locale === 'zh' ? '保存中...' : 'Saving...')
+                      : (generationMode === 'ai'
+                          ? (locale === 'zh' ? 'AI 生成中...' : 'Generating...')
+                          : (locale === 'zh' ? '生成中...' : 'Generating...'))
+                    }
                   </>
                 ) : (
                   <>
@@ -245,7 +276,6 @@ export default function AICustomPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* 生成结果头部 */}
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-display text-heading font-semibold text-foreground">
@@ -268,7 +298,6 @@ export default function AICustomPage() {
                 </button>
               </div>
 
-              {/* 降级提示 */}
               {isFallback && (
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
                   <div className="flex items-start gap-3">
@@ -287,7 +316,6 @@ export default function AICustomPage() {
                 </div>
               )}
 
-              {/* 生成建议 */}
               {generationTips.length > 0 && (
                 <div className="p-4 bg-accent/5 border border-accent/20 rounded-xl">
                   <h3 className="text-sm font-medium text-accent mb-2">
@@ -304,7 +332,6 @@ export default function AICustomPage() {
                 </div>
               )}
 
-              {/* 题目预览 */}
               <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                 {generatedQuestions.map((q, index) => (
                   <div
@@ -314,18 +341,18 @@ export default function AICustomPage() {
                     <span className="flex-shrink-0 w-7 h-7 bg-accent/10 rounded-lg flex items-center justify-center text-sm font-medium text-accent">
                       {index + 1}
                     </span>
-                    <p className="text-foreground font-medium flex-1">
+                    <p className="text-foreground font-medium flex-1 text-sm">
                       {q.title}
                     </p>
                   </div>
                 ))}
               </div>
 
-              {/* 操作按钮 */}
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <button
                   onClick={startFullInterview}
-                  className="py-4 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark transition-all flex items-center justify-center gap-2"
+                  disabled={savedQuestionIds.length === 0}
+                  className="py-4 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -333,15 +360,17 @@ export default function AICustomPage() {
                   </svg>
                   {locale === 'zh' ? '开始整套面试' : 'Start Full Interview'}
                 </button>
-                <button
-                  onClick={() => startSinglePractice(generatedQuestions[0].id)}
-                  className="py-4 bg-surface border border-border text-foreground rounded-xl font-medium hover:bg-accent/5 hover:border-accent/30 transition-all flex items-center justify-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  {locale === 'zh' ? '单题练习' : 'Practice Single'}
-                </button>
+                {savedQuestionIds.length > 0 && (
+                  <button
+                    onClick={startSinglePractice}
+                    className="py-4 bg-surface border border-border text-foreground rounded-xl font-medium hover:bg-accent/5 hover:border-accent/30 transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    {locale === 'zh' ? '单题练习' : 'Practice Single'}
+                  </button>
+                )}
               </div>
             </div>
           )}

@@ -153,4 +153,11 @@ export interface InterviewFeedback {
   improve?: string[];
   suggestion?: string;
   starAnswer?: string;
+
+  // 双模型架构新增字段
+  evaluationModel?: "qwen" | "kimi" | "deepseek" | "rule-engine";
+  evaluationDepth?: "basic" | "advanced";
+
+  // 目标用户类型（标识这个反馈是为哪种类型的用户生成的）
+  targetUserType?: "free" | "paid";
 }

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { VoiceTextarea } from "@/components/voice-textarea";
+import { LoadingState } from "@/components/ui/loading-state";
 import {
   getInterviewSessionAsync,
   startInterviewAsync,
@@ -204,10 +205,12 @@ export default function InterviewPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-foreground-muted">{locale === "zh" ? "加载中..." : "Loading..."}</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <LoadingState
+          variant="spinner"
+          fullScreen
+          message={locale === "zh" ? "加载面试中..." : "Loading interview..."}
+        />
       </div>
     );
   }

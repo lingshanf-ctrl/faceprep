@@ -56,6 +56,12 @@ export interface PracticeRecord {
   };
   duration?: number;
   createdAt: string;
+  // AI 评估状态（异步评估支持）
+  evaluationStatus?: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+  evaluationError?: string;
+  evaluationRetries?: number;
+  evaluationStartedAt?: string;
+  evaluationCompletedAt?: string;
 }
 
 // IndexedDB 配置（离线缓存）
@@ -141,9 +147,10 @@ export async function getPracticeRecords(options?: {
   });
 }
 
-// 保存练习记录
+// 保存练习记录（支持异步评估）
 export async function savePracticeRecord(
-  record: Omit<PracticeRecord, "id" | "createdAt">
+  record: Omit<PracticeRecord, "id" | "createdAt">,
+  options?: { asyncEvaluate?: boolean }
 ): Promise<PracticeRecord | null> {
   // 先保存到本地缓存
   const newRecord: PracticeRecord = {
@@ -166,6 +173,7 @@ export async function savePracticeRecord(
     answer: record.answer,
     score: record.score,
     feedback: JSON.stringify(record.feedback),
+    asyncEvaluate: options?.asyncEvaluate,
   });
 
   if (result.offline) {

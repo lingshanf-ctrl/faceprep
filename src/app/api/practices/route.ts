@@ -88,6 +88,12 @@ export async function GET(request: NextRequest) {
         feedback: parsedFeedback,
         duration: p.duration,
         createdAt: p.createdAt.toISOString(),
+        // AI 评估状态
+        evaluationStatus: p.evaluationStatus,
+        evaluationError: p.evaluationError,
+        evaluationRetries: p.evaluationRetries,
+        evaluationStartedAt: p.evaluationStartedAt?.toISOString(),
+        evaluationCompletedAt: p.evaluationCompletedAt?.toISOString(),
         // 保留原始 question 数据（如果有）
         question: p.question,
       };
@@ -117,6 +123,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { userId, isAnonymous } = await getUserId(request);
+    console.log(`[Debug Create Practice] userId: ${userId}, isAnonymous: ${isAnonymous}`);
     if (!userId) {
       return NextResponse.json(
         { error: "请先登录", requireLogin: true },
@@ -125,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { questionId, questionTitle, answer, score, feedback, duration } = body;
+    const { questionId, questionTitle, answer, score, feedback, duration, asyncEvaluate } = body;
 
     if (!questionId || !answer) {
       return NextResponse.json(
@@ -182,21 +189,38 @@ export async function POST(request: NextRequest) {
     // 创建练习记录，同时存储题目快照
     // 优先使用传入的 questionTitle，如果不存在则从数据库题目获取
     const finalQuestionTitle = questionTitle || existingQuestion?.title || "未知题目";
+
+    // 判断是否异步评估
+    // asyncEvaluate=true: 使用默认分数，标记为PENDING状态，由后台异步评估
+    // asyncEvaluate=false/undefined: 使用传入的score和feedback，标记为COMPLETED
+    const isAsyncEvaluate = asyncEvaluate === true;
+
     const practice = await db.practice.create({
       data: {
         userId,
         questionId: finalQuestionId,
         answer,
-        score,
-        feedback,
+        score: isAsyncEvaluate ? 60 : score, // 异步评估时使用默认分数
+        feedback: isAsyncEvaluate
+          ? JSON.stringify({
+              good: ["回答已提交，AI正在分析中..."],
+              improve: ["请稍后在练习回顾页查看详细反馈"],
+              suggestion: "正在生成个性化建议...",
+            })
+          : feedback,
         duration,
         // 存储题目快照
         questionTitle: finalQuestionTitle,
         questionCategory: existingQuestion?.category,
         questionType: existingQuestion?.type,
         questionDifficulty: existingQuestion?.difficulty,
+        // 评估状态
+        evaluationStatus: isAsyncEvaluate ? "PENDING" : "COMPLETED",
+        evaluationStartedAt: isAsyncEvaluate ? new Date() : null,
       },
     });
+
+    console.log(`[Debug Create Practice] Created practice: ${practice.id} for user: ${userId}`);
 
     // 匿名用户添加警告头
     const headers = new Headers();
@@ -205,7 +229,17 @@ export async function POST(request: NextRequest) {
       headers.set("X-Anonymous-Warning", "数据仅保存在当前设备，登录后可永久保存");
     }
 
-    return NextResponse.json({ practice, isAnonymous }, { headers, status: 201 });
+    return NextResponse.json(
+      {
+        practice: {
+          ...practice,
+          evaluationStatus: practice.evaluationStatus,
+        },
+        isAnonymous,
+        asyncEvaluate: isAsyncEvaluate,
+      },
+      { headers, status: 201 }
+    );
   } catch (error) {
     console.error("Failed to create practice:", error);
     return NextResponse.json(

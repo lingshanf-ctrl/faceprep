@@ -27,6 +27,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // 获取数量参数，默认5道
+    const { searchParams } = new URL(request.url);
+    const count = parseInt(searchParams.get("count") || "5", 10);
+    const limit = Math.min(Math.max(count, 1), 10); // 限制1-10道
+
     // 获取用户的练习记录
     const practices = await db.practice.findMany({
       where: { userId },
@@ -95,7 +100,7 @@ export async function GET(request: NextRequest) {
           type: { in: weakTypes as any },
           id: { notIn: Array.from(practicedQuestionIds).filter((id): id is string => !!id) },
         },
-        take: 3,
+        take: Math.min(3, limit),
         orderBy: { difficulty: "asc" },
       });
 
@@ -108,13 +113,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. 推荐薄弱分类的题目
-    if (weakCategories.length > 0 && recommendations.length < 5) {
+    if (weakCategories.length > 0 && recommendations.length < limit) {
       const categoryRecommendations = await db.question.findMany({
         where: {
           category: { in: weakCategories as any },
           id: { notIn: [...Array.from(practicedQuestionIds), ...recommendations.map((r) => r.id)].filter((id): id is string => !!id) },
         },
-        take: 5 - recommendations.length,
+        take: limit - recommendations.length,
         orderBy: { difficulty: "asc" },
       });
 
@@ -127,13 +132,13 @@ export async function GET(request: NextRequest) {
     }
 
     // 3. 如果还不够，推荐随机题目（难度适中的）
-    if (recommendations.length < 5) {
+    if (recommendations.length < limit) {
       const randomRecommendations = await db.question.findMany({
         where: {
           id: { notIn: [...Array.from(practicedQuestionIds), ...recommendations.map((r) => r.id)].filter((id): id is string => !!id) },
           difficulty: { lte: 2 },
         },
-        take: 5 - recommendations.length,
+        take: limit - recommendations.length,
         orderBy: { frequency: "desc" },
       });
 

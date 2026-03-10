@@ -5,8 +5,28 @@ import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { getPracticeRecords, PracticeRecord } from "@/lib/practice-store";
 import { getInterviewSessionsAsync, InterviewSession, updateInterviewTitle, cloneInterviewSession } from "@/lib/interview-store";
-import { Clock, TrendingUp, Flame, FileText, MessageSquare, ChevronRight, Pencil, RotateCcw, Trash2, Check, X } from "lucide-react";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ScoreBadge } from "@/components/ui/score-badge";
+import { getScoreColor } from "@/lib/ui-helpers";
+import { formatFriendlyDate } from "@/lib/ui-helpers";
+import {
+  Clock,
+  TrendingUp,
+  Flame,
+  FileText,
+  MessageSquare,
+  ChevronRight,
+  Pencil,
+  RotateCcw,
+  Check,
+  X,
+  History,
+  Target,
+  Calendar
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 interface CombinedRecord {
   id: string;
@@ -16,30 +36,6 @@ interface CombinedRecord {
   date: string;
   details?: string;
   questionCount?: number;
-}
-
-function getScoreColor(score: number) {
-  if (score >= 80) return "text-emerald-500";
-  if (score >= 60) return "text-amber-500";
-  return "text-rose-500";
-}
-
-function formatDateLabel(dateStr: string, locale: string) {
-  const date = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (date.toDateString() === today.toDateString()) {
-    return locale === "zh" ? "今天" : "Today";
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return locale === "zh" ? "昨天" : "Yesterday";
-  } else {
-    return date.toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  }
 }
 
 function formatTime(dateStr: string) {
@@ -164,7 +160,7 @@ export default function HistoryPage() {
     const groups: { date: string; label: string; records: CombinedRecord[] }[] = [];
     filteredRecords.forEach((record) => {
       const recordDate = new Date(record.date).toDateString();
-      let label = formatDateLabel(record.date, locale);
+      let label = formatFriendlyDate(record.date, locale as "zh" | "en");
       const existingGroup = groups.find((g) => g.date === recordDate);
       if (existingGroup) {
         existingGroup.records.push(record);
@@ -214,22 +210,28 @@ export default function HistoryPage() {
     };
   }, [practiceRecords, interviewSessions]);
 
-  if (!mounted) {
+  // 检查用户登录状态
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const response = await fetch("/api/auth/me");
+        setIsAuthenticated(response.ok);
+      } catch {
+        setIsAuthenticated(false);
+      }
+    }
+    checkAuth();
+  }, []);
+
+  if (!mounted || loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-6 py-12">
-          <div className="animate-pulse space-y-4">
-            <div className="h-10 bg-surface rounded-lg w-32"></div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="h-20 bg-surface rounded-xl"></div>
-              <div className="h-20 bg-surface rounded-xl"></div>
-              <div className="h-20 bg-surface rounded-xl"></div>
-            </div>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-surface rounded-2xl"></div>
-            ))}
-          </div>
-        </div>
+        <LoadingState
+          variant="skeleton"
+          fullScreen
+          message={locale === "zh" ? "加载记录中..." : "Loading records..."}
+        />
       </div>
     );
   }
@@ -237,135 +239,283 @@ export default function HistoryPage() {
   // Empty state
   if (!loading && combinedRecords.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-6 py-12">
-          <h1 className="text-2xl font-bold text-foreground mb-8">
-            {locale === "zh" ? "学习记录" : "History"}
-          </h1>
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* Background gradient */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
+        </div>
 
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6">
-              <Clock className="w-10 h-10 text-foreground-muted" />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-12 relative z-10">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
+              <History className="w-5 h-5 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-3">
-              {locale === "zh" ? "还没有学习记录" : "No records yet"}
-            </h3>
-            <p className="text-foreground-muted mb-8">
-              {locale === "zh" ? "开始练习，记录你的成长" : "Start practicing to track your progress"}
-            </p>
-            <Link
-              href="/practice"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark transition-all"
-            >
-              {locale === "zh" ? "开始练习" : "Start Practice"}
-              <ChevronRight className="w-4 h-4" />
-            </Link>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+              {locale === "zh" ? "学习记录" : "History"}
+            </h1>
           </div>
+
+          {/* 未登录用户提示 */}
+          {!isAuthenticated && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-medium text-amber-900 mb-1">
+                    {locale === "zh" ? "数据仅保存在当前设备" : "Data only saved on this device"}
+                  </h3>
+                  <p className="text-sm text-amber-700 mb-3">
+                    {locale === "zh"
+                      ? "登录后可以永久保存练习记录，在任何设备上查看"
+                      : "Login to permanently save your practice records and access them from any device"}
+                  </p>
+                  <Link
+                    href="/login?redirect=/history"
+                    className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 hover:text-amber-900 underline"
+                  >
+                    {locale === "zh" ? "立即登录" : "Login now"}
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <EmptyState
+            icon="📊"
+            title={locale === "zh" ? "还没有学习记录" : "No records yet"}
+            description={locale === "zh" ? "开始练习，记录你的成长轨迹" : "Start practicing to track your progress"}
+            action={{
+              label: locale === "zh" ? "开始练习" : "Start Practice",
+              href: "/practice"
+            }}
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Enhanced Background Effects */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-accent/10 rounded-full blur-[120px]" />
+        <div className="absolute top-40 -right-20 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-20 -left-20 w-[500px] h-[500px] bg-success/5 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-12 relative z-10">
+        {/* Hero Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
+              <History className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-medium text-accent">
+              {locale === "zh" ? "学习轨迹" : "Learning Journey"}
+            </span>
+          </div>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-2">
             {locale === "zh" ? "学习记录" : "History"}
           </h1>
-          <p className="text-foreground-muted">
-            {locale === "zh" ? "追踪你的进步轨迹" : "Track your learning journey"}
+          <p className="text-foreground-muted text-base">
+            {locale === "zh" ? "追踪你的进步轨迹，见证每一步成长" : "Track your progress and witness every step of growth"}
           </p>
-        </div>
+        </motion.div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-surface rounded-2xl p-4 text-center border border-border">
-            <div className="flex items-center justify-center gap-1 text-foreground-muted mb-1">
-              <FileText className="w-4 h-4" />
-              <span className="text-xs">{locale === "zh" ? "练习" : "Practices"}</span>
+        {/* 未登录用户提示 */}
+        {!isAuthenticated && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium text-amber-900 mb-1">
+                  {locale === "zh" ? "数据仅保存在当前设备" : "Data only saved on this device"}
+                </h3>
+                <p className="text-sm text-amber-700 mb-3">
+                  {locale === "zh"
+                    ? "登录后可以永久保存练习记录，在任何设备上查看"
+                    : "Login to permanently save your practice records and access them from any device"}
+                </p>
+                <Link
+                  href="/login?redirect=/history"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 hover:text-amber-900 underline"
+                >
+                  {locale === "zh" ? "立即登录" : "Login now"}
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-foreground">{stats.totalPractices}</div>
+          </motion.div>
+        )}
+
+        {/* Stats - Enhanced with gradient effects */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="grid grid-cols-3 gap-4 mb-8"
+        >
+          {/* Practice Count */}
+          <div className="group relative bg-white rounded-2xl p-4 text-center border border-border overflow-hidden transition-all duration-300 hover:shadow-soft-lg hover:border-accent/30 hover:-translate-y-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-1.5 text-foreground-muted mb-2">
+                <div className="p-1.5 bg-gradient-to-br from-accent/20 to-accent/5 rounded-lg border border-accent/20">
+                  <Target className="w-3.5 h-3.5 text-accent" />
+                </div>
+                <span className="text-xs font-medium">{locale === "zh" ? "练习" : "Practices"}</span>
+              </div>
+              <div className="text-2xl font-display font-bold text-foreground group-hover:text-accent transition-colors">
+                {stats.totalPractices}
+              </div>
+            </div>
           </div>
-          <div className="bg-surface rounded-2xl p-4 text-center border border-border">
-            <div className="flex items-center justify-center gap-1 text-foreground-muted mb-1">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-xs">{locale === "zh" ? "平均" : "Average"}</span>
-            </div>
-            <div className={`text-2xl font-bold ${getScoreColor(stats.averageScore)}`}>
-              {stats.averageScore}
-            </div>
-          </div>
-          <div className="bg-surface rounded-2xl p-4 text-center border border-border">
-            <div className="flex items-center justify-center gap-1 text-foreground-muted mb-1">
-              <Flame className="w-4 h-4" />
-              <span className="text-xs">{locale === "zh" ? "连续" : "Streak"}</span>
-            </div>
-            <div className="text-2xl font-bold text-foreground flex items-center justify-center gap-1">
-              {stats.streak}
-              {stats.streak > 0 && <span className="text-lg">🔥</span>}
+
+          {/* Average Score */}
+          <div className="group relative bg-white rounded-2xl p-4 text-center border border-border overflow-hidden transition-all duration-300 hover:shadow-soft-lg hover:border-success/30 hover:-translate-y-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-success/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-1.5 text-foreground-muted mb-2">
+                <div className="p-1.5 bg-gradient-to-br from-success/20 to-success/5 rounded-lg border border-success/20">
+                  <TrendingUp className="w-3.5 h-3.5 text-success" />
+                </div>
+                <span className="text-xs font-medium">{locale === "zh" ? "平均分" : "Average"}</span>
+              </div>
+              <div className={`text-2xl font-display font-bold ${getScoreColor(stats.averageScore)}`}>
+                {stats.averageScore > 0 ? stats.averageScore : "-"}
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Streak */}
+          <div className="group relative bg-white rounded-2xl p-4 text-center border border-border overflow-hidden transition-all duration-300 hover:shadow-soft-lg hover:border-warning/30 hover:-translate-y-1">
+            <div className="absolute inset-0 bg-gradient-to-br from-warning/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-1.5 text-foreground-muted mb-2">
+                <div className="p-1.5 bg-gradient-to-br from-warning/20 to-warning/5 rounded-lg border border-warning/20">
+                  <Flame className="w-3.5 h-3.5 text-warning" />
+                </div>
+                <span className="text-xs font-medium">{locale === "zh" ? "连续" : "Streak"}</span>
+              </div>
+              <div className="text-2xl font-display font-bold text-foreground flex items-center justify-center gap-1">
+                {stats.streak}
+                {stats.streak > 0 && (
+                  <Flame className="w-5 h-5 text-warning fill-warning animate-pulse" />
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide"
+        >
           <button
             onClick={() => setFilter("all")}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
               filter === "all"
-                ? "bg-foreground text-white"
-                : "bg-surface text-foreground-muted hover:text-foreground border border-border"
+                ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-glow scale-105"
+                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-accent/30 hover:shadow-soft-sm"
             }`}
           >
-            {locale === "zh" ? "全部" : "All"} ({stats.totalRecords})
+            <span className="relative z-10 flex items-center gap-1.5">
+              <History className="w-3.5 h-3.5" />
+              {locale === "zh" ? "全部" : "All"}
+            </span>
+            <span className="ml-1.5 text-xs opacity-70">({stats.totalRecords})</span>
           </button>
+
           <button
             onClick={() => setFilter("practice")}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
               filter === "practice"
-                ? "bg-accent text-white"
-                : "bg-surface text-foreground-muted hover:text-foreground border border-border"
+                ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-glow scale-105"
+                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-accent/30 hover:shadow-soft-sm"
             }`}
           >
-            🔵 {locale === "zh" ? "练习" : "Practice"} ({stats.totalPractices})
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5" />
+              {locale === "zh" ? "练习" : "Practice"}
+            </span>
+            <span className="ml-1.5 text-xs opacity-70">({stats.totalPractices})</span>
           </button>
+
           <button
             onClick={() => setFilter("interview")}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
               filter === "interview"
-                ? "bg-emerald-600 text-white"
-                : "bg-surface text-foreground-muted hover:text-foreground border border-border"
+                ? "bg-gradient-to-r from-success to-success-light text-white shadow-glow scale-105"
+                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-success/30 hover:shadow-soft-sm"
             }`}
           >
-            🟢 {locale === "zh" ? "面试" : "Interview"} ({stats.totalInterviews})
+            <span className="relative z-10 flex items-center gap-1.5">
+              <MessageSquare className="w-3.5 h-3.5" />
+              {locale === "zh" ? "面试" : "Interview"}
+            </span>
+            <span className="ml-1.5 text-xs opacity-70">({stats.totalInterviews})</span>
           </button>
-        </div>
+        </motion.div>
 
         {/* Timeline */}
-        <div className="space-y-6">
-          {groupedRecords.map((group) => (
-            <div key={group.date}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="space-y-8"
+        >
+          {groupedRecords.map((group, groupIndex) => (
+            <div key={group.date} className="animate-fade-up" style={{ animationDelay: `${0.3 + groupIndex * 0.1}s` }}>
               {/* Date Header */}
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm font-medium text-foreground">{group.label}</span>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-accent/10 rounded-lg">
+                    <Calendar className="w-3.5 h-3.5 text-accent" />
+                  </div>
+                  <span className="text-sm font-bold text-foreground">{group.label}</span>
+                </div>
                 <div className="flex-1 h-px bg-border"></div>
-                <span className="text-xs text-foreground-muted">
+                <span className="text-xs font-medium text-foreground-muted bg-surface px-2.5 py-1 rounded-full border border-border">
                   {group.records.length} {locale === "zh" ? "条记录" : "records"}
                 </span>
               </div>
 
               {/* Records */}
-              <div className="space-y-2">
-                {group.records.map((record) => {
+              <div className="space-y-3">
+                {group.records.map((record, recordIndex) => {
                   const isEditing = editingId === record.id && record.type === "interview";
                   const isInterview = record.type === "interview";
 
                   return (
                     <div
                       key={`${record.type}-${record.id}`}
-                      className="flex items-center gap-4 p-4 bg-surface rounded-xl border border-border hover:border-accent/30 transition-all group"
+                      className="group flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-border hover:border-accent/30 hover:shadow-soft-md hover:-translate-y-0.5 transition-all duration-300"
+                      style={{ animationDelay: `${recordIndex * 0.05}s` }}
                     >
                       {/* Type Icon */}
                       <Link
@@ -374,10 +524,10 @@ export default function HistoryPage() {
                             ? `/practice/review/${record.id}`
                             : `/interview/${record.id}/report`
                         }
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
                           record.type === "practice"
-                            ? "bg-accent/10 text-accent"
-                            : "bg-emerald-100 text-emerald-600"
+                            ? "bg-gradient-to-br from-accent/20 to-accent/10 text-accent group-hover:shadow-soft-sm"
+                            : "bg-gradient-to-br from-success/20 to-success/10 text-success group-hover:shadow-soft-sm"
                         }`}
                       >
                         {record.type === "practice" ? (
@@ -395,7 +545,7 @@ export default function HistoryPage() {
                               type="text"
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
-                              className="flex-1 px-3 py-1.5 text-sm bg-background border border-accent rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20"
+                              className="flex-1 px-3 py-2 text-sm bg-surface border-2 border-accent rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20"
                               autoFocus
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") saveTitle(record.id);
@@ -404,13 +554,13 @@ export default function HistoryPage() {
                             />
                             <button
                               onClick={() => saveTitle(record.id)}
-                              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              className="p-2 text-success hover:bg-success/10 rounded-xl transition-colors"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                             <button
                               onClick={cancelEdit}
-                              className="p-1.5 text-foreground-muted hover:bg-foreground-muted/10 rounded-lg transition-colors"
+                              className="p-2 text-foreground-muted hover:bg-surface rounded-xl transition-colors"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -422,24 +572,25 @@ export default function HistoryPage() {
                                 ? `/practice/review/${record.id}`
                                 : `/interview/${record.id}/report`
                             }
+                            className="block"
                           >
-                            <h4 className="font-medium text-foreground truncate group-hover:text-accent transition-colors">
+                            <h4 className="font-semibold text-foreground truncate group-hover:text-accent transition-colors">
                               {record.title}
                             </h4>
                           </Link>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-foreground-muted mt-0.5">
-                          <span>{formatTime(record.date)}</span>
+                        <div className="flex items-center gap-2 text-xs text-foreground-muted mt-1">
+                          <span className="font-medium">{formatTime(record.date)}</span>
                           {record.details && (
                             <>
-                              <span>•</span>
+                              <span className="text-border">•</span>
                               <span className="truncate">{record.details}</span>
                             </>
                           )}
                           {record.questionCount && (
                             <>
-                              <span>•</span>
-                              <span>
+                              <span className="text-border">•</span>
+                              <span className="px-2 py-0.5 bg-surface rounded-full border border-border font-medium">
                                 {record.questionCount} {locale === "zh" ? "道题" : "questions"}
                               </span>
                             </>
@@ -448,36 +599,31 @@ export default function HistoryPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-2">
-                        {/* Score */}
+                      <div className="flex items-center gap-3">
+                        {/* Score Badge */}
                         <Link
                           href={
                             record.type === "practice"
                               ? `/practice/review/${record.id}`
                               : `/interview/${record.id}/report`
                           }
-                          className="flex items-center gap-3"
                         >
-                          <span
-                            className={`text-xl font-bold ${getScoreColor(record.score)}`}
-                          >
-                            {record.score}
-                          </span>
+                          <ScoreBadge score={record.score} size="md" />
                         </Link>
 
                         {/* Interview Actions */}
                         {isInterview && (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
                             <button
                               onClick={() => startEditTitle(record as unknown as InterviewSession)}
-                              className="p-1.5 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                              className="p-2 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-xl transition-colors"
                               title={locale === "zh" ? "编辑名称" : "Edit name"}
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleRetry(record as unknown as InterviewSession)}
-                              className="p-1.5 text-foreground-muted hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                              className="p-2 text-foreground-muted hover:text-success hover:bg-success/10 rounded-xl transition-colors"
                               title={locale === "zh" ? "再练一次" : "Practice again"}
                             >
                               <RotateCcw className="w-4 h-4" />
@@ -491,8 +637,9 @@ export default function HistoryPage() {
                               ? `/practice/review/${record.id}`
                               : `/interview/${record.id}/report`
                           }
+                          className="p-2 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-xl transition-colors"
                         >
-                          <ChevronRight className="w-5 h-5 text-foreground-muted group-hover:text-accent transition-colors" />
+                          <ChevronRight className="w-5 h-5" />
                         </Link>
                       </div>
                     </div>
@@ -501,12 +648,23 @@ export default function HistoryPage() {
               </div>
             </div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Load More / End */}
-        <div className="mt-8 text-center text-sm text-foreground-muted">
-          {locale === "zh" ? "— 已经到底了 —" : "— End of records —"}
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-10 text-center"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface rounded-full border border-border">
+            <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted/50" />
+            <span className="text-sm text-foreground-muted">
+              {locale === "zh" ? "已经到底了" : "End of records"}
+            </span>
+            <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted/50" />
+          </div>
+        </motion.div>
       </div>
     </div>
   );

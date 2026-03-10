@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getAnonymousId, clearAnonymousId } from "@/lib/anonymous-user";
 
 interface User {
   id: string;
@@ -48,9 +49,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 登录
   const login = async (email: string, password: string) => {
     try {
+      // 获取匿名ID用于数据迁移（新的key）
+      const anonymousId = getAnonymousId();
+      // 也获取旧的匿名ID（为了兼容之前的数据）
+      const oldAnonymousId = typeof window !== 'undefined' ? localStorage.getItem('anonymous-id') : null;
+      console.log("[Debug Client] anonymousId:", anonymousId, "oldAnonymousId:", oldAnonymousId);
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (anonymousId) {
+        headers["X-Anonymous-Id"] = anonymousId;
+      }
+      if (oldAnonymousId) {
+        headers["X-Anonymous-Id-Old"] = oldAnonymousId;
+      }
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ email, password }),
       });
 
@@ -60,6 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: data.error || "登录失败" };
       }
 
+      // 登录成功后清除匿名ID
+      clearAnonymousId();
       setUser(data.user);
       return {};
     } catch {
@@ -70,9 +89,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 注册
   const register = async (email: string, password: string, name?: string) => {
     try {
+      // 获取匿名ID用于数据迁移（新的key）
+      const anonymousId = getAnonymousId();
+      // 也获取旧的匿名ID（为了兼容之前的数据）
+      const oldAnonymousId = typeof window !== 'undefined' ? localStorage.getItem('anonymous-id') : null;
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (anonymousId) {
+        headers["X-Anonymous-Id"] = anonymousId;
+      }
+      if (oldAnonymousId) {
+        headers["X-Anonymous-Id-Old"] = oldAnonymousId;
+      }
+
       const res = await fetch("/api/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ email, password, name }),
       });
 
@@ -82,6 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: data.error || "注册失败" };
       }
 
+      // 注册成功后清除匿名ID
+      clearAnonymousId();
       setUser(data.user);
       return {};
     } catch {

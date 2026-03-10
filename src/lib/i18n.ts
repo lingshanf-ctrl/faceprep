@@ -268,6 +268,7 @@ export const translations = {
     // Favorites
     favorites: {
       title: '我的收藏',
+      loading: '加载中...',
       empty: {
         title: '还没有收藏的题目',
         desc: '在练习时点击收藏按钮，将重点题目添加到这里',
@@ -582,6 +583,7 @@ export const translations = {
     // Favorites
     favorites: {
       title: 'Saved Questions',
+      loading: 'Loading...',
       empty: {
         title: 'No Saved Questions',
         desc: 'Click the save button while practicing to add questions here',

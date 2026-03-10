@@ -9,6 +9,8 @@ import { isFavorite, toggleFavorite } from "@/lib/favorites-store";
 import { checkAndUnlockAchievements } from "@/lib/achievement-store";
 import { VoiceTextarea } from "@/components/voice-textarea";
 import { useLanguage } from "@/components/language-provider";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Type config
 const typeConfig: Record<string, { label: string; labelZh: string }> = {
@@ -228,10 +230,7 @@ export default function QuestionDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-6 py-12 text-center">
-          <div className="w-12 h-12 border-4 border-accent/20 border-t-accent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-foreground-muted">{locale === 'zh' ? '加载中...' : 'Loading...'}</p>
-        </div>
+        <LoadingState variant="spinner" fullScreen message={locale === 'zh' ? '加载题目中...' : 'Loading question...'} />
       </div>
     );
   }
@@ -240,24 +239,16 @@ export default function QuestionDetailPage() {
   if (loadError || !question) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-3xl mx-auto px-6 py-12 text-center">
-          <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h1 className="font-display text-heading-xl font-semibold text-foreground mb-3">
-            {locale === 'zh' ? '题目不存在' : 'Question Not Found'}
-          </h1>
-          <p className="text-foreground-muted mb-8">
-            {locale === 'zh' ? '该题目可能已被删除或ID无效' : 'This question may have been deleted or the ID is invalid'}
-          </p>
-          <Link href="/questions" className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-full font-medium hover:bg-accent-dark transition-all">
-            {locale === 'zh' ? '返回题库' : 'Back to Questions'}
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </Link>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 md:py-12">
+          <EmptyState
+            icon="❓"
+            title={locale === 'zh' ? '题目不存在' : 'Question Not Found'}
+            description={locale === 'zh' ? '该题目可能已被删除或ID无效' : 'This question may have been deleted or the ID is invalid'}
+            action={{
+              label: locale === 'zh' ? '返回题库' : 'Back to Questions',
+              href: '/questions'
+            }}
+          />
         </div>
       </div>
     );
@@ -276,75 +267,41 @@ export default function QuestionDetailPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: question.title,
-          keyPoints: question.keyPoints,
-          answer: answer,
-          // 新增：完整的题目元数据，用于AI深度评估
-          type: question.type,
-          difficulty: question.difficulty,
-          referenceAnswer: question.referenceAnswer,
-          commonMistakes: question.commonMistakes,
-          framework: question.framework,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("Feedback API error:", response.status, data);
-        throw new Error(data.error || data.message || `Request failed with status ${response.status}`);
-      }
-
-      // 验证返回的数据格式
-      if (!data || typeof data !== 'object') {
-        throw new Error("Invalid response format from server");
-      }
-
-      setFeedback(data);
-
-      // 保存练习记录（使用 await 确保保存完成）
-      try {
-        await savePracticeRecord({
+      // 异步保存练习记录，立即返回 practiceId
+      const savedPractice = await savePracticeRecord(
+        {
           questionId: question.id,
           questionTitle: question.title,
           answer: answer,
-          score: data.totalScore || data.score,
+          score: 60, // 默认分数，AI评估完成后会更新
           feedback: {
-            // 新版多维度反馈
-            dimensions: data.dimensions,
-            gapAnalysis: data.gapAnalysis,
-            improvements: data.improvements,
-            optimizedAnswer: data.optimizedAnswer,
-            coachMessage: data.coachMessage,
-            // 兼容旧版字段
-            good: data.good || data.dimensions?.highlights?.strongPoints || [],
-            improve: data.improve || [
-              ...(data.dimensions?.content?.missing || []),
-              ...(data.dimensions?.structure?.issues || []),
-            ],
-            suggestion: data.suggestion || data.improvements?.[0]?.action || "",
-            starAnswer: data.starAnswer || data.optimizedAnswer,
+            good: ["回答已提交，AI正在分析中..."],
+            improve: ["请稍后在练习回顾页查看详细反馈"],
+            suggestion: "正在生成个性化建议...",
           },
-        });
-        console.log("[Practice Saved] Record saved successfully");
-      } catch (saveError) {
-        console.error("[Practice Save Error]", saveError);
-        // 保存失败不影响展示反馈结果，但会在控制台记录错误
+          duration: elapsedTime,
+        },
+        { asyncEvaluate: true } // 启用异步评估
+      );
+
+      if (!savedPractice) {
+        throw new Error("Failed to save practice record");
       }
 
-      checkAndUnlockAchievements();
+      console.log("[Practice Saved] Async evaluation started, redirecting to review page");
+
+      // 立即跳转到回顾页面，AI评估在后台进行
+      router.push(`/practice/review/${savedPractice.id}`);
+
+      // 检查成就解锁（异步，不影响跳转）
+      checkAndUnlockAchievements().catch(console.error);
     } catch (err) {
-      console.error("Feedback error:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to get feedback";
+      console.error("Submit error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to submit answer";
       setError(locale === "zh"
-        ? `获取反馈失败: ${errorMessage}，请稍后重试`
-        : `Failed to get feedback: ${errorMessage}, please try again later`
+        ? `提交失败: ${errorMessage}，请稍后重试`
+        : `Failed to submit: ${errorMessage}, please try again later`
       );
-    } finally {
       setIsSubmitting(false);
     }
   };

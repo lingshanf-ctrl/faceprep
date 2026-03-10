@@ -6,6 +6,8 @@ import { getFavorites, removeFavorite } from "@/lib/favorites-store";
 import { getQuestionById } from "@/data/questions";
 import { getPracticeRecords, PracticeRecord } from "@/lib/practice-store";
 import { useLanguage } from "@/components/language-provider";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Type config - language specific
 const getTypeConfig = (locale: string): Record<string, { label: string }> => ({
@@ -67,17 +69,7 @@ export default function FavoritesPage() {
   if (!mounted) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <div className="animate-pulse">
-            <div className="h-12 bg-surface rounded-lg w-48 mb-4"></div>
-            <div className="h-5 bg-surface rounded w-64 mb-10"></div>
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-28 bg-surface rounded-2xl"></div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <LoadingState variant="skeleton" fullScreen message={t.favorites.loading || "Loading..."} />
       </div>
     );
   }
@@ -99,31 +91,15 @@ export default function FavoritesPage() {
 
         {favoriteQuestions.length === 0 ? (
           /* Empty state */
-          <div className="text-center py-20">
-            <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-foreground-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                />
-              </svg>
-            </div>
-            <h3 className="font-display text-heading-xl font-semibold text-foreground mb-3">{t.favorites.empty.title}</h3>
-            <p className="text-foreground-muted mb-8 max-w-sm mx-auto">
-              {t.favorites.empty.desc}
-            </p>
-            <Link
-              href="/questions"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-accent text-white rounded-full font-medium hover:bg-accent-dark transition-all hover:shadow-glow"
-            >
-              {t.favorites.empty.button}
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
-          </div>
+          <EmptyState
+            icon="⭐"
+            title={t.favorites.empty.title}
+            description={t.favorites.empty.desc}
+            action={{
+              label: t.favorites.empty.button,
+              href: "/questions"
+            }}
+          />
         ) : (
           <>
             {/* Quick start */}

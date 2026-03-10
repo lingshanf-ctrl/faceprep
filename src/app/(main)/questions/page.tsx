@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, Suspense } from "react";
+import { motion } from "framer-motion";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { questions as systemQuestions } from "@/data/questions";
@@ -28,7 +29,15 @@ import {
   ChevronRight,
   Sparkles,
   BookOpen,
+  CheckCircle2,
+  Layers,
 } from "lucide-react";
+
+// Design System Imports
+import { ScoreBadge } from "@/components/ui/score-badge";
+import { QuestionTypeBadge, CategoryBadge, DifficultyBadge } from "@/components/ui/type-badge";
+import { ConfirmDialog, useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { typeColorConfig, categoryColorConfig, difficultyColorConfig } from "@/lib/design-tokens";
 
 // 统一的题目类型
 interface UnifiedQuestion {
@@ -42,36 +51,21 @@ interface UnifiedQuestion {
   frequency?: number;
 }
 
-// 题型配置
-const typeConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  INTRO: { label: "自我介绍", color: "text-blue-600", bg: "bg-blue-50", icon: "👋" },
-  PROJECT: { label: "项目经历", color: "text-purple-600", bg: "bg-purple-50", icon: "💼" },
-  TECHNICAL: { label: "技术问题", color: "text-emerald-600", bg: "bg-emerald-50", icon: "⚡" },
-  BEHAVIORAL: { label: "行为面试", color: "text-orange-600", bg: "bg-orange-50", icon: "🎯" },
-  HR: { label: "HR面试", color: "text-pink-600", bg: "bg-pink-50", icon: "💬" },
-};
-
-// 分类配置
-const categoryConfig: Record<string, { label: string; icon: string }> = {
-  FRONTEND: { label: "前端", icon: "💻" },
-  BACKEND: { label: "后端", icon: "⚙️" },
-  PRODUCT: { label: "产品", icon: "📱" },
-  DESIGN: { label: "设计", icon: "🎨" },
-  OPERATION: { label: "运营", icon: "📊" },
-  GENERAL: { label: "通用", icon: "🎯" },
-};
-
-// 难度配置
-const difficultyConfig: Record<number, { label: string; color: string; bg: string }> = {
-  1: { label: "简单", color: "text-green-600", bg: "bg-green-50" },
-  2: { label: "中等", color: "text-amber-600", bg: "bg-amber-50" },
-  3: { label: "困难", color: "text-red-600", bg: "bg-red-50" },
+// 分类配置（仅用于图标）
+const categoryIcons: Record<string, string> = {
+  FRONTEND: "💻",
+  BACKEND: "⚙️",
+  PRODUCT: "📱",
+  DESIGN: "🎨",
+  OPERATION: "📊",
+  GENERAL: "🎯",
 };
 
 function QuestionsContent() {
   const { locale } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showConfirm, DialogComponent } = useConfirmDialog();
 
   // 来源筛选: all | system | custom
   const [sourceFilter, setSourceFilter] = useState<"all" | "system" | "custom">("all");
@@ -219,14 +213,23 @@ function QuestionsContent() {
   };
 
   // 删除自定义题目
-  const handleDeleteCustom = (id: string) => {
-    if (confirm("确定删除这道题吗？")) {
-      deleteCustomQuestion(id);
-      setCustomQuestions(getCustomQuestions());
-      const newSelected = new Set(selectedQuestions);
-      newSelected.delete(id);
-      setSelectedQuestions(newSelected);
-    }
+  const handleDeleteCustom = (id: string, title: string) => {
+    showConfirm({
+      title: locale === "zh" ? "确认删除" : "Confirm Delete",
+      description: locale === "zh"
+        ? `确定要删除题目「${title}」吗？此操作无法撤销。`
+        : `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+      confirmText: locale === "zh" ? "删除" : "Delete",
+      cancelText: locale === "zh" ? "取消" : "Cancel",
+      variant: "danger",
+      onConfirm: () => {
+        deleteCustomQuestion(id);
+        setCustomQuestions(getCustomQuestions());
+        const newSelected = new Set(selectedQuestions);
+        newSelected.delete(id);
+        setSelectedQuestions(newSelected);
+      },
+    });
   };
 
   // 选择/取消选择题目
@@ -285,161 +288,219 @@ function QuestionsContent() {
   }), [allQuestions, systemUnifiedQuestions, customUnifiedQuestions]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Enhanced Background Effects */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-accent/10 rounded-full blur-[120px]" />
+        <div className="absolute top-40 -right-20 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
+        <div className="absolute bottom-20 -left-20 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-10 relative z-10">
+        {/* Hero Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-white" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-              {locale === "zh" ? "题库" : "Questions"}
-            </h1>
+            <span className="text-sm font-medium text-accent">
+              {locale === "zh" ? "精选题目" : "Curated Questions"}
+            </span>
           </div>
-          <p className="text-foreground-muted text-sm sm:text-base ml-[52px]">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-2">
+            {locale === "zh" ? "题库" : "Questions"}
+          </h1>
+          <p className="text-foreground-muted text-base">
             {locale === "zh"
-              ? `官方 ${stats.system} 道 | 我的 ${stats.custom} 道`
-              : `${stats.system} official | ${stats.custom} custom`}
+              ? `官方精选 ${stats.system} 道题目 · ${stats.custom} 道专属定制`
+              : `${stats.system} official questions · ${stats.custom} custom`}
           </p>
-        </div>
+        </motion.div>
 
         {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-muted" />
-          <input
-            type="text"
-            placeholder={locale === "zh" ? "搜索题目..." : "Search questions..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-12 py-4 bg-surface border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:border-accent transition-colors"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-foreground-muted hover:text-foreground"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+        <div className="relative mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
+          <div className="relative group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-muted transition-colors group-focus-within:text-accent" />
+            <input
+              type="text"
+              placeholder={locale === "zh" ? "搜索题目标题、关键点..." : "Search questions..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-14 pr-14 py-4 bg-white/80 backdrop-blur-sm border-2 border-border rounded-2xl text-foreground placeholder-foreground-muted
+                focus:outline-none focus:border-accent focus:bg-white focus:shadow-soft-md
+                transition-all duration-300"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-5 top-1/2 -translate-y-1/2 p-1.5 text-foreground-muted hover:text-foreground hover:bg-surface rounded-lg transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Source Filter Tabs */}
-        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+        {/* Source Filter Tabs - 与历史页面保持一致 */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide"
+        >
           <button
             onClick={() => setSourceFilter("all")}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
               sourceFilter === "all"
-                ? "bg-foreground text-white"
-                : "bg-surface text-foreground-muted hover:text-foreground border border-border"
+                ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-glow scale-105"
+                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-accent/30 hover:shadow-soft-sm"
             }`}
           >
-            {locale === "zh" ? "全部" : "All"} ({stats.total})
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5" />
+              {locale === "zh" ? "全部" : "All"}
+            </span>
+            <span className="ml-1.5 text-xs opacity-70">({stats.total})</span>
           </button>
+
           <button
             onClick={() => setSourceFilter("system")}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
               sourceFilter === "system"
-                ? "bg-accent text-white"
-                : "bg-surface text-foreground-muted hover:text-foreground border border-border"
+                ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-glow scale-105"
+                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-accent/30 hover:shadow-soft-sm"
             }`}
           >
-            {locale === "zh" ? "官方题库" : "Official"} ({stats.system})
+            <span className="relative z-10 flex items-center gap-1.5">
+              <BookOpen className="w-3.5 h-3.5" />
+              {locale === "zh" ? "官方题库" : "Official"}
+            </span>
+            <span className="ml-1.5 text-xs opacity-70">({stats.system})</span>
           </button>
+
           <button
             onClick={() => setSourceFilter("custom")}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
               sourceFilter === "custom"
-                ? "bg-accent text-white"
-                : "bg-surface text-foreground-muted hover:text-foreground border border-border"
+                ? "bg-gradient-to-r from-success to-success-light text-white shadow-glow scale-105"
+                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-success/30 hover:shadow-soft-sm"
             }`}
           >
-            {locale === "zh" ? "我的专属" : "My Custom"} ({stats.custom})
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              {locale === "zh" ? "我的专属" : "My Custom"}
+            </span>
+            <span className="ml-1.5 text-xs opacity-70">({stats.custom})</span>
           </button>
 
           <div className="flex-1" />
 
-          {/* Add Button (only show when viewing custom or all) */}
+          {/* Add Button */}
           {(sourceFilter === "custom" || sourceFilter === "all") && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-accent text-white text-sm font-medium rounded-full hover:bg-accent-dark transition-all"
+              className="group relative flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-accent to-accent-light text-white text-sm font-semibold rounded-full
+                hover:shadow-glow transition-all duration-300 hover:scale-105 flex-shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              {locale === "zh" ? "添加" : "Add"}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 rounded-full" />
+              <Plus className="w-4 h-4 relative z-10" />
+              <span className="relative z-10">{locale === "zh" ? "添加" : "Add"}</span>
             </button>
           )}
-        </div>
+        </motion.div>
 
-        {/* Type & Difficulty Filter Tags */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          <Filter className="w-4 h-4 text-foreground-muted flex-shrink-0" />
+        {/* Type & Difficulty Filter Tags with Gradient Fade */}
+        <div className="relative mb-6 animate-fade-up" style={{ animationDelay: "0.3s" }}>
+          {/* Left gradient fade - stronger on mobile */}
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
-          {/* Type filters */}
-          {Object.entries(typeConfig).map(([key, config]) => (
-            <button
-              key={key}
-              onClick={() => setTypeFilter(typeFilter === key ? "" : key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                typeFilter === key
-                  ? `${config.bg} ${config.color} ring-1 ring-current`
-                  : "bg-surface text-foreground-muted border border-border hover:border-accent/30"
-              }`}
-            >
-              {config.icon} {config.label}
-            </button>
-          ))}
+          {/* Right gradient fade - stronger on mobile */}
+          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
 
-          <span className="w-px h-4 bg-border mx-1" />
+          {/* Scroll hint indicator (mobile only) */}
+          <div className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+            <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center animate-pulse">
+              <ChevronRight className="w-4 h-4 text-accent" />
+            </div>
+          </div>
 
-          {/* Difficulty filters */}
-          {Object.entries(difficultyConfig).map(([key, config]) => (
-            <button
-              key={key}
-              onClick={() => setDifficultyFilter(difficultyFilter === key ? "" : key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                difficultyFilter === key
-                  ? `${config.bg} ${config.color} ring-1 ring-current`
-                  : "bg-surface text-foreground-muted border border-border hover:border-accent/30"
-              }`}
-            >
-              {config.label}
-            </button>
-          ))}
+          <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 scrollbar-hide scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex-shrink-0 flex items-center gap-2">
+              <Filter className="w-4 h-4 text-foreground-muted ml-1" />
 
-          {hasFilters && (
-            <button
-              onClick={clearFilters}
-              className="px-3 py-1.5 text-xs text-foreground-muted hover:text-error transition-colors"
-            >
-              {locale === "zh" ? "清空" : "Clear"}
-            </button>
-          )}
+            {/* Type filters */}
+            {Object.entries(typeColorConfig).map(([key, config]) => (
+              <button
+                key={key}
+                onClick={() => setTypeFilter(typeFilter === key ? "" : key)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 ${
+                  typeFilter === key
+                    ? `${config.bg} ${config.color} ring-2 ring-current shadow-soft-sm scale-105`
+                    : "bg-white/80 text-foreground-muted border border-border hover:border-accent/40 hover:bg-white hover:shadow-soft-sm"
+                }`}
+              >
+                <span className="mr-1">{config.icon}</span>
+                {config.label[locale as "zh" | "en"]}
+              </button>
+            ))}
+
+            <span className="w-px h-5 bg-border mx-1 flex-shrink-0" />
+
+            {/* Difficulty filters */}
+            {Object.entries(difficultyColorConfig).map(([key, config]) => (
+              <button
+                key={key}
+                onClick={() => setDifficultyFilter(difficultyFilter === key ? "" : key)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 ${
+                  difficultyFilter === key
+                    ? `${config.bg} ${config.color} ring-2 ring-current shadow-soft-sm scale-105`
+                    : "bg-white/80 text-foreground-muted border border-border hover:border-accent/40 hover:bg-white hover:shadow-soft-sm"
+                }`}
+              >
+                {config.label[locale as "zh" | "en"]}
+              </button>
+            ))}
+
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-xs font-medium text-error hover:bg-error/5 rounded-full transition-all flex-shrink-0 mr-8 sm:mr-1"
+              >
+                {locale === "zh" ? "清空筛选" : "Clear"}
+              </button>
+            )}
+            </div>
+          </div>
         </div>
 
         {/* Custom Questions Selection Bar */}
         {sourceFilter === "custom" && customQuestions.length > 0 && (
-          <div className="flex items-center justify-between mb-4 p-4 bg-surface rounded-xl border border-border">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <div className="flex items-center justify-between mb-5 p-5 bg-gradient-to-r from-accent/5 to-accent/10 rounded-2xl border border-accent/20 backdrop-blur-sm animate-fade-up" style={{ animationDelay: "0.4s" }}>
+            <label className="flex items-center gap-3 cursor-pointer group">
               <button
                 onClick={toggleSelectAll}
-                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${
                   selectedQuestions.size === filteredQuestions.length && filteredQuestions.length > 0
-                    ? "bg-accent border-accent"
+                    ? "bg-accent border-accent shadow-soft-sm scale-110"
                     : selectedQuestions.size > 0
                     ? "bg-accent/50 border-accent"
-                    : "border-border"
+                    : "border-border bg-white group-hover:border-accent"
                 }`}
               >
                 {selectedQuestions.size > 0 && (
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
               </button>
-              <span className="text-sm text-foreground-muted">
+              <span className="text-sm font-medium text-foreground">
                 {selectedQuestions.size > 0
-                  ? `${locale === "zh" ? "已选" : "Selected"} ${selectedQuestions.size}`
+                  ? `${locale === "zh" ? "已选" : "Selected"} ${selectedQuestions.size} ${locale === "zh" ? "道题" : "questions"}`
                   : locale === "zh" ? "全选" : "Select all"}
               </span>
             </label>
@@ -447,10 +508,11 @@ function QuestionsContent() {
             {selectedQuestions.size > 0 && (
               <button
                 onClick={startCustomInterview}
-                className="flex items-center gap-2 px-4 py-2 bg-foreground text-white text-sm font-medium rounded-full hover:bg-foreground/90 transition-all"
+                className="group relative flex items-center gap-2 px-6 py-2.5 bg-foreground text-white text-sm font-semibold rounded-full
+                  hover:bg-foreground/90 hover:shadow-soft-md transition-all duration-300 hover:scale-105"
               >
                 <Play className="w-4 h-4 fill-current" />
-                {locale === "zh" ? `开始面试 (${selectedQuestions.size})` : `Start Interview`}
+                <span>{locale === "zh" ? `开始面试 (${selectedQuestions.size})` : `Start (${selectedQuestions.size})`}</span>
               </button>
             )}
           </div>
@@ -465,29 +527,36 @@ function QuestionsContent() {
             onAddQuestion={() => setShowAddModal(true)}
           />
         ) : (
-          <div className="space-y-3">
-            {filteredQuestions.map((question) => (
-              <QuestionCard
+          <div className="space-y-3 animate-fade-up" style={{ animationDelay: "0.5s" }}>
+            {filteredQuestions.map((question, index) => (
+              <div
                 key={question.id}
-                question={question}
-                locale={locale}
-                isPracticed={practiceStatus[question.id]?.practiced}
-                highestScore={practiceStatus[question.id]?.highestScore}
-                practiceCount={practiceStatus[question.id]?.count}
-                isSelected={selectedQuestions.has(question.id)}
-                onToggleSelect={() => toggleQuestionSelection(question.id)}
-                onDelete={() => handleDeleteCustom(question.id)}
-              />
+                className="animate-fade-up"
+                style={{ animationDelay: `${0.5 + index * 0.05}s` }}
+              >
+                <QuestionCard
+                  question={question}
+                  locale={locale}
+                  isPracticed={practiceStatus[question.id]?.practiced}
+                  highestScore={practiceStatus[question.id]?.highestScore}
+                  practiceCount={practiceStatus[question.id]?.count}
+                  isSelected={selectedQuestions.has(question.id)}
+                  onToggleSelect={() => toggleQuestionSelection(question.id)}
+                  onDelete={() => handleDeleteCustom(question.id, question.title)}
+                />
+              </div>
             ))}
           </div>
         )}
 
         {/* Result Count */}
-        <div className="mt-6 text-center text-sm text-foreground-muted">
-          {locale === "zh"
-            ? `共 ${filteredQuestions.length} 道题目`
-            : `${filteredQuestions.length} questions`}
-        </div>
+        {filteredQuestions.length > 0 && (
+          <div className="mt-8 text-center text-sm text-foreground-muted">
+            {locale === "zh"
+              ? `共找到 ${filteredQuestions.length} 道题目`
+              : `${filteredQuestions.length} questions found`}
+          </div>
+        )}
       </div>
 
       {/* Add Question Modal */}
@@ -508,6 +577,9 @@ function QuestionsContent() {
           }}
         />
       )}
+
+      {/* Confirm Dialog */}
+      {DialogComponent}
     </div>
   );
 }
@@ -534,31 +606,41 @@ function QuestionCard({
   onToggleSelect,
   onDelete,
 }: QuestionCardProps) {
-  const typeInfo = typeConfig[question.type] || { label: question.type, color: "", bg: "", icon: "" };
-  const categoryInfo = categoryConfig[question.category] || { label: question.category, icon: "" };
-  const difficultyInfo = difficultyConfig[question.difficulty] || { label: "", color: "", bg: "" };
   const isCustom = question.source === "custom";
+  const isOfficial = question.source === "system";
 
   return (
     <div
-      className={`group bg-surface rounded-2xl border transition-all overflow-hidden ${
-        isCustom && isSelected
-          ? "border-accent shadow-sm"
-          : "border-border hover:border-accent/30"
-      }`}
+      className={`group relative bg-white rounded-2xl border-2 transition-all duration-300 overflow-hidden
+        ${isCustom && isSelected
+          ? "border-accent shadow-soft-md scale-[1.01]"
+          : "border-border hover:border-accent/30 hover:-translate-y-1 hover:shadow-soft-lg"
+        }`}
     >
-      <div className="p-5">
-        <div className="flex items-start gap-4">
+      {/* Official Question Gradient Indicator */}
+      {isOfficial && (
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-accent via-accent-light to-accent opacity-80" />
+      )}
+
+      {/* High Frequency Glow */}
+      {question.frequency && question.frequency >= 2 && (
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-400/5 via-transparent to-transparent pointer-events-none" />
+      )}
+
+      <div className="p-4 sm:p-5 pl-5 sm:pl-6">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
           {/* Selection Checkbox (custom only) */}
           {isCustom && (
             <button
               onClick={onToggleSelect}
-              className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                isSelected ? "bg-accent border-accent" : "border-border hover:border-accent"
+              className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 shrink-0 ${
+                isSelected
+                  ? "bg-accent border-accent shadow-soft-sm scale-110"
+                  : "border-border bg-white hover:border-accent hover:scale-105"
               }`}
             >
               {isSelected && (
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               )}
@@ -567,60 +649,70 @@ function QuestionCard({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            {/* Tags */}
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className={`text-xs px-2 py-1 rounded-lg font-medium ${typeInfo.bg} ${typeInfo.color}`}>
-                {typeInfo.icon} {typeInfo.label}
-              </span>
-              <span className="text-xs px-2 py-1 rounded-lg text-foreground-muted bg-background border border-border">
-                {categoryInfo.icon} {categoryInfo.label}
-              </span>
-              <span className={`text-xs px-2 py-1 rounded-lg font-medium ${difficultyInfo.bg} ${difficultyInfo.color}`}>
-                {difficultyInfo.label}
-              </span>
+            {/* Tags - optimized for mobile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-3 flex-wrap">
+              <QuestionTypeBadge
+                type={question.type}
+                locale={locale as "zh" | "en"}
+                showIcon={true}
+              />
+              <CategoryBadge
+                category={question.category}
+                locale={locale as "zh" | "en"}
+                showIcon={true}
+              />
+              <DifficultyBadge
+                difficulty={question.difficulty}
+                locale={locale as "zh" | "en"}
+              />
+
               {question.frequency && question.frequency >= 2 && (
-                <span className="text-xs px-2 py-1 rounded-lg text-amber-600 bg-amber-50 border border-amber-100">
-                  {locale === "zh" ? "高频" : "Hot"}
+                <span className="relative text-xs px-3 py-1 rounded-full font-semibold text-amber-700 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 shadow-soft-sm">
+                  <span className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-transparent rounded-full animate-pulse" />
+                  <span className="relative flex items-center gap-1">
+                    ⚡ {locale === "zh" ? "高频" : "Hot"}
+                  </span>
                 </span>
               )}
+
               {isCustom && (
-                <span className="text-xs px-2 py-1 rounded-lg text-accent bg-accent/10 border border-accent/20">
-                  {locale === "zh" ? "我的" : "Custom"}
+                <span className="text-xs px-3 py-1 rounded-full font-semibold text-accent bg-accent/10 border border-accent/30">
+                  {locale === "zh" ? "专属" : "Custom"}
                 </span>
               )}
+
               {isPracticed && (
-                <span className="text-xs px-2 py-1 rounded-lg text-green-600 bg-green-50 border border-green-100">
-                  {locale === "zh" ? "已练习" : "Done"}
+                <span className="flex items-center gap-1 text-xs px-3 py-1 rounded-full font-semibold text-success bg-success/10 border border-success/30">
+                  <CheckCircle2 className="w-3 h-3" />
+                  {locale === "zh" ? "已练" : "Done"}
                 </span>
               )}
             </div>
 
             {/* Title */}
-            <h3 className="font-medium text-foreground mb-1 leading-relaxed">
-              <Link href={`/questions/${question.id}`} className="hover:text-accent transition-colors">
+            <h3 className="font-semibold text-foreground mb-2 leading-relaxed text-base group-hover:text-accent transition-colors">
+              <Link href={`/questions/${question.id}`}>
                 {question.title}
               </Link>
             </h3>
 
             {/* Key Points */}
             {question.keyPoints && (
-              <p className="text-foreground-muted text-sm line-clamp-1">{question.keyPoints}</p>
+              <p className="text-foreground-muted text-sm line-clamp-2 leading-relaxed">
+                {question.keyPoints}
+              </p>
             )}
           </div>
 
-          {/* Right Side */}
-          <div className="shrink-0 flex flex-col items-end gap-2">
+          {/* Right Side - Mobile: horizontal row at bottom, Desktop: vertical column */}
+          <div className="shrink-0 flex sm:flex-col items-center sm:items-end gap-2 sm:gap-3">
             {/* Score */}
             {isPracticed && highestScore !== undefined && (
-              <div className="flex items-center gap-2">
-                <span className={`text-2xl font-bold ${
-                  highestScore >= 80 ? "text-green-500" : highestScore >= 60 ? "text-amber-500" : "text-red-500"
-                }`}>
-                  {highestScore}
-                </span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <ScoreBadge score={highestScore} size="sm" showLabel={false} />
                 {practiceCount && practiceCount > 1 && (
-                  <span className="text-xs text-foreground-muted bg-background px-2 py-0.5 rounded-full">
-                    {practiceCount}次
+                  <span className="text-xs text-foreground-muted bg-surface px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-medium border border-border">
+                    ×{practiceCount}
                   </span>
                 )}
               </div>
@@ -630,16 +722,18 @@ function QuestionCard({
             <div className="flex items-center gap-1">
               <Link
                 href={`/questions/${question.id}`}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-accent hover:bg-accent/5 rounded-lg transition-all"
+                className="group/btn flex items-center gap-1 px-3 sm:px-4 py-2 text-sm font-medium text-accent hover:bg-accent/10 rounded-full transition-all duration-300 hover:shadow-soft-sm"
               >
-                {locale === "zh" ? "练习" : "Practice"}
-                <ChevronRight className="w-4 h-4" />
+                <span className="hidden sm:inline">{locale === "zh" ? "练习" : "Practice"}</span>
+                <span className="sm:hidden">{locale === "zh" ? "去练" : "Go"}</span>
+                <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5" />
               </Link>
 
               {isCustom && (
                 <button
                   onClick={onDelete}
-                  className="p-1.5 text-foreground-muted hover:text-error hover:bg-error/5 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                  className="p-2 text-foreground-muted hover:text-error hover:bg-error/5 rounded-full transition-all duration-300 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label={locale === "zh" ? "删除" : "Delete"}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -662,31 +756,45 @@ interface EmptyStateProps {
 
 function EmptyState({ hasFilters, locale, onClearFilters, onAddQuestion }: EmptyStateProps) {
   return (
-    <div className="text-center py-16 px-4">
-      <div className="text-5xl mb-4">{hasFilters ? "🔍" : "📝"}</div>
-      <h3 className="text-lg font-semibold text-foreground mb-2">
+    <div className="text-center py-20 px-4 animate-fade-up">
+      <div className="relative inline-block mb-6">
+        <div className="text-8xl animate-float">{hasFilters ? "🔍" : "📚"}</div>
+        <div className="absolute inset-0 bg-accent/10 blur-3xl rounded-full" />
+      </div>
+
+      <h3 className="text-2xl font-display font-bold text-foreground mb-3">
         {hasFilters
-          ? locale === "zh" ? "没有找到符合条件的题目" : "No questions found"
-          : locale === "zh" ? "还没有题目" : "No questions yet"}
+          ? locale === "zh" ? "未找到匹配的题目" : "No questions found"
+          : locale === "zh" ? "题库空空如也" : "No questions yet"}
       </h3>
-      <p className="text-foreground-muted text-sm mb-6">
+
+      <p className="text-foreground-muted text-base mb-8 max-w-md mx-auto leading-relaxed">
         {hasFilters
-          ? locale === "zh" ? "尝试调整筛选条件" : "Try adjusting your filters"
-          : locale === "zh" ? "添加你的第一道题开始练习" : "Add your first question to start"}
+          ? locale === "zh"
+            ? "试试调整筛选条件，或者清空筛选查看所有题目"
+            : "Try adjusting your filters or clear them to see all questions"
+          : locale === "zh"
+            ? "添加你的第一道专属题目，开启刻意练习之旅"
+            : "Add your first custom question to start practicing"}
       </p>
+
       {hasFilters ? (
         <button
           onClick={onClearFilters}
-          className="px-6 py-2.5 bg-surface text-foreground rounded-xl font-medium hover:bg-border transition-all"
+          className="px-8 py-3.5 bg-white text-foreground rounded-full font-semibold border-2 border-border hover:border-accent hover:bg-accent/5 transition-all duration-300 shadow-soft-sm hover:shadow-soft-md hover:scale-105"
         >
-          {locale === "zh" ? "清除筛选" : "Clear filters"}
+          {locale === "zh" ? "清除筛选条件" : "Clear filters"}
         </button>
       ) : (
         <button
           onClick={onAddQuestion}
-          className="px-6 py-2.5 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark transition-all"
+          className="group relative px-8 py-3.5 bg-gradient-to-r from-accent to-accent-light text-white rounded-full font-semibold transition-all duration-300 shadow-soft-md hover:shadow-glow hover:scale-105"
         >
-          {locale === "zh" ? "添加题目" : "Add question"}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 rounded-full" />
+          <span className="relative flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            {locale === "zh" ? "添加专属题目" : "Add question"}
+          </span>
         </button>
       )}
     </div>
@@ -727,19 +835,23 @@ function AddQuestionModal({
   const selectedCount = parsedPreview?.questions.filter((q) => q.selected).length || 0;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-border">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border-2 border-border animate-scale-in">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border">
+        <div className="flex items-center justify-between p-6 border-b-2 border-border">
           <div>
-            <h3 className="text-xl font-semibold text-foreground">
+            <h3 className="text-2xl font-display font-bold text-foreground">
               {locale === "zh" ? "添加专属题目" : "Add Custom Questions"}
             </h3>
-            <p className="text-sm text-foreground-muted mt-1">
-              {locale === "zh" ? "支持多种格式，AI 智能识别" : "Multiple formats supported, AI-powered parsing"}
+            <p className="text-sm text-foreground-muted mt-1.5 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-accent" />
+              {locale === "zh" ? "支持多种格式，AI 智能识别" : "Multiple formats supported, AI-powered"}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-foreground-muted hover:text-foreground rounded-xl hover:bg-background">
+          <button
+            onClick={onClose}
+            className="p-2.5 text-foreground-muted hover:text-foreground rounded-xl hover:bg-surface transition-all duration-300"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -747,84 +859,97 @@ function AddQuestionModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {!parsedPreview ? (
-            <div className="space-y-4">
-              <div className="p-4 bg-accent/5 border border-accent/10 rounded-2xl">
+            <div className="space-y-5">
+              <div className="p-5 bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/20 rounded-2xl">
                 <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-accent mt-0.5" />
-                  <p className="text-sm text-foreground-muted">
+                  <Sparkles className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-foreground-muted leading-relaxed">
                     {locale === "zh"
-                      ? "支持 1. / - / (1) / 第一题：等各种编号格式，自动识别题型"
-                      : "Supports various numbering formats with auto type detection"}
-                  </p>
+                      ? "支持 1. / - / (1) / 第一题：等各种编号格式，AI 会自动识别题型和难度"
+                      : "Supports various numbering formats (1. / - / (1)) with automatic type and difficulty detection"}
+                  </div>
                 </div>
               </div>
+
               <textarea
                 value={parseText}
                 onChange={(e) => setParseText(e.target.value)}
                 placeholder={
                   locale === "zh"
-                    ? "在此粘贴你的面试题目...\n\n例如：\n1. 请介绍一下你自己\n2. React 的虚拟 DOM 原理是什么？"
-                    : "Paste your interview questions here..."
+                    ? "在此粘贴你的面试题目...\n\n例如：\n1. 请介绍一下你自己\n2. React 的虚拟 DOM 原理是什么？\n3. 描述一个你遇到的技术难题及解决方案"
+                    : "Paste your interview questions here...\n\nExample:\n1. Tell me about yourself\n2. Explain React's Virtual DOM\n3. Describe a technical challenge you solved"
                 }
-                className="w-full h-48 px-4 py-4 bg-background border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:border-accent resize-none"
+                className="w-full h-56 px-5 py-4 bg-surface/50 border-2 border-border rounded-2xl text-foreground placeholder-foreground-muted
+                  focus:outline-none focus:border-accent focus:bg-white focus:shadow-soft-md resize-none transition-all duration-300"
               />
+
               <button
                 onClick={onParse}
                 disabled={!parseText.trim() || isParsing}
-                className="w-full py-3.5 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                className="group relative w-full py-4 bg-gradient-to-r from-accent to-accent-light text-white rounded-2xl font-semibold
+                  hover:shadow-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 disabled:hover:shadow-none overflow-hidden"
               >
-                {isParsing ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    {locale === "zh" ? "解析中..." : "Parsing..."}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5" />
-                    {locale === "zh" ? "智能解析" : "Parse"}
-                  </>
-                )}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+                <span className="relative flex items-center justify-center gap-2">
+                  {isParsing ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>{locale === "zh" ? "AI 解析中..." : "Parsing..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      <span>{locale === "zh" ? "AI 智能解析" : "AI Parse"}</span>
+                    </>
+                  )}
+                </span>
               </button>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-border">
-                <span className="font-medium text-foreground">
-                  {locale === "zh" ? `识别 ${parsedPreview.total} 道题目` : `${parsedPreview.total} questions found`}
-                </span>
-                <span className="text-sm text-accent font-medium">
+              <div className="flex items-center justify-between p-5 bg-gradient-to-r from-accent/5 to-transparent rounded-2xl border border-accent/20">
+                <div>
+                  <span className="font-semibold text-foreground text-lg">
+                    {locale === "zh" ? `识别到 ${parsedPreview.total} 道题目` : `${parsedPreview.total} questions found`}
+                  </span>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    {locale === "zh" ? "点击题目选择或取消选择" : "Click to select/deselect"}
+                  </p>
+                </div>
+                <span className="text-sm text-accent font-bold bg-accent/10 px-4 py-2 rounded-full">
                   {locale === "zh" ? `已选 ${selectedCount}` : `${selectedCount} selected`}
                 </span>
               </div>
-              <div className="space-y-2 max-h-80 overflow-y-auto">
+
+              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-2">
                 {parsedPreview.questions.map((q, idx) => (
                   <div
                     key={idx}
                     onClick={() => toggleSelection(idx)}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
                       q.selected
-                        ? "bg-accent/5 border-accent/30"
-                        : "bg-background border-border opacity-60 hover:opacity-100"
+                        ? "bg-accent/5 border-accent/40 shadow-soft-sm scale-[1.02]"
+                        : "bg-white border-border hover:border-accent/30 hover:bg-accent/5"
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                        q.selected ? "bg-accent border-accent" : "border-border"
+                      <div className={`mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${
+                        q.selected ? "bg-accent border-accent shadow-soft-sm" : "border-border bg-white"
                       }`}>
                         {q.selected && (
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs text-foreground-muted">#{idx + 1}</span>
-                          <span className="text-xs px-2 py-0.5 rounded bg-accent/10 text-accent">
-                            {typeConfig[q.type]?.label || q.type}
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-xs font-medium text-foreground-muted">#{idx + 1}</span>
+                          <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-accent/10 text-accent border border-accent/20">
+                            {typeColorConfig[q.type as keyof typeof typeColorConfig]?.label[locale as "zh" | "en"] || q.type}
                           </span>
                         </div>
-                        <p className={`text-sm ${q.selected ? "text-foreground" : "text-foreground-muted"}`}>
+                        <p className={`text-sm leading-relaxed ${q.selected ? "text-foreground font-medium" : "text-foreground-muted"}`}>
                           {q.title}
                         </p>
                       </div>
@@ -838,19 +963,23 @@ function AddQuestionModal({
 
         {/* Footer */}
         {parsedPreview && (
-          <div className="flex gap-3 p-6 border-t border-border">
+          <div className="flex gap-3 p-6 border-t-2 border-border bg-surface/30">
             <button
               onClick={() => setParsedPreview(null)}
-              className="px-6 py-3 border border-border rounded-xl font-medium text-foreground hover:bg-background transition-all"
+              className="px-6 py-3 border-2 border-border rounded-2xl font-semibold text-foreground hover:bg-white hover:border-accent/30 transition-all duration-300"
             >
-              {locale === "zh" ? "重新编辑" : "Re-edit"}
+              {locale === "zh" ? "← 重新编辑" : "← Re-edit"}
             </button>
             <button
               onClick={onSave}
               disabled={selectedCount === 0}
-              className="flex-1 py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark disabled:opacity-50 transition-all"
+              className="group relative flex-1 py-3 bg-gradient-to-r from-accent to-accent-light text-white rounded-2xl font-semibold
+                hover:shadow-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden"
             >
-              {locale === "zh" ? `保存 ${selectedCount} 道` : `Save ${selectedCount}`}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+              <span className="relative">
+                {locale === "zh" ? `保存 ${selectedCount} 道题目` : `Save ${selectedCount} questions`}
+              </span>
             </button>
           </div>
         )}
@@ -862,13 +991,13 @@ function AddQuestionModal({
 function QuestionsLoading() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-6 py-10">
         <div className="animate-pulse space-y-4">
-          <div className="h-10 bg-surface rounded-lg w-32"></div>
+          <div className="h-12 bg-surface rounded-2xl w-40"></div>
           <div className="h-14 bg-surface rounded-2xl"></div>
-          <div className="h-10 bg-surface rounded-full w-64"></div>
+          <div className="h-12 bg-surface rounded-full w-96"></div>
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-24 bg-surface rounded-2xl"></div>
+            <div key={i} className="h-32 bg-surface rounded-2xl"></div>
           ))}
         </div>
       </div>

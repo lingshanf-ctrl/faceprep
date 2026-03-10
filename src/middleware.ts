@@ -7,8 +7,8 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 保护 /admin 路径
-  if (pathname.startsWith("/admin")) {
+  // 保护 /admin 路径（仅 API 请求需要验证，页面由前端自己处理认证）
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/analytics") && !pathname.startsWith("/admin/membership")) {
     // 检查请求中是否有正确的 admin token
     // 可以从 header 或 cookie 中获取
     const adminToken = request.headers.get("x-admin-token") ||
@@ -42,5 +42,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin", "/admin/stats", "/api/admin/:path*"],
 };

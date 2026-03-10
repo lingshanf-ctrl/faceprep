@@ -24,7 +24,7 @@ export function MobileNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-200 safe-area-pb">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-border safe-area-pb">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -37,7 +37,7 @@ export function MobileNav() {
               className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
                 active
                   ? "text-accent"
-                  : "text-gray-400 hover:text-gray-600"
+                  : "text-foreground-muted hover:text-foreground"
               }`}
             >
               <div className={`p-1.5 rounded-xl transition-all ${active ? "bg-accent/10" : ""}`}>

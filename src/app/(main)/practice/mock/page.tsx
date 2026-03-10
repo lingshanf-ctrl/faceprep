@@ -85,7 +85,7 @@ export default function MockInterviewPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 md:py-12">
         {/* Header */}
         <div className="mb-8">
           <Link

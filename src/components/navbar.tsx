@@ -2,9 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { MembershipBadge } from "./membership-badge";
+import { UpgradeModal } from "./upgrade-modal";
 import { useAuth } from "./auth-provider";
 import { useLanguage } from "./language-provider";
+import { UserMenu } from "./user-menu";
+
+interface MembershipStatus {
+  membershipType: "MONTHLY" | "CREDIT" | "FREE";
+  creditsRemaining: number | null;
+  monthlyExpiresAt: string | null;
+}
 
 const navItemsZh = [
   { href: "/dashboard", label: "首页" },
@@ -25,7 +34,42 @@ export function Navbar() {
   const { user, isLoading, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { locale, toggleLocale, t } = useLanguage();
+  const [membershipStatus, setMembershipStatus] = useState<MembershipStatus | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const navItems = locale === "zh" ? navItemsZh : navItemsEn;
+
+  // 获取会员状态
+  const fetchMembershipStatus = () => {
+    if (user) {
+      fetch("/api/membership/status")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status) {
+            setMembershipStatus(data.status);
+          }
+        })
+        .catch(() => {
+          // 静默处理错误，不展示徽章
+          setMembershipStatus(null);
+        });
+    }
+  };
+
+  useEffect(() => {
+    fetchMembershipStatus();
+  }, [user]);
+
+  // 监听会员状态更新事件（扣费成功后触发）
+  useEffect(() => {
+    const handleMembershipUpdate = () => {
+      fetchMembershipStatus();
+    };
+
+    window.addEventListener("membership:updated", handleMembershipUpdate);
+    return () => {
+      window.removeEventListener("membership:updated", handleMembershipUpdate);
+    };
+  }, []);
 
   const isActive = (href: string) => {
     return pathname === href || pathname.startsWith(href + "/");
@@ -33,11 +77,11 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-border">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+            <div className="w-9 h-9 md:w-10 md:h-10 bg-accent rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
               <span className="text-white text-sm font-bold font-display">FP</span>
             </div>
             <span className="font-display text-lg font-semibold text-foreground tracking-tight hidden sm:block">
@@ -45,8 +89,8 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Nav Links - Desktop */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Nav Links - Desktop Only (hidden on mobile) */}
+          <div className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -68,7 +112,7 @@ export function Navbar() {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* Language Toggle */}
             <button
               onClick={toggleLocale}
@@ -80,23 +124,23 @@ export function Navbar() {
             {isLoading ? (
               <div className="w-20 h-10 bg-surface rounded-xl animate-pulse" />
             ) : user ? (
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-surface rounded-full">
-                  <div className="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center">
-                    <span className="text-accent text-xs font-semibold">
-                      {(user.name || user.email || "U")[0].toUpperCase()}
-                    </span>
+              <div className="flex items-center gap-2 md:gap-3">
+                {/* 移动端简化的会员徽章 */}
+                {membershipStatus && (
+                  <div className="sm:hidden">
+                    <MembershipBadge
+                      type={membershipStatus.membershipType}
+                      creditsRemaining={membershipStatus.creditsRemaining}
+                      onUpgrade={() => setShowUpgradeModal(true)}
+                    />
                   </div>
-                  <span className="text-sm text-foreground font-medium">
-                    {user.name || user.email?.split("@")[0]}
-                  </span>
-                </div>
-                <button
-                  onClick={logout}
-                  className="px-4 py-2 text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
-                >
-                  {t.nav.logout}
-                </button>
+                )}
+                {/* 用户菜单 */}
+                <UserMenu
+                  user={user}
+                  membershipStatus={membershipStatus}
+                  onLogout={logout}
+                />
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -155,6 +199,15 @@ export function Navbar() {
           </div>
         )}
       </div>
+
+      {/* 升级弹窗 */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        userType={membershipStatus?.membershipType === "FREE" ? "free" : "monthly_expired"}
+        creditsRemaining={membershipStatus?.creditsRemaining}
+        monthlyExpiresAt={membershipStatus?.monthlyExpiresAt ? new Date(membershipStatus.monthlyExpiresAt) : null}
+      />
     </nav>
   );
 }

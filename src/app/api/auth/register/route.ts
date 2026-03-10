@@ -13,6 +13,11 @@ function getClientIp(req: NextRequest): string {
   return (req as unknown as { ip?: string }).ip || "unknown";
 }
 
+// 获取匿名ID
+function getAnonymousId(req: NextRequest): string | null {
+  return req.headers.get("X-Anonymous-Id");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { email, password, name } = await req.json();
@@ -66,6 +71,34 @@ export async function POST(req: NextRequest) {
         name: name || null,
       },
     });
+
+    // 迁移匿名用户数据（如果有）
+    const anonymousId = getAnonymousId(req);
+    const oldAnonymousId = req.headers.get("X-Anonymous-Id-Old");
+    const idsToMigrate = [anonymousId, oldAnonymousId].filter(Boolean) as string[];
+
+    for (const anonId of idsToMigrate) {
+      try {
+        const practicesBefore = await db.practice.count({ where: { userId: anonId } });
+        const sessionsBefore = await db.interviewSession.count({ where: { userId: anonId } });
+
+        if (practicesBefore > 0 || sessionsBefore > 0) {
+          const updatedPractices = await db.practice.updateMany({
+            where: { userId: anonId },
+            data: { userId: user.id },
+          });
+
+          const updatedSessions = await db.interviewSession.updateMany({
+            where: { userId: anonId },
+            data: { userId: user.id },
+          });
+
+          console.log(`[Register Data Migration] Migrated ${updatedPractices.count} practices and ${updatedSessions.count} sessions from ${anonId} to ${user.id}`);
+        }
+      } catch (migrationError) {
+        console.error("[Register Data Migration Error]", migrationError);
+      }
+    }
 
     // 创建会话
     const token = await createSessionToken({

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { useLanguage } from "@/components/language-provider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, locale } = useLanguage();
   const { register } = useAuth();
   const [name, setName] = useState("");
@@ -16,6 +17,9 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // 获取 redirect 参数
+  const redirectUrl = searchParams.get("redirect") || "/dashboard";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +43,7 @@ export default function RegisterPage() {
       setError(result.error);
       setIsLoading(false);
     } else {
-      router.push("/dashboard");
+      router.push(redirectUrl);
       router.refresh();
     }
   };

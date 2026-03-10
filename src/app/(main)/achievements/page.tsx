@@ -9,6 +9,8 @@ import {
   AchievementProgress,
 } from "@/lib/achievement-store";
 import { formatDate } from "@/lib/utils";
+import { LoadingState } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // 成就卡片组件
 function AchievementCard({
@@ -192,18 +194,8 @@ export default function AchievementsPage() {
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-surface py-12">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-white/50 rounded-lg w-48 mb-4"></div>
-            <div className="h-4 bg-white/50 rounded-lg w-96 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-32 bg-white/50 rounded-2xl"></div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-surface">
+        <LoadingState variant="skeleton" fullScreen message="加载成就数据..." />
       </div>
     );
   }
@@ -322,12 +314,11 @@ export default function AchievementsPage() {
 
         {/* 空状态 */}
         {filteredAchievements.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">🔍</span>
-            </div>
-            <p className="text-text-secondary">没有找到相关成就</p>
-          </div>
+          <EmptyState
+            icon="🔍"
+            title="没有找到相关成就"
+            description="尝试切换其他分类查看成就"
+          />
         )}
       </div>
     </div>

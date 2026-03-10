@@ -1,6 +1,6 @@
 import { AIProvider, AICompletionOptions, AICompletionResult, AIError, AIStreamOptions, classifyAIError } from "./types";
 
-const API_TIMEOUT = 30000; // 30秒超时
+const API_TIMEOUT = 60000; // 60秒超时（支持kimi-k2.5深度分析）
 const MAX_RETRIES = 2;     // 最大重试次数
 
 // 通用 OpenAI 兼容适配器（支持通义千问、文心一言等）

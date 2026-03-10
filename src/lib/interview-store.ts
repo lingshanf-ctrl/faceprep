@@ -86,13 +86,14 @@ export interface InterviewSession {
   aiEvaluation?: AIOverallEvaluation;
 }
 
-// 获取匿名ID
+// 获取匿名ID（使用统一的 key）
 function getAnonymousId(): string {
   if (typeof window === 'undefined') return '';
-  let id = localStorage.getItem('anonymous-id');
+  const key = 'job-pilot-anonymous-id';
+  let id = localStorage.getItem(key);
   if (!id) {
-    id = 'anon-' + crypto.randomUUID();
-    localStorage.setItem('anonymous-id', id);
+    id = 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem(key, id);
   }
   return id;
 }

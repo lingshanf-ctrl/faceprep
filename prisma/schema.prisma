@@ -15,18 +15,42 @@ model User {
   password  String   // 密码（已哈希）
   avatar    String?
   plan      Plan     @default(FREE)
+  isAdmin   Boolean  @default(false)  // 管理员标识
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  practices       Practice[]
-  favorites       Favorite[]
-  customQuestions CustomQuestion[]
-  sessions        InterviewSession[]
+  practices           Practice[]
+  favorites           Favorite[]
+  customQuestions     CustomQuestion[]
+  aiGeneratedQuestions AIGeneratedQuestion[]
+  sessions            InterviewSession[]
+  memberships         MembershipOrder[]
+  usageRecords        UsageRecord[]
 }
 
 enum Plan {
   FREE
   PRO
+}
+
+// 会员类型
+enum MembershipType {
+  CREDIT   // 次卡
+  MONTHLY  // 月卡
+}
+
+// 订单状态
+enum OrderStatus {
+  ACTIVE     // 有效
+  EXPIRED    // 已过期
+  CONSUMED   // 已用完
+  CANCELLED  // 已取消
+}
+
+// 消费来源类型
+enum UsageSourceType {
+  PRACTICE          // 单题练习
+  INTERVIEW_SESSION // 模拟面试
 }
 
 // 面试题
@@ -82,13 +106,26 @@ model Practice {
   questionType     QuestionType? // 当时的题目类型
   questionDifficulty Int?   // 当时的题目难度
 
+  // AI 评估状态追踪（异步评估支持）
+  evaluationStatus      EvaluationStatus @default(COMPLETED) // PENDING, PROCESSING, COMPLETED, FAILED
+  evaluationError       String?          // 错误信息
+  evaluationRetries     Int              @default(0) // 重试次数
+  evaluationStartedAt   DateTime?        // 评估开始时间
+  evaluationCompletedAt DateTime?        // 评估完成时间
+
+  // AI 生成题目关联
+  aiGeneratedQuestionId String?
+
   createdAt DateTime @default(now())
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question Question? @relation(fields: [questionId], references: [id], onDelete: SetNull)
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question           Question?           @relation(fields: [questionId], references: [id], onDelete: SetNull)
+  aiGeneratedQuestion AIGeneratedQuestion? @relation(fields: [aiGeneratedQuestionId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([questionId])
+  @@index([evaluationStatus])
+  @@index([aiGeneratedQuestionId])
 }
 
 // 收藏
@@ -121,6 +158,32 @@ model CustomQuestion {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// AI 生成题目（用户专属面试间）
+model AIGeneratedQuestion {
+  id              String       @id @default(cuid())
+  userId          String
+  title           String       // 题目内容
+  type            QuestionType // 题目类型
+  difficulty      String       // 难度 easy/medium/hard
+  keyPoints       String       // 考察点
+
+  // 生成上下文
+  jdText          String?      @db.Text // JD 原文
+  resumeText      String?      @db.Text // 简历原文
+  generationMode  String       @default("ai") // ai 或 rule
+
+  // 关联练习记录
+  practices       Practice[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 // 面试会话
@@ -240,4 +303,53 @@ enum BugStatus {
   IN_PROGRESS // 处理中
   RESOLVED  // 已解决
   CLOSED    // 已关闭
+}
+
+// 会员订单（次卡/月卡）
+model MembershipOrder {
+  id            String         @id @default(cuid())
+  userId        String
+  type          MembershipType
+  status        OrderStatus    @default(ACTIVE)
+
+  // 次卡字段
+  totalCredits  Int?           // 总次数
+  usedCredits   Int            @default(0) // 已使用次数
+
+  // 月卡字段
+  startDate     DateTime?      // 生效日期
+  endDate       DateTime?      // 到期日期
+
+  // 管理字段
+  note          String?        // 备注
+  createdBy     String         // 开通人（admin ID 或 "system"）
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageRecords  UsageRecord[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([endDate])
+}
+
+// 消费记录
+model UsageRecord {
+  id              String          @id @default(cuid())
+  userId          String
+  membershipId    String          // 关联的会员订单
+  sourceType      UsageSourceType // 消费来源类型
+  sourceId        String          // Practice ID 或 InterviewSession ID
+  sourceTitle     String?         // 题目/面试标题（冗余存储便于展示）
+  createdAt       DateTime        @default(now())
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membership      MembershipOrder @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceType, sourceId]) // 防止重复扣费
+  @@index([userId])
+  @@index([membershipId])
+  @@index([createdAt])
 }

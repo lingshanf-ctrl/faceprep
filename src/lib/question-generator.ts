@@ -597,10 +597,16 @@ export function generateMockInterviewQuestions(
     );
   }
 
-  // 按难度过滤
+  // 按难度过滤（题库中难度是数字：1=easy, 2=medium, 3=hard）
   if (difficulty !== 'all' && difficulty !== 'mixed') {
+    const difficultyMap: Record<string, number> = {
+      'easy': 1,
+      'medium': 2,
+      'hard': 3,
+    };
+    const targetDifficulty = difficultyMap[difficulty];
     filteredQuestions = filteredQuestions.filter(
-      (q: any) => q.difficulty === difficulty
+      (q: any) => q.difficulty === targetDifficulty
     );
   }
 
@@ -663,11 +669,11 @@ export function generateMockInterviewQuestions(
   // 3. 技术问题（3题，按难度混合）
   let technicalQuestions = shuffle(questionsByType.TECHNICAL);
 
-  // 如果是mixed难度，确保有简单和困难题混合
+  // 如果是mixed难度，确保有简单和困难题混合（题库中难度是数字：1=easy, 2=medium, 3=hard）
   if (difficulty === 'mixed') {
-    const easyTech = technicalQuestions.filter((q: any) => q.difficulty === 'easy');
-    const mediumTech = technicalQuestions.filter((q: any) => q.difficulty === 'medium');
-    const hardTech = technicalQuestions.filter((q: any) => q.difficulty === 'hard');
+    const easyTech = technicalQuestions.filter((q: any) => q.difficulty === 1);
+    const mediumTech = technicalQuestions.filter((q: any) => q.difficulty === 2);
+    const hardTech = technicalQuestions.filter((q: any) => q.difficulty === 3);
 
     // 混合策略：1简单 + 1中等 + 1困难
     const mixedTech: any[] = [];
