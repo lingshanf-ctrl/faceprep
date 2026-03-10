@@ -160,4 +160,116 @@ export interface InterviewFeedback {
 
   // 目标用户类型（标识这个反馈是为哪种类型的用户生成的）
   targetUserType?: "free" | "paid";
+
+  // ============================================================
+  // 基础版新增字段（免费用户 - 钩子策略）
+  // ============================================================
+
+  // 关键发现（增强版）
+  keyFindings?: {
+    strengths: string[];
+    weaknesses: string[];
+    criticalMissing?: string; // 最关键的缺失点
+  };
+
+  // 快速建议（结构化）
+  quickAdvice?: {
+    primary: string; // 主要建议
+    secondary?: string; // 次要建议
+  };
+
+  // 升级预告（钩子）
+  upgradeTeaser?: UpgradeTeaser;
+
+  // ============================================================
+  // 高级版新增字段（付费用户 - 深度分析）
+  // ============================================================
+
+  // 修改前后对比示例
+  modificationExamples?: ModificationExample[];
+}
+
+// ============================================================
+// 基础版反馈新增类型（免费用户 - 钩子策略）
+// ============================================================
+
+// 维度评分（基础版 - 带预览钩子）
+export interface BasicDimensionScore extends DimensionScore {
+  preview?: string; // 深度分析预览（钩子）
+  potential?: string; // 潜力挖掘方向（仅 highlights 维度）
+}
+
+// 升级预告（激发付费意愿）
+export interface UpgradeTeaser {
+  gapHint: string; // 差距提示（如："对比优秀回答，你在XX方面存在差距"）
+  optimizedPreview: string; // 优化版预览（前20字）
+  coachInsight: string; // 教练洞察（模糊但吸引人的点评）
+}
+
+// ============================================================
+// 高级版反馈新增类型（付费用户 - 深度分析）
+// ============================================================
+
+// 引用分析（针对用户原文）
+export interface QuoteAnalysis {
+  original: string; // 用户原文摘录
+  analysis: string; // 问题分析
+  suggestion: string; // 改进建议
+}
+
+// 用词改进示例
+export interface WordChoiceExample {
+  original: string; // 原用词/表达
+  improved: string; // 改进后的表达
+  reason: string; // 为什么这样改更好
+}
+
+// 修改前后对比示例
+export interface ModificationExample {
+  original: string; // 用户原文摘录
+  problem: string; // 存在的问题
+  improved: string; // 修改后的文本
+  impact: string; // 修改后的效果提升
+}
+
+// 增强版差距分析项（带原文引用）
+export interface EnhancedGapItem extends GapItem {
+  userQuote?: string; // 用户原文引用
+  referenceQuote?: string; // 参考答案引用
+  referenceContent?: string; // 参考答案内容摘要
+  why?: string; // 为什么出色/重要
+}
+
+// 增强版内容维度（带引用分析）
+export interface EnhancedContentDimension extends ContentDimension {
+  quotes?: QuoteAnalysis[];
+}
+
+// 增强版结构维度（带框架分析）
+export interface EnhancedStructureDimension extends StructureDimension {
+  frameworkAnalysis?: string; // 答题框架使用分析
+}
+
+// 增强版表达维度（带用词改进示例）
+export interface EnhancedExpressionDimension extends ExpressionDimension {
+  wordChoiceExamples?: WordChoiceExample[];
+}
+
+// 增强版亮点维度
+export interface EnhancedHighlightsDimension extends HighlightsDimension {
+  uniqueInsights?: string; // 独特见解
+  potentialToExplore?: string; // 可挖掘的方向
+}
+
+// 增强版差距分析
+export interface EnhancedGapAnalysis {
+  missing: EnhancedGapItem[];
+  insufficient: EnhancedGapItem[];
+  good: EnhancedGapItem[];
+  excellent: EnhancedGapItem[];
+}
+
+// 增强版改进建议
+export interface EnhancedImprovementAction extends ImprovementAction {
+  example?: string; // 示例或说明
 }
