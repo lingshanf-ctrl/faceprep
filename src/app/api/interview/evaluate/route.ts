@@ -31,15 +31,24 @@ export async function POST(request: NextRequest) {
       questionMetadata
     );
 
-    // 转换为模拟面试需要的简单格式
-    const simpleFeedback = {
+    // 构建完整反馈（保留所有新字段）
+    const fullFeedback = {
+      totalScore: feedback.totalScore,
+      dimensions: feedback.dimensions,
+      gapAnalysis: feedback.gapAnalysis,
+      improvements: feedback.improvements,
+      optimizedAnswer: feedback.optimizedAnswer,
+      coachMessage: feedback.coachMessage,
+      // 新增字段
+      quotes: (feedback as any).quotes || [],
+      modificationExamples: (feedback as any).modificationExamples || [],
+      // 兼容旧版字段
       score: feedback.totalScore,
       good: [
         ...(feedback.dimensions.content.missing.length === 0 ? ["内容完整，覆盖考察要点"] : []),
         ...(feedback.dimensions.structure.score >= 70 ? ["结构清晰，逻辑连贯"] : []),
         ...(feedback.dimensions.expression.score >= 70 ? ["表达专业，用词准确"] : []),
         ...(feedback.dimensions.highlights.score >= 70 ? ["回答有亮点，展现个人特色"] : []),
-        // 添加亮点具体描述
         ...feedback.dimensions.highlights.strongPoints.slice(0, 2),
       ],
       improve: [
@@ -54,23 +63,18 @@ export async function POST(request: NextRequest) {
           : []),
       ],
       suggestion: feedback.coachMessage || feedback.dimensions.content.feedback,
-      // 保留完整的维度数据供报告使用
-      dimensions: feedback.dimensions,
-      improvements: feedback.improvements,
-      optimizedAnswer: feedback.optimizedAnswer,
     };
 
     // 确保至少有一些改进建议
-    if (simpleFeedback.improve.length === 0) {
-      simpleFeedback.improve.push("继续保持，可以尝试加入更多具体数据支撑");
+    if (fullFeedback.improve.length === 0) {
+      fullFeedback.improve.push("继续保持，可以尝试加入更多具体数据支撑");
     }
-    if (simpleFeedback.good.length === 0) {
-      simpleFeedback.good.push("回答基本完整，表达清晰");
+    if (fullFeedback.good.length === 0) {
+      fullFeedback.good.push("回答基本完整，表达清晰");
     }
 
     return NextResponse.json({
-      feedback: simpleFeedback,
-      fullFeedback: feedback,
+      feedback: fullFeedback,
     });
   } catch (error) {
     console.error("Interview evaluation error:", error);

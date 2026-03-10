@@ -339,7 +339,8 @@ export function BasicFeedbackView({
       )}
 
       {/* 核心改进建议 */}
-      {(quickAdvice.primary || quickAdvice.secondary) && (
+      {((quickAdvice.primary && typeof quickAdvice.primary === 'string') ||
+        (quickAdvice.secondary && typeof quickAdvice.secondary === 'string')) && (
         <Card className="border border-slate-200">
           <CardHeader>
             <CardTitle className="text-base font-medium flex items-center gap-2">
@@ -349,14 +350,14 @@ export function BasicFeedbackView({
           </CardHeader>
           <CardContent className="space-y-3">
             {/* 主要建议 */}
-            {quickAdvice.primary && (
+            {quickAdvice.primary && typeof quickAdvice.primary === 'string' && (
               <div className="bg-accent/5 border border-accent/20 rounded-lg p-4">
                 <p className="text-sm font-medium text-slate-800">{quickAdvice.primary}</p>
               </div>
             )}
 
             {/* 次要建议 */}
-            {quickAdvice.secondary && (
+            {quickAdvice.secondary && typeof quickAdvice.secondary === 'string' && (
               <p className="text-sm text-slate-600 pl-4 border-l-2 border-slate-200">
                 {quickAdvice.secondary}
               </p>

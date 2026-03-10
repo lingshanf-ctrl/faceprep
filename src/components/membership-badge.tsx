@@ -40,16 +40,16 @@ export function MembershipBadge({
     );
   }
 
-  // 免费用户 - 显示升级按钮
+  // 免费用户 - 显示升级标签（使用 span 避免嵌套 button 问题）
   return (
-    <button
+    <span
       onClick={(e) => {
         e.stopPropagation();
         onUpgrade?.();
       }}
-      className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-accent text-white hover:bg-accent-dark transition-colors shadow-sm hover:shadow-glow ${className}`}
+      className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-accent text-white hover:bg-accent-dark transition-colors shadow-sm hover:shadow-glow cursor-pointer ${className}`}
     >
       升级
-    </button>
+    </span>
   );
 }

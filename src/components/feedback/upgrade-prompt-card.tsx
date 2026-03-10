@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Sparkles, Crown, Check, X, ChevronRight, Zap } from "lucide-react";
+import { Lock, Sparkles, Crown, Check, ChevronRight, Zap } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 
 interface UpgradeTeaserData {
@@ -34,26 +34,14 @@ const translations = {
     // 新增翻译
     free: "免费版",
     premium: "专业版",
-    priceAnchor: "原价 ¥199/月",
-    currentPrice: "限时 ¥49/月",
-    saveAmount: "省 ¥150",
+    priceAnchor: "原价 ¥29.9/月",
+    currentPrice: "限时 ¥19.9/月",
+    saveAmount: "省 ¥10",
     previewTitle: "专业版分析预览",
     gapHintTitle: "🎯 差距分析要点",
     optimizedPreviewTitle: "✨ 优化版预览",
     coachInsightTitle: "💡 教练洞察",
     viewMore: "查看完整分析",
-    comparisonTitle: "功能对比",
-    basicAnalysis: "基础AI分析",
-    advancedAnalysis: "深度AI分析（Kimi 2.5）",
-    dimensionCount: "2个维度评分",
-    dimensionCountPremium: "4个维度深度评估",
-    quoteAnalysis: "原文引用分析",
-    modificationExample: "修改前后对比",
-    optimizedAnswer: "完整优化答案",
-    coachMessage: "教练寄语",
-    gapAnalysis: "差距分析",
-    unlimited: "无限次练习",
-    limited: "每日5次限制",
   },
   en: {
     loginToUnlock: "Login to Unlock More",
@@ -69,26 +57,14 @@ const translations = {
     // New translations
     free: "Free",
     premium: "Premium",
-    priceAnchor: "Was ¥199/month",
-    currentPrice: "Now ¥49/month",
-    saveAmount: "Save ¥150",
+    priceAnchor: "Was ¥29.9/month",
+    currentPrice: "Now ¥19.9/month",
+    saveAmount: "Save ¥10",
     previewTitle: "Premium Preview",
     gapHintTitle: "🎯 Gap Analysis Highlight",
     optimizedPreviewTitle: "✨ Optimized Preview",
     coachInsightTitle: "💡 Coach Insight",
     viewMore: "View Full Analysis",
-    comparisonTitle: "Feature Comparison",
-    basicAnalysis: "Basic AI Analysis",
-    advancedAnalysis: "Advanced AI (Kimi 2.5)",
-    dimensionCount: "2 dimensions",
-    dimensionCountPremium: "4 dimensions deep",
-    quoteAnalysis: "Quote-based analysis",
-    modificationExample: "Before/after comparison",
-    optimizedAnswer: "Full optimized answer",
-    coachMessage: "Coach message",
-    gapAnalysis: "Gap analysis",
-    unlimited: "Unlimited practice",
-    limited: "5 times/day limit",
   },
 };
 
@@ -184,55 +160,6 @@ export function UpgradePromptCard({
         </CardContent>
       </Card>
 
-      {/* 功能对比表 */}
-      <Card className="border border-slate-200">
-        <CardContent className="pt-4 pb-4">
-          <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-accent" />
-            {t.comparisonTitle}
-          </h4>
-          <div className="space-y-2">
-            {/* 表头 */}
-            <div className="grid grid-cols-3 gap-2 text-xs font-medium text-slate-500 pb-2 border-b">
-              <span>功能</span>
-              <span className="text-center">{t.free}</span>
-              <span className="text-center text-accent">{t.premium}</span>
-            </div>
-
-            {/* 对比项 */}
-            <ComparisonRow
-              feature={t.basicAnalysis}
-              free={<Check className="w-4 h-4 text-slate-400 mx-auto" />}
-              premium={<Check className="w-4 h-4 text-accent mx-auto" />}
-            />
-            <ComparisonRow
-              feature={t.advancedAnalysis}
-              free={<X className="w-4 h-4 text-slate-300 mx-auto" />}
-              premium={<Badge className="bg-accent/10 text-accent text-xs mx-auto">Kimi 2.5</Badge>}
-            />
-            <ComparisonRow
-              feature={t.dimensionCount}
-              free={<span className="text-xs text-slate-400 text-center block">2</span>}
-              premium={<span className="text-xs text-accent text-center block font-medium">4</span>}
-            />
-            <ComparisonRow
-              feature={t.quoteAnalysis}
-              free={<X className="w-4 h-4 text-slate-300 mx-auto" />}
-              premium={<Check className="w-4 h-4 text-accent mx-auto" />}
-            />
-            <ComparisonRow
-              feature={t.modificationExample}
-              free={<X className="w-4 h-4 text-slate-300 mx-auto" />}
-              premium={<Check className="w-4 h-4 text-accent mx-auto" />}
-            />
-            <ComparisonRow
-              feature={t.optimizedAnswer}
-              free={<span className="text-xs text-slate-400 text-center block">{t.limited}</span>}
-              premium={<span className="text-xs text-accent text-center block">{t.unlimited}</span>}
-            />
-          </div>
-        </CardContent>
-      </Card>
 
       {/* 预览内容（如果有） */}
       {teaserData && (
@@ -296,21 +223,3 @@ export function UpgradePromptCard({
   );
 }
 
-// 对比行组件
-function ComparisonRow({
-  feature,
-  free,
-  premium
-}: {
-  feature: string;
-  free: React.ReactNode;
-  premium: React.ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-3 gap-2 text-xs py-1.5 hover:bg-slate-50 rounded">
-      <span className="text-slate-600">{feature}</span>
-      <div className="flex justify-center">{free}</div>
-      <div className="flex justify-center">{premium}</div>
-    </div>
-  );
-}
