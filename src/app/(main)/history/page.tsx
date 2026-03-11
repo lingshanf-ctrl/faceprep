@@ -514,133 +514,144 @@ export default function HistoryPage() {
                   return (
                     <div
                       key={`${record.type}-${record.id}`}
-                      className="group flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-border hover:border-accent/30 hover:shadow-soft-md hover:-translate-y-0.5 transition-all duration-300"
+                      className="group p-4 bg-white rounded-2xl border-2 border-border hover:border-accent/30 hover:shadow-soft-md hover:-translate-y-0.5 transition-all duration-300"
                       style={{ animationDelay: `${recordIndex * 0.05}s` }}
                     >
-                      {/* Type Icon */}
-                      <Link
-                        href={
-                          record.type === "practice"
-                            ? `/practice/review/${record.id}`
-                            : `/interview/${record.id}/report`
-                        }
-                        className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                          record.type === "practice"
-                            ? "bg-gradient-to-br from-accent/20 to-accent/10 text-accent group-hover:shadow-soft-sm"
-                            : "bg-gradient-to-br from-success/20 to-success/10 text-success group-hover:shadow-soft-sm"
-                        }`}
-                      >
-                        {record.type === "practice" ? (
-                          <FileText className="w-5 h-5" />
-                        ) : (
-                          <MessageSquare className="w-5 h-5" />
-                        )}
-                      </Link>
+                      {/* Mobile & Desktop Layout */}
+                      <div className="flex items-start gap-3 sm:gap-4">
+                        {/* Type Icon - 固定大小 */}
+                        <Link
+                          href={
+                            record.type === "practice"
+                              ? `/practice/review/${record.id}`
+                              : `/interview/${record.id}/report`
+                          }
+                          className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                            record.type === "practice"
+                              ? "bg-gradient-to-br from-accent/20 to-accent/10 text-accent group-hover:shadow-soft-sm"
+                              : "bg-gradient-to-br from-success/20 to-success/10 text-success group-hover:shadow-soft-sm"
+                          }`}
+                        >
+                          {record.type === "practice" ? (
+                            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
+                          ) : (
+                            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                          )}
+                        </Link>
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        {isEditing ? (
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              className="flex-1 px-3 py-2 text-sm bg-surface border-2 border-accent rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20"
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") saveTitle(record.id);
-                                if (e.key === "Escape") cancelEdit();
-                              }}
-                            />
-                            <button
-                              onClick={() => saveTitle(record.id)}
-                              className="p-2 text-success hover:bg-success/10 rounded-xl transition-colors"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={cancelEdit}
-                              className="p-2 text-foreground-muted hover:bg-surface rounded-xl transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
+                        {/* Content - 占据剩余空间 */}
+                        <div className="flex-1 min-w-0">
+                          {/* Title Row: 标题 + 分数 */}
+                          {isEditing ? (
+                            <div className="flex items-center gap-2 mb-2">
+                              <input
+                                type="text"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                className="flex-1 px-3 py-2 text-sm bg-surface border-2 border-accent rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveTitle(record.id);
+                                  if (e.key === "Escape") cancelEdit();
+                                }}
+                              />
+                              <button
+                                onClick={() => saveTitle(record.id)}
+                                className="p-2 text-success hover:bg-success/10 rounded-xl transition-colors"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={cancelEdit}
+                                className="p-2 text-foreground-muted hover:bg-surface rounded-xl transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-start sm:items-center gap-2 sm:gap-3 mb-1.5">
+                              <Link
+                                href={
+                                  record.type === "practice"
+                                    ? `/practice/review/${record.id}`
+                                    : `/interview/${record.id}/report`
+                                }
+                                className="flex-1 min-w-0"
+                              >
+                                <h4 className="font-semibold text-foreground text-sm sm:text-base leading-tight line-clamp-2 sm:line-clamp-1 group-hover:text-accent transition-colors">
+                                  {record.title}
+                                </h4>
+                              </Link>
+                              {/* Score Badge - 紧跟标题 */}
+                              <Link
+                                href={
+                                  record.type === "practice"
+                                    ? `/practice/review/${record.id}`
+                                    : `/interview/${record.id}/report`
+                                }
+                                className="flex-shrink-0"
+                              >
+                                <ScoreBadge score={record.score} size="sm" className="sm:text-sm" />
+                              </Link>
+                            </div>
+                          )}
+
+                          {/* Meta Row: 时间 + 详情 + 操作按钮 */}
+                          <div className="flex items-center justify-between gap-2">
+                            {/* 时间和详情 */}
+                            <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-foreground-muted min-w-0 flex-1">
+                              <span className="font-medium flex-shrink-0">{formatTime(record.date)}</span>
+                              {record.details && (
+                                <>
+                                  <span className="text-border flex-shrink-0">•</span>
+                                  <span className="truncate">{record.details}</span>
+                                </>
+                              )}
+                              {record.questionCount && (
+                                <>
+                                  <span className="text-border flex-shrink-0">•</span>
+                                  <span className="px-1.5 sm:px-2 py-0.5 bg-surface rounded-full border border-border font-medium flex-shrink-0">
+                                    {record.questionCount} {locale === "zh" ? "题" : "Q"}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+
+                            {/* 操作按钮 - 更紧凑的设计 */}
+                            <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+                              {/* Interview Actions - 移动端始终显示，桌面端hover显示 */}
+                              {isInterview && (
+                                <>
+                                  <button
+                                    onClick={() => startEditTitle(record as unknown as InterviewSession)}
+                                    className="p-1.5 sm:p-2 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+                                    title={locale === "zh" ? "编辑名称" : "Edit name"}
+                                  >
+                                    <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleRetry(record as unknown as InterviewSession)}
+                                    className="p-1.5 sm:p-2 text-foreground-muted hover:text-success hover:bg-success/10 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
+                                    title={locale === "zh" ? "再练一次" : "Practice again"}
+                                  >
+                                    <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                  </button>
+                                </>
+                              )}
+
+                              <Link
+                                href={
+                                  record.type === "practice"
+                                    ? `/practice/review/${record.id}`
+                                    : `/interview/${record.id}/report`
+                                }
+                                className="p-1.5 sm:p-2 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
+                              >
+                                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                              </Link>
+                            </div>
                           </div>
-                        ) : (
-                          <Link
-                            href={
-                              record.type === "practice"
-                                ? `/practice/review/${record.id}`
-                                : `/interview/${record.id}/report`
-                            }
-                            className="block"
-                          >
-                            <h4 className="font-semibold text-foreground truncate group-hover:text-accent transition-colors">
-                              {record.title}
-                            </h4>
-                          </Link>
-                        )}
-                        <div className="flex items-center gap-2 text-xs text-foreground-muted mt-1">
-                          <span className="font-medium">{formatTime(record.date)}</span>
-                          {record.details && (
-                            <>
-                              <span className="text-border">•</span>
-                              <span className="truncate">{record.details}</span>
-                            </>
-                          )}
-                          {record.questionCount && (
-                            <>
-                              <span className="text-border">•</span>
-                              <span className="px-2 py-0.5 bg-surface rounded-full border border-border font-medium">
-                                {record.questionCount} {locale === "zh" ? "道题" : "questions"}
-                              </span>
-                            </>
-                          )}
                         </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-3">
-                        {/* Score Badge */}
-                        <Link
-                          href={
-                            record.type === "practice"
-                              ? `/practice/review/${record.id}`
-                              : `/interview/${record.id}/report`
-                          }
-                        >
-                          <ScoreBadge score={record.score} size="md" />
-                        </Link>
-
-                        {/* Interview Actions */}
-                        {isInterview && (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                            <button
-                              onClick={() => startEditTitle(record as unknown as InterviewSession)}
-                              className="p-2 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-xl transition-colors"
-                              title={locale === "zh" ? "编辑名称" : "Edit name"}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleRetry(record as unknown as InterviewSession)}
-                              className="p-2 text-foreground-muted hover:text-success hover:bg-success/10 rounded-xl transition-colors"
-                              title={locale === "zh" ? "再练一次" : "Practice again"}
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-
-                        <Link
-                          href={
-                            record.type === "practice"
-                              ? `/practice/review/${record.id}`
-                              : `/interview/${record.id}/report`
-                          }
-                          className="p-2 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-xl transition-colors"
-                        >
-                          <ChevronRight className="w-5 h-5" />
-                        </Link>
                       </div>
                     </div>
                   );
