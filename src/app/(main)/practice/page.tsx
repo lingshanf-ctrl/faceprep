@@ -259,7 +259,7 @@ export default function PracticePage() {
                         </h3>
 
                         {/* 推荐理由 */}
-                        <p className="text-white/70 text-sm mb-4 flex items-center gap-1">
+                        <p className="text-slate-200 text-sm mb-4 flex items-center gap-1">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
@@ -267,7 +267,7 @@ export default function PracticePage() {
                         </p>
 
                         {/* 预计时间 */}
-                        <div className="flex items-center gap-4 mb-6 text-sm text-white/80">
+                        <div className="flex items-center gap-4 mb-6 text-sm text-slate-100">
                           <span className="flex items-center gap-1">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -294,7 +294,7 @@ export default function PracticePage() {
                             variant="ghost"
                             onClick={handleChangeQuestion}
                             disabled={isChanging}
-                            className="text-white/80 hover:text-white hover:bg-white/[0.15] rounded-full h-11 sm:h-10"
+                            className="text-slate-100 hover:text-white hover:bg-slate-700/90 rounded-full h-11 sm:h-10"
                           >
                             <svg className={`w-4 h-4 mr-1 ${isChanging ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -402,7 +402,7 @@ export default function PracticePage() {
             <h2 className="font-display text-3xl md:text-4xl font-bold mb-3">
               {locale === 'zh' ? '沉浸式面试体验' : 'Immersive Interview Experience'}
             </h2>
-            <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto">
+            <p className="text-slate-100 text-base md:text-lg max-w-2xl mx-auto">
               {locale === 'zh'
                 ? '完整流程 · 多题连贯 · AI 综合评估 · 20-30分钟'
                 : 'Full flow · Multi-questions · AI assessment · 20-30 min'}
@@ -420,7 +420,7 @@ export default function PracticePage() {
             {/* 标准模拟 */}
             <motion.div variants={itemVariants}>
               <Link href="/practice/mock" className="block h-full group">
-                <div className="h-full bg-white/10 backdrop-blur-sm border border-white/10 hover:border-accent/50 rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 transition-all hover:bg-white/[0.15] relative overflow-hidden">
+                <div className="h-full bg-slate-800/80 border border-slate-700 hover:border-accent/50 rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 transition-all hover:bg-slate-700/90 relative overflow-hidden">
                   {/* 光晕效果 */}
                   <div className="absolute -top-20 -right-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -439,7 +439,7 @@ export default function PracticePage() {
                     <h3 className="font-display text-xl md:text-2xl font-semibold mb-2">
                       {locale === 'zh' ? '标准模拟' : 'Standard Mock'}
                     </h3>
-                    <p className="text-white/70 text-sm mb-6">
+                    <p className="text-slate-200 text-sm mb-6">
                       {locale === 'zh'
                         ? '8道精选经典题，覆盖自我介绍、项目经历、技术、行为面试等全类型'
                         : '8 classic questions covering all interview types'}
@@ -452,7 +452,7 @@ export default function PracticePage() {
                         locale === 'zh' ? '完整面试流程模拟' : 'Full interview flow simulation',
                         locale === 'zh' ? '综合评分与详细反馈' : 'Comprehensive scoring & feedback'
                       ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm text-white/80">
+                        <div key={i} className="flex items-center gap-2 text-sm text-slate-100">
                           <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -462,7 +462,7 @@ export default function PracticePage() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-white/40 text-sm flex items-center gap-1">
+                      <span className="text-slate-400 text-sm flex items-center gap-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -483,7 +483,7 @@ export default function PracticePage() {
             {/* AI 定制 */}
             <motion.div variants={itemVariants}>
               <Link href="/practice/ai-custom" className="block h-full group">
-                <div className="h-full bg-white/10 backdrop-blur-sm border border-white/10 hover:border-purple-500/50 rounded-3xl p-6 md:p-8 transition-all hover:bg-white/[0.15] relative overflow-hidden">
+                <div className="h-full bg-slate-800/80 border border-slate-700 hover:border-purple-500/50 rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-700/90 relative overflow-hidden">
                   {/* 光晕效果 */}
                   <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -502,7 +502,7 @@ export default function PracticePage() {
                     <h3 className="font-display text-xl md:text-2xl font-semibold mb-2">
                       {locale === 'zh' ? 'AI 定制模拟' : 'AI Custom Mock'}
                     </h3>
-                    <p className="text-white/70 text-sm mb-6">
+                    <p className="text-slate-200 text-sm mb-6">
                       {locale === 'zh'
                         ? '上传简历和职位描述，AI 生成专属面试题目，精准匹配目标岗位'
                         : 'Upload resume & JD, AI generates tailored questions for your target role'}
@@ -515,7 +515,7 @@ export default function PracticePage() {
                         locale === 'zh' ? '针对简历内容深挖' : 'Deep dive into your resume',
                         locale === 'zh' ? '岗位匹配度分析' : 'Role compatibility analysis'
                       ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm text-white/80">
+                        <div key={i} className="flex items-center gap-2 text-sm text-slate-100">
                           <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -525,7 +525,7 @@ export default function PracticePage() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-white/40 text-sm flex items-center gap-1">
+                      <span className="text-slate-400 text-sm flex items-center gap-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
