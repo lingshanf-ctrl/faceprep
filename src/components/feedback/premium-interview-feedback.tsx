@@ -625,7 +625,7 @@ function AnswerCard({
             )}
 
             {/* Good & Improve - 优点与改进 */}
-            {(answer.feedback?.good?.length || answer.feedback?.improve?.length) > 0 && (
+            {((answer.feedback?.good?.length || 0) > 0 || (answer.feedback?.improve?.length || 0) > 0) && (
               <div className="grid md:grid-cols-2 gap-3">
                 {answer.feedback?.good && answer.feedback.good.length > 0 && (
                   <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
@@ -740,7 +740,7 @@ function AnswerCard({
             </div>
 
             {/* 关键改进点 */}
-            {(answer.feedback.good?.length || answer.feedback.improve?.length) > 0 && (
+            {((answer.feedback?.good?.length || 0) > 0 || (answer.feedback?.improve?.length || 0) > 0) && (
               <div className="bg-accent/5 rounded-lg p-4 border border-accent/10">
                 <h5 className="text-xs font-medium text-accent mb-3 flex items-center gap-1">
                   <Wand2 className="w-3 h-3" />
