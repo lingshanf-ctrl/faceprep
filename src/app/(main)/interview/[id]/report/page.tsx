@@ -13,7 +13,7 @@ import {
 } from "@/lib/interview-store";
 import { LoadingState } from "@/components/ui/loading-state";
 import { UpgradeModal } from "@/components/upgrade-modal";
-import { BasicInterviewFeedback, PremiumInterviewFeedback } from "@/components/feedback";
+import { BasicInterviewFeedback, InterviewReportRedesign } from "@/components/feedback";
 
 // 评估状态类型
 interface EvaluationStatus {
@@ -541,7 +541,7 @@ export default function InterviewReportPage() {
         )}
 
         {hasAccess === true && session && (
-          <PremiumInterviewFeedback session={session} />
+          <InterviewReportRedesign session={session} />
         )}
 
         {/* 权限检查中 */}
