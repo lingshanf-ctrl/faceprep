@@ -13,7 +13,29 @@ import {
 } from "@/lib/interview-store";
 import { LoadingState } from "@/components/ui/loading-state";
 import { UpgradeModal } from "@/components/upgrade-modal";
-import { BasicInterviewFeedback, InterviewReportRedesign } from "@/components/feedback";
+import { BasicInterviewFeedback, InterviewReportV2 } from "@/components/feedback";
+
+// ==================== 工具函数 ====================
+
+/**
+ * 安全地获取字符串值
+ * 处理后端返回的字符串或对象格式
+ */
+function safeString(value: unknown, fallback = ""): string {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return fallback;
+  // 处理对象格式，尝试提取常见字段
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    return (obj.text as string) ||
+           (obj.description as string) ||
+           (obj.primary as string) ||
+           (obj.secondary as string) ||
+           (obj.content as string) ||
+           JSON.stringify(value);
+  }
+  return String(value);
+}
 
 // 评估状态类型
 interface EvaluationStatus {
@@ -84,6 +106,11 @@ export default function InterviewReportPage() {
 
   // 仅检查权限，不消费（用于评估进行中的情况）
   const checkAccessOnly = async (sessionId: string) => {
+    if (!sessionId) {
+      console.error("checkAccessOnly: sessionId is required");
+      setHasAccess(false);
+      return false;
+    }
     try {
       const checkResponse = await fetch(`/api/membership/check-access?type=INTERVIEW_SESSION&id=${sessionId}`);
       if (!checkResponse.ok) {
@@ -131,6 +158,11 @@ export default function InterviewReportPage() {
 
   // 检查权限并处理消费
   const checkAccessAndConsume = async (sessionId: string, sessionTitle?: string) => {
+    if (!sessionId) {
+      console.error("checkAccessAndConsume: sessionId is required");
+      setHasAccess(false);
+      return false;
+    }
     try {
       const checkResponse = await fetch(`/api/membership/check-access?type=INTERVIEW_SESSION&id=${sessionId}`);
       if (!checkResponse.ok) {
@@ -217,6 +249,10 @@ export default function InterviewReportPage() {
 
   useEffect(() => {
     async function loadSession() {
+      if (!interviewId) {
+        console.error("loadSession: interviewId is required");
+        return;
+      }
       const loadedSession = await getInterviewSessionAsync(interviewId);
       if (!loadedSession) {
         router.push("/practice");
@@ -541,7 +577,7 @@ export default function InterviewReportPage() {
         )}
 
         {hasAccess === true && session && (
-          <InterviewReportRedesign session={session} />
+          <InterviewReportV2 session={session} />
         )}
 
         {/* 权限检查中 */}
@@ -677,7 +713,7 @@ function OverviewTab({ session, locale }: { session: InterviewSession; locale: s
               <h3 className="font-semibold text-foreground mb-1">
                 {locale === "zh" ? "岗位匹配度" : "Job Match Score"}
               </h3>
-              <p className="text-sm text-foreground-muted leading-relaxed">{session.aiEvaluation.jobMatch.analysis}</p>
+              <p className="text-sm text-foreground-muted leading-relaxed">{safeString(session.aiEvaluation.jobMatch.analysis)}</p>
             </div>
           </div>
         </div>
@@ -686,7 +722,7 @@ function OverviewTab({ session, locale }: { session: InterviewSession; locale: s
       {/* Overall Feedback */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">{locale === "zh" ? "整体评价" : "Overall Assessment"}</h2>
-        <p className="text-foreground-muted leading-relaxed">{session.overallFeedback}</p>
+        <p className="text-foreground-muted leading-relaxed">{safeString(session.overallFeedback)}</p>
       </div>
 
       {/* Strengths & Improvements */}
@@ -707,7 +743,7 @@ function OverviewTab({ session, locale }: { session: InterviewSession; locale: s
                 <span className="flex-shrink-0 w-5 h-5 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-xs font-medium">
                   {idx + 1}
                 </span>
-                <span className="leading-relaxed">{strength}</span>
+                <span className="leading-relaxed">{safeString(strength)}</span>
               </li>
             ))}
           </ul>
@@ -734,7 +770,7 @@ function OverviewTab({ session, locale }: { session: InterviewSession; locale: s
                 <span className="flex-shrink-0 w-5 h-5 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-xs font-medium">
                   {idx + 1}
                 </span>
-                <span className="leading-relaxed">{improvement}</span>
+                <span className="leading-relaxed">{safeString(improvement)}</span>
               </li>
             ))}
           </ul>
@@ -757,7 +793,7 @@ function OverviewTab({ session, locale }: { session: InterviewSession; locale: s
             </div>
             <div>
               <h3 className="font-semibold text-foreground mb-2">{locale === "zh" ? "教练寄语" : "Coach's Words"}</h3>
-              <p className="text-foreground-muted italic leading-relaxed">"{session.aiEvaluation.coachSummary}"</p>
+              <p className="text-foreground-muted italic leading-relaxed">"{safeString(session.aiEvaluation.coachSummary)}"</p>
             </div>
           </div>
         </div>
@@ -772,7 +808,7 @@ function OverviewTab({ session, locale }: { session: InterviewSession; locale: s
               <span className="flex-shrink-0 w-6 h-6 bg-accent text-white rounded-full flex items-center justify-center text-xs font-medium">
                 {idx + 1}
               </span>
-              <p className="text-sm text-foreground leading-relaxed">{step}</p>
+              <p className="text-sm text-foreground leading-relaxed">{safeString(step)}</p>
             </div>
           ))}
         </div>
@@ -931,7 +967,7 @@ function QuestionCard({
                 {locale === "zh" ? "你的回答" : "Your Answer"}
               </h4>
               <div className="p-4 bg-slate-50 rounded-xl">
-                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{answer.answer}</p>
+                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{safeString(answer.answer)}</p>
               </div>
             </div>
 
@@ -966,7 +1002,7 @@ function QuestionCard({
                     {answer.feedback.good.map((item, idx) => (
                       <li key={idx} className="text-xs text-foreground flex items-start gap-2">
                         <span className="text-emerald-500 mt-0.5">+</span>
-                        <span className="leading-relaxed">{item}</span>
+                        <span className="leading-relaxed">{safeString(item)}</span>
                       </li>
                     ))}
                   </ul>
@@ -979,7 +1015,7 @@ function QuestionCard({
                     {answer.feedback.improve.map((item, idx) => (
                       <li key={idx} className="text-xs text-foreground flex items-start gap-2">
                         <span className="text-amber-500 mt-0.5">!</span>
-                        <span className="leading-relaxed">{item}</span>
+                        <span className="leading-relaxed">{safeString(item)}</span>
                       </li>
                     ))}
                   </ul>
@@ -994,7 +1030,7 @@ function QuestionCard({
                   {locale === "zh" ? "优化示例" : "Optimized Example"}
                 </h5>
                 <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
-                  {answer.feedback.optimizedAnswer}
+                  {safeString(answer.feedback.optimizedAnswer)}
                 </p>
               </div>
             )}
@@ -1004,7 +1040,7 @@ function QuestionCard({
               <h5 className="text-xs font-medium text-foreground-muted mb-1">
                 {locale === "zh" ? "教练建议" : "Coach Suggestion"}
               </h5>
-              <p className="text-sm text-foreground">{answer.feedback.suggestion}</p>
+              <p className="text-sm text-foreground">{safeString(answer.feedback.suggestion)}</p>
             </div>
           </div>
         </div>

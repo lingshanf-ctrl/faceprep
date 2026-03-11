@@ -20,6 +20,36 @@ import {
 import { motion } from "framer-motion";
 import { useLanguage } from "@/components/language-provider";
 
+// ==================== 工具函数 ====================
+
+/**
+ * 安全地获取字符串值
+ * 处理后端返回的字符串或对象格式
+ */
+function safeString(value: unknown, fallback = ""): string {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return fallback;
+  // 处理对象格式，尝试提取常见字段
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    return (obj.text as string) ||
+           (obj.description as string) ||
+           (obj.primary as string) ||
+           (obj.secondary as string) ||
+           (obj.content as string) ||
+           JSON.stringify(value);
+  }
+  return String(value);
+}
+
+/**
+ * 安全地获取字符串数组
+ */
+function safeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(item => safeString(item));
+}
+
 // 引用分析类型
 interface QuoteAnalysis {
   original: string;
@@ -256,7 +286,7 @@ function EnhancedDimensionCard({
                   {score}
                 </span>
               </div>
-              <p className="text-sm text-slate-600 leading-relaxed">{feedback}</p>
+              <p className="text-sm text-slate-600 leading-relaxed">{safeString(feedback)}</p>
             </div>
           </div>
 
@@ -264,7 +294,7 @@ function EnhancedDimensionCard({
           {frameworkAnalysis && (
             <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
               <p className="text-xs font-medium text-purple-600 mb-1">{t.frameworkAnalysis}</p>
-              <p className="text-sm text-purple-700">{frameworkAnalysis}</p>
+              <p className="text-sm text-purple-700">{safeString(frameworkAnalysis)}</p>
             </div>
           )}
 
@@ -272,7 +302,7 @@ function EnhancedDimensionCard({
           {uniqueInsights && (
             <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
               <p className="text-xs font-medium text-emerald-600 mb-1">{t.uniqueInsights}</p>
-              <p className="text-sm text-emerald-700">{uniqueInsights}</p>
+              <p className="text-sm text-emerald-700">{safeString(uniqueInsights)}</p>
             </div>
           )}
 
@@ -280,7 +310,7 @@ function EnhancedDimensionCard({
           {potentialToExplore && (
             <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
               <p className="text-xs font-medium text-blue-600 mb-1">{t.potentialToExplore}</p>
-              <p className="text-sm text-blue-700">{potentialToExplore}</p>
+              <p className="text-sm text-blue-700">{safeString(potentialToExplore)}</p>
             </div>
           )}
 
@@ -291,10 +321,10 @@ function EnhancedDimensionCard({
                 <div key={idx} className="bg-slate-50 rounded-lg p-3">
                   <div className="flex items-start gap-2 mb-2">
                     <Quote className="w-3 h-3 text-slate-400 mt-1 shrink-0" />
-                    <p className="text-sm text-slate-600 italic">&ldquo;{quote.original}&rdquo;</p>
+                    <p className="text-sm text-slate-600 italic">&ldquo;{safeString(quote.original)}&rdquo;</p>
                   </div>
-                  <p className="text-xs text-rose-600 mb-1">{quote.analysis}</p>
-                  <p className="text-xs text-emerald-600">💡 {quote.suggestion}</p>
+                  <p className="text-xs text-rose-600 mb-1">{safeString(quote.analysis)}</p>
+                  <p className="text-xs text-emerald-600">💡 {safeString(quote.suggestion)}</p>
                 </div>
               ))}
             </div>
@@ -335,7 +365,7 @@ function ModificationExamplesSection({
                     <span className="w-2 h-2 rounded-full bg-rose-400" />
                     {t.original}
                   </p>
-                  <p className="text-sm text-slate-700 italic">&ldquo;{example.original}&rdquo;</p>
+                  <p className="text-sm text-slate-700 italic">&ldquo;{safeString(example.original)}&rdquo;</p>
                 </div>
                 {/* 改进后 */}
                 <div className="p-4 bg-emerald-50/30">
@@ -343,7 +373,7 @@ function ModificationExamplesSection({
                     <span className="w-2 h-2 rounded-full bg-emerald-400" />
                     {t.improved}
                   </p>
-                  <p className="text-sm text-slate-700 italic">&ldquo;{example.improved}&rdquo;</p>
+                  <p className="text-sm text-slate-700 italic">&ldquo;{safeString(example.improved)}&rdquo;</p>
                 </div>
               </div>
               {/* 分析说明 */}
@@ -351,11 +381,11 @@ function ModificationExamplesSection({
                 <div className="flex flex-wrap gap-4 text-xs">
                   <div>
                     <span className="font-medium text-slate-500">{t.problem}:</span>{" "}
-                    <span className="text-slate-600">{example.problem}</span>
+                    <span className="text-slate-600">{safeString(example.problem)}</span>
                   </div>
                   <div>
                     <span className="font-medium text-emerald-600">{t.impact}:</span>{" "}
-                    <span className="text-emerald-700">{example.impact}</span>
+                    <span className="text-emerald-700">{safeString(example.impact)}</span>
                   </div>
                 </div>
               </div>
@@ -402,12 +432,12 @@ function EnhancedGapAnalysisSection({
               <ul className="space-y-3">
                 {missing.map((item, idx) => (
                   <li key={idx} className="text-sm">
-                    <span className="text-rose-500 font-medium">{item.location}:</span>{" "}
-                    <span className="text-slate-600">{item.description}</span>
+                    <span className="text-rose-500 font-medium">{safeString(item.location)}:</span>{" "}
+                    <span className="text-slate-600">{safeString(item.description)}</span>
                     {item.referenceContent && (
                       <div className="mt-2 bg-rose-50 rounded p-2 border border-rose-100">
                         <p className="text-xs text-rose-600 font-medium mb-1">{t.referenceAnswer}:</p>
-                        <p className="text-xs text-slate-600 italic">&ldquo;{item.referenceContent}&rdquo;</p>
+                        <p className="text-xs text-slate-600 italic">&ldquo;{safeString(item.referenceContent)}&rdquo;</p>
                       </div>
                     )}
                   </li>
@@ -425,26 +455,26 @@ function EnhancedGapAnalysisSection({
               <ul className="space-y-3">
                 {insufficient.map((item, idx) => (
                   <li key={idx} className="text-sm">
-                    <span className="text-amber-500 font-medium">{item.location}:</span>{" "}
-                    <span className="text-slate-600">{item.description}</span>
+                    <span className="text-amber-500 font-medium">{safeString(item.location)}:</span>{" "}
+                    <span className="text-slate-600">{safeString(item.description)}</span>
                     {(item.userQuote || item.referenceQuote) && (
                       <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                         {item.userQuote && (
                           <div className="bg-amber-50 rounded p-2 border border-amber-100">
                             <p className="text-xs text-amber-600 font-medium mb-1">{t.yourAnswer}:</p>
-                            <p className="text-xs text-slate-600 italic">&ldquo;{item.userQuote}&rdquo;</p>
+                            <p className="text-xs text-slate-600 italic">&ldquo;{safeString(item.userQuote)}&rdquo;</p>
                           </div>
                         )}
                         {item.referenceQuote && (
                           <div className="bg-emerald-50 rounded p-2 border border-emerald-100">
                             <p className="text-xs text-emerald-600 font-medium mb-1">{t.referenceAnswer}:</p>
-                            <p className="text-xs text-slate-600 italic">&ldquo;{item.referenceQuote}&rdquo;</p>
+                            <p className="text-xs text-slate-600 italic">&ldquo;{safeString(item.referenceQuote)}&rdquo;</p>
                           </div>
                         )}
                       </div>
                     )}
                     {item.suggestion && (
-                      <p className="text-xs text-amber-600 mt-2">💡 {item.suggestion}</p>
+                      <p className="text-xs text-amber-600 mt-2">💡 {safeString(item.suggestion)}</p>
                     )}
                   </li>
                 ))}
@@ -461,10 +491,10 @@ function EnhancedGapAnalysisSection({
               <ul className="space-y-2">
                 {good.map((item, idx) => (
                   <li key={idx} className="text-sm text-slate-600">
-                    <span className="text-emerald-500 font-medium">{item.location}:</span>{" "}
-                    {item.description}
+                    <span className="text-emerald-500 font-medium">{safeString(item.location)}:</span>{" "}
+                    {safeString(item.description)}
                     {item.userQuote && (
-                      <p className="text-xs text-emerald-600 mt-1 italic">&ldquo;{item.userQuote}&rdquo;</p>
+                      <p className="text-xs text-emerald-600 mt-1 italic">&ldquo;{safeString(item.userQuote)}&rdquo;</p>
                     )}
                   </li>
                 ))}
@@ -481,13 +511,13 @@ function EnhancedGapAnalysisSection({
               <ul className="space-y-2">
                 {excellent.map((item, idx) => (
                   <li key={idx} className="text-sm text-slate-600">
-                    <span className="text-purple-500 font-medium">{item.location}:</span>{" "}
-                    {item.description}
+                    <span className="text-purple-500 font-medium">{safeString(item.location)}:</span>{" "}
+                    {safeString(item.description)}
                     {item.why && (
-                      <p className="text-xs text-purple-600 mt-1">✨ {item.why}</p>
+                      <p className="text-xs text-purple-600 mt-1">✨ {safeString(item.why)}</p>
                     )}
                     {item.userQuote && (
-                      <p className="text-xs text-purple-600 mt-1 italic">&ldquo;{item.userQuote}&rdquo;</p>
+                      <p className="text-xs text-purple-600 mt-1 italic">&ldquo;{safeString(item.userQuote)}&rdquo;</p>
                     )}
                   </li>
                 ))}
@@ -526,22 +556,34 @@ function ActionItemsSection({
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {improvements.map((item, idx) => (
+          {improvements.map((item, idx) => {
+            const priority = priorityConfig[item.priority] || priorityConfig.medium;
+            // 确保字段是字符串
+            const actionText = safeString(item.action);
+            const exampleText = safeString(item.example);
+            const gainText = safeString(item.expectedGain);
+
+            if (!actionText) return null;
+
+            return (
             <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
               <div className="flex items-start gap-3">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border shrink-0 ${priorityConfig[item.priority].color}`}>
-                  {priorityConfig[item.priority].label}
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full border shrink-0 ${priority.color}`}>
+                  {priority.label}
                 </span>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-700">{item.action}</p>
-                  {item.example && (
-                    <p className="text-xs text-slate-500 mt-1 italic">{item.example}</p>
+                  <p className="text-sm font-medium text-slate-700">{actionText}</p>
+                  {exampleText && (
+                    <p className="text-xs text-slate-500 mt-1 italic">{exampleText}</p>
                   )}
-                  <p className="text-xs text-emerald-600 mt-1">📈 {item.expectedGain}</p>
+                  {gainText && (
+                    <p className="text-xs text-emerald-600 mt-1">📈 {gainText}</p>
+                  )}
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </CardContent>
     </Card>
@@ -595,24 +637,24 @@ function OptimizedAnswerSection({
                 <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200">
                   <div className="p-3 bg-rose-50/30">
                     <p className="text-xs font-medium text-rose-600 mb-1">{t.original}</p>
-                    <p className="text-sm text-slate-700 italic">&ldquo;{example.original}&rdquo;</p>
+                    <p className="text-sm text-slate-700 italic">&ldquo;{safeString(example.original)}&rdquo;</p>
                   </div>
                   <div className="p-3 bg-emerald-50/30">
                     <p className="text-xs font-medium text-emerald-600 mb-1">{t.improved}</p>
-                    <p className="text-sm text-slate-700 italic">&ldquo;{example.improved}&rdquo;</p>
+                    <p className="text-sm text-slate-700 italic">&ldquo;{safeString(example.improved)}&rdquo;</p>
                   </div>
                 </div>
                 <div className="px-3 py-2 bg-slate-50 border-t border-slate-200 text-xs">
-                  <span className="text-slate-500">{t.problem}:</span> <span className="text-slate-600">{example.problem}</span>
+                  <span className="text-slate-500">{t.problem}:</span> <span className="text-slate-600">{safeString(example.problem)}</span>
                   <span className="mx-2">→</span>
-                  <span className="text-emerald-600">{example.impact}</span>
+                  <span className="text-emerald-600">{safeString(example.impact)}</span>
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="bg-white rounded-lg p-4 border border-accent/10">
-            <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{optimizedAnswer}</p>
+            <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">{safeString(optimizedAnswer)}</p>
           </div>
         )}
       </CardContent>
@@ -621,8 +663,13 @@ function OptimizedAnswerSection({
 }
 
 // 增强版教练寄语
-function EnhancedCoachMessage({ message, locale }: { message: string; locale: string }) {
+function EnhancedCoachMessage({ message, locale }: { message: string | { primary?: string; secondary?: string } | any; locale: string }) {
   const t = translations[locale === "zh" ? "zh" : "en"];
+
+  // 处理对象格式
+  const messageText = safeString(message);
+
+  if (!messageText) return null;
 
   return (
     <Card className="border-0 bg-gradient-to-r from-accent/5 to-purple-500/5">
@@ -641,7 +688,7 @@ function EnhancedCoachMessage({ message, locale }: { message: string; locale: st
             <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 relative">
               {/* 引号装饰 */}
               <Quote className="absolute -top-2 -left-2 w-6 h-6 text-accent/20" />
-              <p className="text-slate-700 leading-relaxed italic pl-4">{message}</p>
+              <p className="text-slate-700 leading-relaxed italic pl-4">{messageText}</p>
             </div>
           </div>
         </div>
@@ -728,7 +775,7 @@ export function PremiumFeedbackView({ feedback }: PremiumFeedbackViewProps) {
                       {feedback.good.map((item, idx) => (
                         <li key={idx} className="text-sm text-emerald-700 flex items-start gap-2">
                           <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-                          <span>{item}</span>
+                          <span>{safeString(item)}</span>
                         </li>
                       ))}
                     </ul>
@@ -748,7 +795,7 @@ export function PremiumFeedbackView({ feedback }: PremiumFeedbackViewProps) {
                       {feedback.improve.map((item, idx) => (
                         <li key={idx} className="text-sm text-amber-700 flex items-start gap-2">
                           <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                          <span>{item}</span>
+                          <span>{safeString(item)}</span>
                         </li>
                       ))}
                     </ul>
@@ -821,7 +868,7 @@ export function PremiumFeedbackView({ feedback }: PremiumFeedbackViewProps) {
       )}
 
       {/* 改进行动清单 */}
-      {feedback.improvements && feedback.improvements.length > 0 && (
+      {Array.isArray(feedback.improvements) && feedback.improvements.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <ActionItemsSection improvements={feedback.improvements} locale={locale} />
         </motion.div>

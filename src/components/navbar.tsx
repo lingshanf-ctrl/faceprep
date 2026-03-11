@@ -112,11 +112,11 @@ export function Navbar() {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
             {/* Language Toggle */}
             <button
               onClick={toggleLocale}
-              className="px-3 py-1.5 text-sm font-medium text-foreground-muted hover:text-foreground bg-surface rounded-full transition-colors"
+              className="px-2 sm:px-3 py-1.5 text-sm font-medium text-foreground-muted hover:text-foreground bg-surface rounded-full transition-colors"
             >
               {locale === "zh" ? "EN" : "中"}
             </button>
@@ -124,9 +124,9 @@ export function Navbar() {
             {isLoading ? (
               <div className="w-20 h-10 bg-surface rounded-xl animate-pulse" />
             ) : user ? (
-              <div className="flex items-center gap-2 md:gap-3">
-                {/* 移动端简化的会员徽章 */}
-                {membershipStatus && (
+              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+                {/* 移动端简化的会员徽章 - 仅非会员时显示，且与UserMenu合并显示 */}
+                {membershipStatus?.membershipType === "FREE" && (
                   <div className="sm:hidden">
                     <MembershipBadge
                       type={membershipStatus.membershipType}
@@ -162,9 +162,9 @@ export function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface transition-colors"
+              className="md:hidden p-1.5 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
                 ) : (

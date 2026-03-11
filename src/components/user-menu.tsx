@@ -76,12 +76,12 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
       {/* 用户卡片触发器 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-surface hover:bg-accent/5 rounded-full transition-all duration-200 hover:shadow-md group"
+        className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-surface hover:bg-accent/5 rounded-full transition-all duration-200 hover:shadow-md group"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
         {/* 头像 */}
-        <div className="w-7 h-7 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
+        <div className="w-6 h-6 sm:w-7 sm:h-7 bg-accent/10 rounded-full flex items-center justify-center flex-shrink-0">
           <span className="text-accent text-xs font-semibold">
             {(user.name || user.email || "U")[0].toUpperCase()}
           </span>
@@ -92,7 +92,7 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
           {user.name || user.email?.split("@")[0]}
         </span>
 
-        {/* 会员徽章 */}
+        {/* 会员徽章 - 仅桌面端显示 */}
         <MembershipBadge
           type={type}
           creditsRemaining={creditsRemaining}
@@ -120,7 +120,7 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
       {/* 下拉菜单 */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-border py-2 animate-fade-in z-50 max-w-[calc(100vw-2rem)] sm:max-w-none"
+          className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-border py-2 animate-fade-in z-50 max-w-[calc(100vw-1rem)]"
           style={{
             animation: "fadeIn 0.1s ease-out",
           }}

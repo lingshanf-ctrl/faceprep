@@ -56,8 +56,10 @@ interface InterviewSession {
   title: string;
   overallScore: number;
   answers: InterviewAnswer[];
+  overallFeedback?: string;
   strengths?: string[];
   improvements?: string[];
+  nextSteps?: string[];
 }
 
 interface BasicInterviewFeedbackProps {
@@ -267,6 +269,84 @@ export function BasicInterviewFeedback({
           </div>
         </CardContent>
       </Card>
+
+      {/* 整体反馈 - 使用 session 级别数据 */}
+      {(session.overallFeedback || session.strengths?.length || session.improvements?.length) && (
+        <Card className="border border-slate-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Target className="w-4 h-4 text-accent" />
+              {t.generalFeedback}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* 整体评价 */}
+              {session.overallFeedback && (
+                <p className="text-sm text-slate-700 leading-relaxed">{session.overallFeedback}</p>
+              )}
+
+              {/* 亮点与改进 */}
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* 亮点 */}
+                {session.strengths && session.strengths.length > 0 && (
+                  <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <h4 className="text-xs font-medium text-emerald-700 mb-2 flex items-center gap-1">
+                      <Lightbulb className="w-3 h-3" />
+                      {t.strengths}
+                    </h4>
+                    <ul className="space-y-1">
+                      {session.strengths.slice(0, 3).map((item, idx) => (
+                        <li key={idx} className="text-xs text-emerald-600 flex items-start gap-1">
+                          <span className="text-emerald-400 mt-0.5">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 改进点 */}
+                {session.improvements && session.improvements.length > 0 && (
+                  <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                    <h4 className="text-xs font-medium text-amber-700 mb-2 flex items-center gap-1">
+                      <ArrowUpCircle className="w-3 h-3" />
+                      {t.improvements}
+                    </h4>
+                    <ul className="space-y-1">
+                      {session.improvements.slice(0, 3).map((item, idx) => (
+                        <li key={idx} className="text-xs text-amber-600 flex items-start gap-1">
+                          <span className="text-amber-400 mt-0.5">{idx + 1}.</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* 后续建议 */}
+              {session.nextSteps && session.nextSteps.length > 0 && (
+                <div className="pt-3 border-t border-slate-100">
+                  <h4 className="text-xs font-medium text-slate-600 mb-2">
+                    {locale === "zh" ? "后续建议" : "Next Steps"}
+                  </h4>
+                  <div className="space-y-2">
+                    {session.nextSteps.slice(0, 3).map((step, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className="w-5 h-5 bg-accent text-white rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+                          {idx + 1}
+                        </span>
+                        <p className="text-xs text-slate-600 leading-relaxed">{step}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 4维度分析预览 */}
       {dimensions && (

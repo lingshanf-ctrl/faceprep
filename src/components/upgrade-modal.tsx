@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 
@@ -103,8 +104,13 @@ export function UpgradeModal({
 }: UpgradeModalProps) {
   const { locale } = useLanguage();
   const t = translations[locale === "zh" ? "zh" : "en"];
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   // 根据用户类型获取文案和主题
   const getContent = () => {
@@ -159,48 +165,24 @@ export function UpgradeModal({
 
   const content = getContent();
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative bg-background rounded-2xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className={`bg-gradient-to-r ${content.theme.gradient} p-6 text-white`}>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">{content.title}</h2>
-              <p className="text-sm text-white/80">{content.subtitle}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="p-6">
-          <ul className="space-y-3 mb-6">
-            {t.features.map((feature, index) => (
-              <li key={index} className="flex items-start gap-3">
+      {/* Modal Container - 使用 flex 居中 */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        {/* Modal */}
+        <div className="relative bg-background rounded-2xl shadow-xl max-w-md w-full">
+          {/* Header */}
+          <div className={`bg-gradient-to-r ${content.theme.gradient} p-6 text-white`}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                 <svg
-                  className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"
+                  className="w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -209,93 +191,121 @@ export function UpgradeModal({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M5 13l4 4L19 7"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
                   />
                 </svg>
-                <span className="text-sm text-foreground">{feature}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* Plans */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <div className="border border-border rounded-xl p-3 text-center opacity-50 flex sm:block items-center justify-between">
-              <p className="text-xs text-foreground-muted mb-0 sm:mb-1 font-medium">
-                {t.freePlan}
-              </p>
-              <p className="text-xs text-foreground-muted">{t.freeDesc}</p>
-            </div>
-            <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5 flex sm:block items-center justify-between">
-              <p className="text-xs font-medium text-accent mb-0 sm:mb-1">
-                {t.creditPlan}
-              </p>
-              <p className="text-xs text-foreground-muted">{t.creditDesc}</p>
-            </div>
-            <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5 flex sm:block items-center justify-between">
-              <p className="text-xs font-medium text-accent mb-0 sm:mb-1">
-                {t.monthlyPlan}
-              </p>
-              <p className="text-xs text-foreground-muted">{t.monthlyDesc}</p>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold">{content.title}</h2>
+                <p className="text-sm text-white/80">{content.subtitle}</p>
+              </div>
             </div>
           </div>
 
-          {/* Current status if applicable */}
-          {(creditsRemaining !== null || monthlyExpiresAt !== null) && (
+          {/* Content */}
+          <div className="p-6">
+            <ul className="space-y-3 mb-6">
+              {t.features.map((feature, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <svg
+                    className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span className="text-sm text-foreground">{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Plans */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="border border-border rounded-xl p-3 text-center opacity-50 flex sm:block items-center justify-between">
+                <p className="text-xs text-foreground-muted mb-0 sm:mb-1 font-medium">
+                  {t.freePlan}
+                </p>
+                <p className="text-xs text-foreground-muted">{t.freeDesc}</p>
+              </div>
+              <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5 flex sm:block items-center justify-between">
+                <p className="text-xs font-medium text-accent mb-0 sm:mb-1">
+                  {t.creditPlan}
+                </p>
+                <p className="text-xs text-foreground-muted">{t.creditDesc}</p>
+              </div>
+              <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5 flex sm:block items-center justify-between">
+                <p className="text-xs font-medium text-accent mb-0 sm:mb-1">
+                  {t.monthlyPlan}
+                </p>
+                <p className="text-xs text-foreground-muted">{t.monthlyDesc}</p>
+              </div>
+            </div>
+
+            {/* Current status if applicable */}
+            {(creditsRemaining !== null || monthlyExpiresAt !== null) && (
+              <div className={`rounded-lg p-3 mb-4 border ${content.theme.bg} ${content.theme.border}`}>
+                <p className={`text-xs mb-1 ${content.theme.text}`}>
+                  {t.currentPlan}
+                </p>
+                {monthlyExpiresAt && (
+                  <p className="text-sm font-medium text-foreground">
+                    {userType === "monthly_expired" ? (
+                      <>
+                        {t.monthlyPlan} · {t.expiredAt}{" "}
+                        {new Date(monthlyExpiresAt).toLocaleDateString()}{t.expired}
+                      </>
+                    ) : (
+                      <>
+                        {t.monthlyPlan} · {t.expiresAt}{" "}
+                        {new Date(monthlyExpiresAt).toLocaleDateString()}
+                      </>
+                    )}
+                  </p>
+                )}
+                {creditsRemaining !== null && (
+                  <p className="text-sm font-medium text-foreground">
+                    {userType === "credit_exhausted" ? (
+                      <>
+                        {t.creditPlan} · {t.creditsLeft} 0 {t.times}
+                      </>
+                    ) : (
+                      <>
+                        {t.creditPlan} · {t.creditsLeft} {creditsRemaining} {t.times}
+                      </>
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Hint */}
             <div className={`rounded-lg p-3 mb-4 border ${content.theme.bg} ${content.theme.border}`}>
-              <p className={`text-xs mb-1 ${content.theme.text}`}>
-                {t.currentPlan}
+              <p className={`text-sm text-center ${content.theme.text}`}>
+                {content.hint}
               </p>
-              {monthlyExpiresAt && (
-                <p className="text-sm font-medium text-foreground">
-                  {userType === "monthly_expired" ? (
-                    <>
-                      {t.monthlyPlan} · {t.expiredAt}{" "}
-                      {new Date(monthlyExpiresAt).toLocaleDateString()}{t.expired}
-                    </>
-                  ) : (
-                    <>
-                      {t.monthlyPlan} · {t.expiresAt}{" "}
-                      {new Date(monthlyExpiresAt).toLocaleDateString()}
-                    </>
-                  )}
-                </p>
-              )}
-              {creditsRemaining !== null && (
-                <p className="text-sm font-medium text-foreground">
-                  {userType === "credit_exhausted" ? (
-                    <>
-                      {t.creditPlan} · {t.creditsLeft} 0 {t.times}
-                    </>
-                  ) : (
-                    <>
-                      {t.creditPlan} · {t.creditsLeft} {creditsRemaining} {t.times}
-                    </>
-                  )}
-                </p>
-              )}
             </div>
-          )}
 
-          {/* Hint */}
-          <div className={`rounded-lg p-3 mb-4 border ${content.theme.bg} ${content.theme.border}`}>
-            <p className={`text-sm text-center ${content.theme.text}`}>
-              {content.hint}
-            </p>
+            {/* Contact Admin */}
+            <div className="bg-surface border border-border rounded-lg p-3 mb-4">
+              <p className="text-sm text-foreground-muted text-center">
+                {t.contactAdmin}
+              </p>
+            </div>
+
+            {/* Actions */}
+            <Button variant="outline" className="w-full" onClick={onClose}>
+              {t.close}
+            </Button>
           </div>
-
-          {/* Contact Admin */}
-          <div className="bg-surface border border-border rounded-lg p-3 mb-4">
-            <p className="text-sm text-foreground-muted text-center">
-              {t.contactAdmin}
-            </p>
-          </div>
-
-          {/* Actions */}
-          <Button variant="outline" className="w-full" onClick={onClose}>
-            {t.close}
-          </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
