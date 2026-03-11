@@ -26,6 +26,7 @@ model User {
   sessions            InterviewSession[]
   memberships         MembershipOrder[]
   usageRecords        UsageRecord[]
+  trialClaims         TrialClaim[]
 }
 
 enum Plan {
@@ -352,4 +353,22 @@ model UsageRecord {
   @@index([userId])
   @@index([membershipId])
   @@index([createdAt])
+}
+
+// 体验卡领取记录
+model TrialClaim {
+  id          String   @id @default(cuid())
+  userId      String   @unique // 每个用户只能领一次
+  email       String   // 领取时输入的邮箱
+  credits     Int      @default(3) // 领取的次数
+  claimedAt   DateTime @default(now())
+  claimedIp   String?  // 领取IP（风控）
+  userAgent   String?  // 浏览器标识（风控）
+  source      String   @default("direct_link") // 来源标识
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([claimedAt])
+  @@index([email])
 }
