@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红书商品主图 - 面试题型讲解与题库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@300;400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f3f0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 3:4 比例容器 900x1200px */
+        .main-image-container {
+            width: 900px;
+            height: 1200px;
+            background: #faf9f7;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 4px 6px -1px rgba(0,0,0,0.02),
+                0 10px 15px -3px rgba(0,0,0,0.03),
+                0 25px 50px -12px rgba(0,0,0,0.08);
+        }
+
+        /* 微妙纹理背景 */
+        .texture-overlay {
+            position: absolute;
+            inset: 0;
+            opacity: 0.4;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: multiply;
+        }
+
+        /* 顶部装饰线 */
+        .top-line {
+            position: absolute;
+            top: 80px;
+            left: 80px;
+            right: 80px;
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(120, 113, 108, 0.3) 20%,
+                rgba(120, 113, 108, 0.3) 80%,
+                transparent 100%
+            );
+        }
+
+        /* 左侧竖线装饰 */
+        .side-line {
+            position: absolute;
+            left: 80px;
+            top: 300px;
+            width: 1px;
+            height: 200px;
+            background: linear-gradient(180deg,
+                rgba(120, 113, 108, 0.4) 0%,
+                rgba(120, 113, 108, 0.1) 100%
+            );
+        }
+
+        /* 几何装饰圆 */
+        .circle-accent {
+            position: absolute;
+            top: 200px;
+            right: 100px;
+            width: 120px;
+            height: 120px;
+            border: 1px solid rgba(120, 113, 108, 0.15);
+            border-radius: 50%;
+        }
+
+        .circle-accent-2 {
+            position: absolute;
+            bottom: 300px;
+            left: 60px;
+            width: 80px;
+            height: 80px;
+            border: 1px solid rgba(120, 113, 108, 0.12);
+            border-radius: 50%;
+        }
+
+        /* 点状装饰 */
+        .dot-pattern {
+            position: absolute;
+            bottom: 150px;
+            right: 100px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .dot {
+            width: 4px;
+            height: 4px;
+            background: rgba(120, 113, 108, 0.25);
+            border-radius: 50%;
+        }
+
+        /* 主内容区 */
+        .content-area {
+            position: absolute;
+            top: 180px;
+            left: 120px;
+            right: 120px;
+        }
+
+        /* 品牌标识 */
+        .brand-mark {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            letter-spacing: 4px;
+            color: rgba(120, 113, 108, 0.6);
+            margin-bottom: 60px;
+            font-weight: 400;
+        }
+
+        /* 主标题 */
+        .main-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 88px;
+            font-weight: 600;
+            color: #1c1917;
+            line-height: 1.15;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+        }
+
+        .main-title .line2 {
+            display: block;
+            margin-top: 8px;
+        }
+
+        /* 英文副标题 */
+        .subtitle-en {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            font-style: italic;
+            color: rgba(120, 113, 108, 0.7);
+            margin-bottom: 80px;
+            letter-spacing: 1px;
+        }
+
+        /* 核心卖点 */
+        .features {
+            display: flex;
+            gap: 48px;
+            margin-bottom: 100px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feature-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 14px;
+            font-style: italic;
+            color: rgba(120, 113, 108, 0.5);
+        }
+
+        .feature-text {
+            font-size: 16px;
+            color: #44403c;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .feature-divider {
+            width: 20px;
+            height: 1px;
+            background: rgba(120, 113, 108, 0.3);
+        }
+
+        /* 书籍展示区域 */
+        .book-showcase {
+            position: absolute;
+            bottom: 200px;
+            left: 120px;
+            display: flex;
+            align-items: flex-end;
+            gap: 60px;
+        }
+
+        .book-visual {
+            position: relative;
+            width: 200px;
+            height: 280px;
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #f5f5f4 0%, #e7e5e4 100%);
+            border-radius: 3px 8px 8px 3px;
+            box-shadow:
+                -15px 20px 40px rgba(0,0,0,0.08),
+                -5px 8px 15px rgba(0,0,0,0.05);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+
+        .book-spine {
+            position: absolute;
+            left: -8px;
+            top: 3px;
+            bottom: 3px;
+            width: 8px;
+            background: linear-gradient(90deg, #d6d3d1, #e7e5e4);
+            border-radius: 2px 0 0 2px;
+        }
+
+        .book-cover-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 20px;
+            font-weight: 600;
+            color: #1c1917;
+            line-height: 1.4;
+            margin-top: auto;
+        }
+
+        .book-cover-subtitle {
+            font-size: 11px;
+            color: rgba(120, 113, 108, 0.7);
+            margin-top: 8px;
+            letter-spacing: 1px;
+        }
+
+        .book-line-decor {
+            width: 30px;
+            height: 2px;
+            background: #78716c;
+            margin-top: 16px;
+        }
+
+        /* 包含内容说明 */
+        .includes {
+            padding-bottom: 20px;
+        }
+
+        .includes-label {
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: rgba(120, 113, 108, 0.6);
+            margin-bottom: 16px;
+        }
+
+        .includes-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .includes-item {
+            font-size: 14px;
+            color: #57534e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .includes-item::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: rgba(120, 113, 108, 0.4);
+            border-radius: 50%;
+        }
+
+        /* 底部信任标签 */
+        .trust-section {
+            position: absolute;
+            bottom: 80px;
+            left: 120px;
+            right: 120px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(120, 113, 108, 0.15);
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .trust-icon {
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(120, 113, 108, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .trust-text {
+            font-size: 14px;
+            color: #57534e;
+        }
+
+        .trust-text strong {
+            color: #1c1917;
+            font-weight: 600;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 3px;
+        }
+
+        .star {
+            color: #d6d3d1;
+            font-size: 14px;
+        }
+
+        .star.filled {
+            color: #78716c;
+        }
+
+        /* 右侧垂直文字 */
+        .vertical-text {
+            position: absolute;
+            right: 60px;
+            top: 50%;
+            transform: translateY(-50%) rotate(180deg);
+            writing-mode: vertical-rl;
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: rgba(120, 113, 108, 0.4);
+        }
+
+        /* 导出区域 */
+        .export-section {
+            margin-top: 40px;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .export-btn {
+            background: #1c1917;
+            color: white;
+            padding: 16px 48px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 400;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .export-btn:hover {
+            background: #44403c;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <!-- 主图容器 900x1200px (3:4) -->
+    <div class="main-image-container" id="mainImage">
+        <div class="texture-overlay"></div>
+
+        <!-- 装饰元素 -->
+        <div class="top-line"></div>
+        <div class="side-line"></div>
+        <div class="circle-accent"></div>
+        <div class="circle-accent-2"></div>
+        <div class="dot-pattern">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+
+        <!-- 右侧垂直文字 -->
+        <div class="vertical-text">FACEPREP INTERVIEW SYSTEM</div>
+
+        <!-- 主内容 -->
+        <div class="content-area">
+            <div class="brand-mark">FACEPREP</div>
+
+            <h1 class="main-title">
+                面试题型
+                <span class="line2">讲解与题库</span>
+            </h1>
+
+            <p class="subtitle-en">Interview Question Bank & Guide</p>
+
+            <div class="features">
+                <div class="feature-item">
+                    <span class="feature-number">01</span>
+                    <div class="feature-divider"></div>
+                    <span class="feature-text">5大题型精讲</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-number">02</span>
+                    <div class="feature-divider"></div>
+                    <span class="feature-text">话术模板</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-number">03</span>
+                    <div class="feature-divider"></div>
+                    <span class="feature-text">面试模拟</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 书籍展示 -->
+        <div class="book-showcase">
+            <div class="book-visual">
+                <div class="book-cover">
+                    <div class="book-spine"></div>
+                    <div class="book-cover-title">面试题型讲解<br>与话术模板</div>
+                    <div class="book-cover-subtitle">INTERVIEW GUIDE</div>
+                    <div class="book-line-decor"></div>
+                </div>
+            </div>
+
+            <div class="includes">
+                <div class="includes-label">包含内容</div>
+                <div class="includes-items">
+                    <div class="includes-item">面试刻意练习模拟</div>
+                    <div class="includes-item">面试题目深度分析</div>
+                    <div class="includes-item">个人盲点分析</div>
+                    <div class="includes-item">练习反馈追踪</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信任标签 -->
+        <div class="trust-section">
+            <div class="trust-item">
+                <div class="trust-icon">✦</div>
+                <span class="trust-text"><strong>专业教练</strong> 深度分析</span>
+            </div>
+            <div class="rating">
+                <div class="stars">
+                    <span class="star filled">★</span>
+                    <span class="star filled">★</span>
+                    <span class="star filled">★</span>
+                    <span class="star filled">★</span>
+                    <span class="star filled">★</span>
+                </div>
+                <span class="trust-text"><strong>4.9分</strong> 好评</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导出控制区 -->
+    <div class="export-section">
+        <h2 style="margin-bottom: 10px; color: #1c1917; font-weight: 500; font-size: 20px;">
+            简约高级版主图
+        </h2>
+        <p style="color: #78716c; margin-bottom: 25px; font-size: 14px;">
+            尺寸：900 × 1200px（3:4比例）| 米白暖调 | 杂志封面风格
+        </p>
+        <button class="export-btn" onclick="exportImage()">
+            导出主图 PNG
+        </button>
+    </div>
+
+    <script>
+        async function exportImage() {
+            const btn = document.querySelector('.export-btn');
+            btn.textContent = '生成中...';
+            btn.disabled = true;
+
+            try {
+                const element = document.getElementById('mainImage');
+                const canvas = await html2canvas(element, {
+                    scale: 1,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#faf9f7',
+                    logging: false,
+                    imageTimeout: 0
+                });
+
+                // 使用质量压缩，目标 1-2MB
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = '面试题型讲解与题库-主图-900x1200.png';
+                    link.href = url;
+                    link.click();
+
+                    const sizeInMB = (blob.size / 1024 / 1024).toFixed(2);
+                    btn.textContent = `导出成功 (${sizeInMB}MB)`;
+                    setTimeout(() => {
+                        btn.textContent = '导出主图 PNG';
+                        btn.disabled = false;
+                    }, 2000);
+                }, 'image/png', 0.9);
+
+            } catch (error) {
+                console.error('导出失败:', error);
+                btn.textContent = '导出失败，请重试';
+                setTimeout(() => {
+                    btn.textContent = '导出主图 PNG';
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>
