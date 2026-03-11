@@ -507,7 +507,7 @@ function AnswerCard({
 }) {
   const t = translations[locale === "zh" ? "zh" : "en"];
   const dims = answer.feedback?.dimensions;
-  const [activeSection, setActiveSection] = useState<"dimensions" | "quotes" | "optimized">("dimensions");
+  const [activeSection, setActiveSection] = useState<"dimensions" | "quotes" | "optimized" | "comparison">("dimensions");
 
   return (
     <Card className="border-0 shadow-sm overflow-hidden">
@@ -558,58 +558,122 @@ function AnswerCard({
             </button>
           )}
           {answer.feedback?.optimizedAnswer && (
-            <button
-              onClick={() => setActiveSection("optimized")}
-              className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-                activeSection === "optimized"
-                  ? "bg-accent text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {t.optimizedExample}
-            </button>
+            <>
+              <button
+                onClick={() => setActiveSection("optimized")}
+                className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
+                  activeSection === "optimized"
+                    ? "bg-accent text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {t.optimizedExample}
+              </button>
+              <button
+                onClick={() => setActiveSection("comparison")}
+                className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
+                  activeSection === "comparison"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {locale === "zh" ? "对比查看" : "Compare"}
+              </button>
+            </>
           )}
         </div>
 
         {/* 维度详情 */}
-        {activeSection === "dimensions" && dims && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <DimensionDetailCard
-                label={t.content}
-                score={dims.content?.score || 0}
-                feedback={dims.content?.feedback}
-                details={dims.content?.missing}
-                type="content"
-                locale={locale}
-              />
-              <DimensionDetailCard
-                label={t.structure}
-                score={dims.structure?.score || 0}
-                feedback={dims.structure?.feedback}
-                details={dims.structure?.issues}
-                type="structure"
-                locale={locale}
-              />
-              <DimensionDetailCard
-                label={t.expression}
-                score={dims.expression?.score || 0}
-                feedback={dims.expression?.feedback}
-                details={dims.expression?.suggestions}
-                type="expression"
-                locale={locale}
-              />
-              <DimensionDetailCard
-                label={t.highlights}
-                score={dims.highlights?.score || 0}
-                feedback={dims.highlights?.feedback}
-                details={dims.highlights?.strongPoints}
-                type="highlights"
-                locale={locale}
-              />
-            </div>
+        {activeSection === "dimensions" && (
+          <div className="space-y-4">
+            {/* 四维度评分卡片 */}
+            {dims && (
+              <div className="grid grid-cols-2 gap-3">
+                <DimensionDetailCard
+                  label={t.content}
+                  score={dims.content?.score || 0}
+                  feedback={dims.content?.feedback}
+                  details={dims.content?.missing}
+                  type="content"
+                  locale={locale}
+                />
+                <DimensionDetailCard
+                  label={t.structure}
+                  score={dims.structure?.score || 0}
+                  feedback={dims.structure?.feedback}
+                  details={dims.structure?.issues}
+                  type="structure"
+                  locale={locale}
+                />
+                <DimensionDetailCard
+                  label={t.expression}
+                  score={dims.expression?.score || 0}
+                  feedback={dims.expression?.feedback}
+                  details={dims.expression?.suggestions}
+                  type="expression"
+                  locale={locale}
+                />
+                <DimensionDetailCard
+                  label={t.highlights}
+                  score={dims.highlights?.score || 0}
+                  feedback={dims.highlights?.feedback}
+                  details={dims.highlights?.strongPoints}
+                  type="highlights"
+                  locale={locale}
+                />
+              </div>
+            )}
 
-            {/* 改进建议 */}
+            {/* Good & Improve - 优点与改进 */}
+            {(answer.feedback?.good?.length || answer.feedback?.improve?.length) > 0 && (
+              <div className="grid md:grid-cols-2 gap-3">
+                {answer.feedback?.good && answer.feedback.good.length > 0 && (
+                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                    <h4 className="text-xs font-medium text-emerald-700 mb-3 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      {locale === "zh" ? "表现亮点" : "Strengths"}
+                    </h4>
+                    <ul className="space-y-2">
+                      {answer.feedback.good.map((item, idx) => (
+                        <li key={idx} className="text-sm text-emerald-800 flex items-start gap-2">
+                          <span className="text-emerald-500 mt-0.5">✓</span>
+                          <span className="leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {answer.feedback?.improve && answer.feedback.improve.length > 0 && (
+                  <div className="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                    <h4 className="text-xs font-medium text-amber-700 mb-3 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      {locale === "zh" ? "改进空间" : "Areas to Improve"}
+                    </h4>
+                    <ul className="space-y-2">
+                      {answer.feedback.improve.map((item, idx) => (
+                        <li key={idx} className="text-sm text-amber-800 flex items-start gap-2">
+                          <span className="text-amber-500 mt-0.5">→</span>
+                          <span className="leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Suggestion - 教练建议 */}
+            {answer.feedback?.suggestion && (
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <h4 className="text-xs font-medium text-blue-700 mb-2 flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3" />
+                  {locale === "zh" ? "改进建议" : "Suggestion"}
+                </h4>
+                <p className="text-sm text-blue-800 leading-relaxed">{answer.feedback.suggestion}</p>
+              </div>
+            )}
+
+            {/* 改进建议（优先级列表） */}
             {answer.feedback?.improvements && answer.feedback.improvements.length > 0 && (
               <div className="mt-4">
                 <h4 className="text-xs font-medium text-slate-500 mb-2 flex items-center gap-1">
@@ -639,6 +703,75 @@ function AnswerCard({
                 {answer.feedback.optimizedAnswer}
               </p>
             </div>
+            {answer.feedback.modificationExamples && answer.feedback.modificationExamples.length > 0 && (
+              <ModificationExamplesCard
+                examples={answer.feedback.modificationExamples}
+                locale={locale}
+              />
+            )}
+          </div>
+        )}
+
+        {/* 对比查看 */}
+        {activeSection === "comparison" && answer.feedback?.optimizedAnswer && (
+          <div className="space-y-4">
+            {/* 对比展示 */}
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* 原答案 */}
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                <h5 className="text-xs font-medium text-slate-500 mb-2 flex items-center gap-1">
+                  <span className="w-4 h-4 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-600">原</span>
+                  {locale === "zh" ? "你的原答案" : "Your Original Answer"}
+                </h5>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+                  {answer.answer}
+                </p>
+              </div>
+              {/* 优化版 */}
+              <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+                <h5 className="text-xs font-medium text-emerald-700 mb-2 flex items-center gap-1">
+                  <span className="w-4 h-4 rounded-full bg-emerald-200 flex items-center justify-center text-[10px] text-emerald-700">优</span>
+                  {locale === "zh" ? "AI 优化版" : "AI Optimized Version"}
+                </h5>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+                  {answer.feedback.optimizedAnswer}
+                </p>
+              </div>
+            </div>
+
+            {/* 关键改进点 */}
+            {(answer.feedback.good?.length || answer.feedback.improve?.length) > 0 && (
+              <div className="bg-accent/5 rounded-lg p-4 border border-accent/10">
+                <h5 className="text-xs font-medium text-accent mb-3 flex items-center gap-1">
+                  <Wand2 className="w-3 h-3" />
+                  {locale === "zh" ? "优化要点" : "Key Improvements"}
+                </h5>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {answer.feedback?.improve && answer.feedback.improve.length > 0 && (
+                    <ul className="space-y-1.5">
+                      {answer.feedback.improve.slice(0, 3).map((item, idx) => (
+                        <li key={idx} className="text-xs text-slate-700 flex items-start gap-2">
+                          <span className="text-amber-500 mt-0.5">→</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {answer.feedback?.good && answer.feedback.good.length > 0 && (
+                    <ul className="space-y-1.5">
+                      {answer.feedback.good.slice(0, 3).map((item, idx) => (
+                        <li key={idx} className="text-xs text-slate-700 flex items-start gap-2">
+                          <span className="text-emerald-500 mt-0.5">✓</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 优化说明 */}
             {answer.feedback.modificationExamples && answer.feedback.modificationExamples.length > 0 && (
               <ModificationExamplesCard
                 examples={answer.feedback.modificationExamples}
