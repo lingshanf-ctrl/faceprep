@@ -29,13 +29,14 @@ export function MembershipBadge({
     const isLow = creditsRemaining <= 3;
     return (
       <span
-        className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border ${
+        className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 text-xs font-medium rounded-full border whitespace-nowrap ${
           isLow
             ? "bg-warning/10 text-warning border-warning/20"
             : "bg-accent/10 text-accent border-accent/20"
         } ${className}`}
       >
-        剩{creditsRemaining}次
+        <span className="hidden sm:inline">剩{creditsRemaining}次</span>
+        <span className="sm:hidden">{creditsRemaining}次</span>
       </span>
     );
   }

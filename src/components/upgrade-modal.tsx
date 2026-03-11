@@ -218,21 +218,21 @@ export function UpgradeModal({
           </ul>
 
           {/* Plans */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="border border-border rounded-xl p-3 text-center opacity-50">
-              <p className="text-xs text-foreground-muted mb-1">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            <div className="border border-border rounded-xl p-3 text-center opacity-50 flex sm:block items-center justify-between">
+              <p className="text-xs text-foreground-muted mb-0 sm:mb-1 font-medium">
                 {t.freePlan}
               </p>
               <p className="text-xs text-foreground-muted">{t.freeDesc}</p>
             </div>
-            <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5">
-              <p className="text-xs font-medium text-accent mb-1">
+            <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5 flex sm:block items-center justify-between">
+              <p className="text-xs font-medium text-accent mb-0 sm:mb-1">
                 {t.creditPlan}
               </p>
               <p className="text-xs text-foreground-muted">{t.creditDesc}</p>
             </div>
-            <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5">
-              <p className="text-xs font-medium text-accent mb-1">
+            <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5 flex sm:block items-center justify-between">
+              <p className="text-xs font-medium text-accent mb-0 sm:mb-1">
                 {t.monthlyPlan}
               </p>
               <p className="text-xs text-foreground-muted">{t.monthlyDesc}</p>
