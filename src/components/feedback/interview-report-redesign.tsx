@@ -548,7 +548,7 @@ function QuestionAnalysisCard({
                 )}
 
                 {/* ========== 第四层：深度分析（可折叠） ========== */}
-                {(feedback?.quotes?.length || feedback?.modificationExamples?.length) > 0 && (
+                {((feedback?.quotes?.length || 0) > 0 || (feedback?.modificationExamples?.length || 0) > 0) && (
                   <div className="pt-4 border-t border-slate-100">
                     <QuoteAnalysisSection feedback={feedback} t={t} />
                   </div>
