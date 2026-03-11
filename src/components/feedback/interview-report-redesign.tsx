@@ -487,13 +487,15 @@ function QuestionAnalysisCard({
                   </div>
                 )}
 
-                {/* ========== 第二层：维度评分 ========== */}
+                {/* ========== 第二层：维度评分（含详细分析） ========== */}
                 {dims && (
                   <div className="space-y-3">
                     <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
                       <BarChart3 className="w-4 h-4 text-accent" />
                       {t.dimensionScores}
                     </h4>
+
+                    {/* 维度分数概览 */}
                     <div className="grid grid-cols-4 gap-3">
                       {[
                         { label: t.content, score: dims.content?.score || 0, color: "emerald" },
@@ -506,6 +508,101 @@ function QuestionAnalysisCard({
                           <div className="text-xs text-slate-600">{d.label}</div>
                         </div>
                       ))}
+                    </div>
+
+                    {/* 维度详细分析 */}
+                    <div className="grid gap-3">
+                      {/* 内容维度 */}
+                      {dims.content?.feedback && (
+                        <div className="p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="text-sm font-medium text-emerald-800">{t.content}分析</h5>
+                            <span className="text-sm font-bold text-emerald-600">{dims.content.score}分</span>
+                          </div>
+                          <p className="text-sm text-emerald-700 mb-2">{dims.content.feedback}</p>
+                          {dims.content.missing && dims.content.missing.length > 0 && (
+                            <div className="mt-2">
+                              <span className="text-xs text-emerald-600 font-medium">缺失要点：</span>
+                              <ul className="mt-1 space-y-1">
+                                {dims.content.missing.map((item, idx) => (
+                                  <li key={idx} className="text-xs text-emerald-700 flex items-start gap-1">
+                                    <span>•</span><span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 结构维度 */}
+                      {dims.structure?.feedback && (
+                        <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="text-sm font-medium text-blue-800">{t.structure}分析</h5>
+                            <span className="text-sm font-bold text-blue-600">{dims.structure.score}分</span>
+                          </div>
+                          <p className="text-sm text-blue-700 mb-2">{dims.structure.feedback}</p>
+                          {dims.structure.issues && dims.structure.issues.length > 0 && (
+                            <div className="mt-2">
+                              <span className="text-xs text-blue-600 font-medium">结构问题：</span>
+                              <ul className="mt-1 space-y-1">
+                                {dims.structure.issues.map((item, idx) => (
+                                  <li key={idx} className="text-xs text-blue-700 flex items-start gap-1">
+                                    <span>•</span><span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 表达维度 */}
+                      {dims.expression?.feedback && (
+                        <div className="p-4 bg-purple-50/50 rounded-xl border border-purple-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="text-sm font-medium text-purple-800">{t.expression}分析</h5>
+                            <span className="text-sm font-bold text-purple-600">{dims.expression.score}分</span>
+                          </div>
+                          <p className="text-sm text-purple-700 mb-2">{dims.expression.feedback}</p>
+                          {dims.expression.suggestions && dims.expression.suggestions.length > 0 && (
+                            <div className="mt-2">
+                              <span className="text-xs text-purple-600 font-medium">改进建议：</span>
+                              <ul className="mt-1 space-y-1">
+                                {dims.expression.suggestions.map((item, idx) => (
+                                  <li key={idx} className="text-xs text-purple-700 flex items-start gap-1">
+                                    <span>•</span><span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 亮点维度 */}
+                      {dims.highlights?.feedback && (
+                        <div className="p-4 bg-amber-50/50 rounded-xl border border-amber-100">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="text-sm font-medium text-amber-800">{t.highlights}分析</h5>
+                            <span className="text-sm font-bold text-amber-600">{dims.highlights.score}分</span>
+                          </div>
+                          <p className="text-sm text-amber-700 mb-2">{dims.highlights.feedback}</p>
+                          {dims.highlights.strongPoints && dims.highlights.strongPoints.length > 0 && (
+                            <div className="mt-2">
+                              <span className="text-xs text-amber-600 font-medium">亮点提炼：</span>
+                              <ul className="mt-1 space-y-1">
+                                {dims.highlights.strongPoints.map((item, idx) => (
+                                  <li key={idx} className="text-xs text-amber-700 flex items-start gap-1">
+                                    <span>✓</span><span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
