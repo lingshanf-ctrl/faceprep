@@ -7,19 +7,20 @@ const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "hellodata";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // TODO: 暂时关闭鉴权
   // 只保护 /api/admin 路径，/admin 页面由前端自己处理认证
-  if (pathname.startsWith("/api/admin")) {
-    const adminToken = request.headers.get("x-admin-token");
+  // if (pathname.startsWith("/api/admin")) {
+  //   const adminToken = request.headers.get("x-admin-token");
 
-    if (!adminToken || adminToken !== ADMIN_TOKEN) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+  //   if (!adminToken || adminToken !== ADMIN_TOKEN) {
+  //     return NextResponse.json(
+  //       { error: "Unauthorized" },
+  //       { status: 401 }
+  //     );
+  //   }
 
-    return NextResponse.next();
-  }
+  //   return NextResponse.next();
+  // }
 
   return NextResponse.next();
 }

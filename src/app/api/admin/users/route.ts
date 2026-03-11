@@ -14,9 +14,10 @@ function isAdmin(req: NextRequest): boolean {
  */
 export async function GET(req: NextRequest) {
   try {
-    if (!isAdmin(req)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // TODO: 暂时关闭鉴权
+    // if (!isAdmin(req)) {
+    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // }
 
     const searchParams = req.nextUrl.searchParams;
     const search = searchParams.get("search") || "";
