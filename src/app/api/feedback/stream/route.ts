@@ -4,7 +4,7 @@ import { QUICK_COACH_SYSTEM_PROMPT, QUICK_COACH_USER_PROMPT } from "@/lib/ai/pro
 
 export const runtime = "edge";
 export const maxDuration = 60;
-export const preferredRegion = ["hkg1", "sin1", "nrt1", "icn1"];
+export const preferredRegion = ["hkg1", "sin1", "icn1"];
 
 // 快速评估 Prompt（精简版，用于流式响应）
 const QUICK_SYSTEM_PROMPT = QUICK_COACH_SYSTEM_PROMPT || `你是一位经验丰富的面试教练，擅长快速给出精准、可操作的反馈。
