@@ -121,7 +121,7 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
       {/* 下拉菜单 */}
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-border py-2 animate-fade-in z-50"
+          className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-border py-2 animate-fade-in z-50 max-w-[calc(100vw-2rem)] sm:max-w-none"
           style={{
             animation: "fadeIn 0.1s ease-out",
           }}
