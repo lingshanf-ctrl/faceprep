@@ -41,16 +41,12 @@ export function MembershipBadge({
     );
   }
 
-  // 免费用户 - 显示升级标签（使用 span 避免嵌套 button 问题）
+  // 免费用户 - 显示升级标签（仅展示，点击请使用下拉菜单中的按钮）
   return (
     <span
-      onClick={(e) => {
-        e.stopPropagation();
-        onUpgrade?.();
-      }}
-      className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-accent text-white hover:bg-accent-dark transition-colors shadow-sm hover:shadow-glow cursor-pointer ${className}`}
+      className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-accent/10 text-accent border border-accent/20 ${className}`}
     >
-      升级
+      免费版
     </span>
   );
 }

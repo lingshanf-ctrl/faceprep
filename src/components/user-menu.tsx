@@ -97,7 +97,6 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
           type={type}
           creditsRemaining={creditsRemaining}
           className="hidden sm:inline-flex"
-          onUpgrade={() => setShowUpgradeModal(true)}
         />
 
         {/* 下拉箭头 */}

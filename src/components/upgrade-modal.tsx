@@ -168,7 +168,7 @@ export function UpgradeModal({
       />
 
       {/* Modal */}
-      <div className="relative bg-background rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
+      <div className="relative bg-background rounded-2xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className={`bg-gradient-to-r ${content.theme.gradient} p-6 text-white`}>
           <div className="flex items-center gap-3 mb-2">
