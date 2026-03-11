@@ -13,6 +13,7 @@ interface GrantRequestBody {
   userId: string;
   type: "CREDIT" | "MONTHLY";
   credits?: number;
+  totalCredits?: number; // 兼容前端参数名
   durationDays?: number;
   note?: string;
 }
@@ -29,7 +30,10 @@ export async function POST(req: NextRequest) {
     // }
 
     const body: GrantRequestBody = await req.json();
-    const { userId, type, credits, durationDays, note } = body;
+    const { userId, type, credits, totalCredits, durationDays, note } = body;
+
+    // 兼容 totalCredits 和 credits 参数名
+    const finalCredits = totalCredits || credits;
 
     if (!userId || !type) {
       return NextResponse.json(
@@ -45,7 +49,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (type === "CREDIT" && (!credits || credits <= 0)) {
+    if (type === "CREDIT" && (!finalCredits || finalCredits <= 0)) {
       return NextResponse.json(
         { error: "Credits must be a positive number for CREDIT type" },
         { status: 400 }
@@ -62,7 +66,7 @@ export async function POST(req: NextRequest) {
     const result = await grantMembership({
       userId,
       type: type as MembershipType,
-      credits,
+      credits: finalCredits,
       durationDays,
       note,
       createdBy: "admin", // 可以改为从 session 获取管理员 ID
@@ -87,7 +91,7 @@ export async function POST(req: NextRequest) {
       membershipId: result.membership?.id,
       message:
         type === "CREDIT"
-          ? `成功开通 ${credits} 次的次卡`
+          ? `成功开通 ${finalCredits} 次的次卡`
           : `成功开通 ${durationDays} 天的月卡`,
     });
   } catch (error) {
