@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserUsageRecords } from "@/lib/membership-service";
 
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "admin-secret-token";
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "hellodata";
 
 function isAdmin(req: NextRequest): boolean {
   const token = req.headers.get("x-admin-token");

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // 管理员 token（从环境变量获取）
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "hellodata";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
