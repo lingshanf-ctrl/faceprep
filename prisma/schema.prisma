@@ -72,6 +72,12 @@ model Question {
 
   practices Practice[]
   favorites Favorite[]
+
+  @@index([category])
+  @@index([type])
+  @@index([difficulty])
+  @@index([frequency])
+  @@index([category, type, difficulty]) // 复合索引用于筛选
 }
 
 enum Category {
@@ -124,6 +130,8 @@ model Practice {
   aiGeneratedQuestion AIGeneratedQuestion? @relation(fields: [aiGeneratedQuestionId], references: [id], onDelete: SetNull)
 
   @@index([userId])
+  @@index([userId, createdAt]) // 用于查询最近练习记录
+  @@index([userId, questionType]) // 用于按类型统计
   @@index([questionId])
   @@index([evaluationStatus])
   @@index([aiGeneratedQuestionId])
@@ -226,6 +234,7 @@ model InterviewSession {
 
   @@index([userId])
   @@index([status])
+  @@index([userId, status]) // 复合索引用于查询用户的进行中会话
   @@index([createdAt])
 }
 

@@ -46,13 +46,18 @@ interface UpgradeTeaser {
   coachInsight?: string;
 }
 
+interface SuggestionDetail {
+  primary?: string;
+  secondary?: string;
+}
+
 interface PracticeFeedback {
   totalScore?: number;
   score?: number;
   dimensions?: FeedbackDimensions;
   good?: string[];
   improve?: string[];
-  suggestion?: string;
+  suggestion?: string | SuggestionDetail;
   keyFindings?: KeyFindings;
   quickAdvice?: QuickAdvice | string;
   upgradeTeaser?: UpgradeTeaser;
@@ -78,6 +83,7 @@ const translations = {
     weaknesses: "提升空间",
     criticalMissing: "关键缺失",
     coreAdvice: "核心改进建议",
+    aiSuggestion: "AI建议",
   },
   en: {
     overallScore: "Overall Score",
@@ -91,6 +97,7 @@ const translations = {
     weaknesses: "Areas to Improve",
     criticalMissing: "Critical Missing",
     coreAdvice: "Core Improvement Advice",
+    aiSuggestion: "AI Suggestion",
   },
 };
 
@@ -332,6 +339,28 @@ export function BasicFeedbackView({
                   <span className="font-medium">{t.criticalMissing}:</span>{" "}
                   <span>{keyFindings.criticalMissing}</span>
                 </div>
+              </div>
+            )}
+
+            {/* AI建议（从 suggestion 字段） */}
+            {feedback.suggestion && (
+              <div className="mt-4 bg-blue-50 rounded-lg p-4 border border-blue-100">
+                <h4 className="text-sm font-medium text-blue-700 mb-2 flex items-center gap-2">
+                  <Wand2 className="w-4 h-4" />
+                  {t.aiSuggestion}
+                </h4>
+                {typeof feedback.suggestion === 'string' ? (
+                  <p className="text-sm text-blue-700">{feedback.suggestion}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {feedback.suggestion.primary && (
+                      <p className="text-sm text-blue-700 font-medium">{feedback.suggestion.primary}</p>
+                    )}
+                    {feedback.suggestion.secondary && (
+                      <p className="text-sm text-blue-600">{feedback.suggestion.secondary}</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

@@ -41,12 +41,11 @@ export function MembershipBadge({
     );
   }
 
-  // 免费用户 - 显示升级标签（仅展示，点击请使用下拉菜单中的按钮）
+  // 免费用户 - 显示低调的小圆点
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-accent/10 text-accent border border-accent/20 ${className}`}
-    >
-      免费版
-    </span>
+      className={`inline-flex items-center justify-center w-1.5 h-1.5 rounded-full bg-slate-300 ${className}`}
+      title="免费用户"
+    />
   );
 }

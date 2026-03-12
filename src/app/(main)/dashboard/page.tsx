@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -20,7 +20,7 @@ import {
   Trophy,
   Play,
 } from "lucide-react";
-import { getStats, getPracticeRecordsSync, getStreak, PracticeRecord } from "@/lib/practice-store";
+import { getStats, getPracticeRecords, getStreak, PracticeRecord } from "@/lib/practice-store";
 import { useLanguage } from "@/components/language-provider";
 import { ScoreBadge } from "@/components/ui/score-badge";
 import { QuestionTypeBadge } from "@/components/ui/type-badge";
@@ -62,20 +62,22 @@ interface DashboardStats {
 }
 
 // 本地备用推荐逻辑（API 失败时使用）
-function getLocalRecommendations(locale: "zh" | "en", count: number = 3) {
-  const records = getPracticeRecordsSync();
+function getLocalRecommendations(locale: "zh" | "en", count: number = 3, records?: PracticeRecord[]) {
+  const practiceRecords = records || getPracticeRecordsSync();
   const recs: Array<{ id: string; title: string; type: string; reason: string }> = [];
   const usedIds = new Set<string>();
 
-  // 计算薄弱类型
+  // 计算薄弱类型（使用 Map 优化查找）
+  const questionTypeMap = new Map(questions.map(q => [q.id, q.type]));
   const typeScores: Record<string, number[]> = {};
-  records.forEach((r) => {
-    const q = questions.find((q) => q.id === r.questionId);
-    if (q) {
-      if (!typeScores[q.type]) typeScores[q.type] = [];
-      typeScores[q.type].push(r.score);
+
+  for (const r of practiceRecords) {
+    const type = questionTypeMap.get(r.questionId);
+    if (type) {
+      if (!typeScores[type]) typeScores[type] = [];
+      typeScores[type].push(r.score);
     }
-  });
+  }
 
   let weakestType = "";
   let lowestAvg = 100;
@@ -351,58 +353,27 @@ function RecentPracticeItem({
 export default function DashboardPage() {
   const { locale } = useLanguage();
   const [mounted, setMounted] = useState(false);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentRecords, setRecentRecords] = useState<PracticeRecord[]>([]);
+  const [rawStats, setRawStats] = useState<{ totalPractices: number; averageScore: number } | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [records, setRecords] = useState<PracticeRecord[]>([]);
   const [recommendations, setRecommendations] = useState<
     Array<{ id: string; title: string; type: string; reason: string }>
   >([]);
 
+  // 数据加载（仅在组件挂载时执行一次）
   useEffect(() => {
     setMounted(true);
 
     async function loadData() {
-      const rawStats = await getStats();
-      const streak = await getStreak();
+      const [statsData, streakData, recordsData] = await Promise.all([
+        getStats(),
+        getStreak(),
+        getPracticeRecords({ limit: 5 }), // 从API获取最近5条记录
+      ]);
 
-      const typeScores: Record<string, number[]> = {};
-      const records = getPracticeRecordsSync();
-      const totalTime = records.reduce((sum, r) => sum + (r.duration || 0), 0);
-
-      records.forEach((r) => {
-        const q = questions.find((q) => q.id === r.questionId);
-        if (q) {
-          if (!typeScores[q.type]) typeScores[q.type] = [];
-          typeScores[q.type].push(r.score);
-        }
-      });
-
-      let weakestType = "";
-      let bestType = "";
-      let lowestAvg = 100;
-      let highestAvg = 0;
-
-      Object.entries(typeScores).forEach(([type, scores]) => {
-        const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-        if (avg < lowestAvg) {
-          lowestAvg = avg;
-          weakestType = type;
-        }
-        if (avg > highestAvg) {
-          highestAvg = avg;
-          bestType = type;
-        }
-      });
-
-      setStats({
-        totalPractices: rawStats.totalPractices,
-        averageScore: rawStats.averageScore,
-        streakDays: streak,
-        totalTime: totalTime,
-        weakestType,
-        bestType,
-      });
-
-      setRecentRecords(getPracticeRecordsSync().slice(0, 5));
+      setRawStats(statsData);
+      setStreak(streakData);
+      setRecords(recordsData);
 
       // 从 API 获取推荐题目
       try {
@@ -422,16 +393,65 @@ export default function DashboardPage() {
           }));
           setRecommendations(formattedRecs);
         } else {
-          // 如果 API 失败，使用本地备用逻辑
-          setRecommendations(getLocalRecommendations(locale, 3));
+          setRecommendations(getLocalRecommendations(locale, 3, recordsData));
         }
       } catch {
-        setRecommendations(getLocalRecommendations(locale, 3));
+        setRecommendations(getLocalRecommendations(locale, 3, recordsData));
       }
     }
 
     loadData();
-  }, [locale]);
+  }, []); // 移除 locale 依赖，只在挂载时加载
+
+  // 使用 useMemo 缓存统计数据计算
+  const stats = useMemo<DashboardStats | null>(() => {
+    if (!rawStats) return null;
+
+    // 缓存题目 ID 到类型的映射，避免重复查找
+    const questionTypeMap = new Map(questions.map(q => [q.id, q.type]));
+
+    const typeScores: Record<string, number[]> = {};
+    let totalTime = 0;
+
+    // 单次遍历完成所有计算
+    for (const r of records) {
+      totalTime += r.duration || 0;
+      const type = questionTypeMap.get(r.questionId);
+      if (type) {
+        if (!typeScores[type]) typeScores[type] = [];
+        typeScores[type].push(r.score);
+      }
+    }
+
+    let weakestType = "";
+    let bestType = "";
+    let lowestAvg = 100;
+    let highestAvg = 0;
+
+    Object.entries(typeScores).forEach(([type, scores]) => {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      if (avg < lowestAvg) {
+        lowestAvg = avg;
+        weakestType = type;
+      }
+      if (avg > highestAvg) {
+        highestAvg = avg;
+        bestType = type;
+      }
+    });
+
+    return {
+      totalPractices: rawStats.totalPractices,
+      averageScore: rawStats.averageScore,
+      streakDays: streak,
+      totalTime,
+      weakestType,
+      bestType,
+    };
+  }, [rawStats, streak, records]);
+
+  // 缓存最近记录
+  const recentRecords = useMemo(() => records.slice(0, 5), [records]);
 
   if (!mounted || !stats) {
     return (

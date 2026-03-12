@@ -86,6 +86,8 @@ export default function InterviewReportPage() {
   const [evaluationStatus, setEvaluationStatus] = useState<EvaluationStatus | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
+  const maxPollCount = 60; // 最大轮询 60 次（5分钟）
 
   // 会员权限状态
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
@@ -283,22 +285,30 @@ export default function InterviewReportPage() {
         accessGranted = await checkAccessAndConsume(interviewId, loadedSession.title);
       }
 
-      // 如果有权限且没有 AI 评价，异步获取（仅当评估已完成时）
+      // 如果有权限且没有 AI 评价，异步触发生成（不等待结果）
       if (accessGranted && !loadedSession.aiEvaluation && loadedSession.answers.length > 0 && !hasPendingEvaluations) {
-        setIsGeneratingAIReport(true);
-        const aiEvaluation = await fetchAIEvaluation(loadedSession);
-        if (aiEvaluation) {
-          const updated = await updateSessionWithAIEvaluationAsync(interviewId, aiEvaluation);
-          if (updated) {
-            setSession(updated);
-          }
-        }
-        setIsGeneratingAIReport(false);
+        // 触发后台 AI 生成，不阻塞页面渲染
+        triggerAIGeneration(interviewId);
       }
     }
 
     loadSession();
   }, [interviewId, router]);
+
+  // 触发 AI 异步生成（不等待结果）
+  const triggerAIGeneration = async (sessionId: string) => {
+    setIsGeneratingAIReport(true);
+    try {
+      // 触发后台生成，不等待完成
+      fetch(`/api/interview/trigger-ai-evaluation?sessionId=${sessionId}`, {
+        method: "POST",
+      }).catch(() => {
+        // 忽略错误，轮询会处理状态
+      });
+    } finally {
+      // 不阻塞，立即显示页面
+    }
+  };
 
   // 获取评估状态
   const fetchEvaluationStatus = async () => {
@@ -372,27 +382,72 @@ export default function InterviewReportPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id]);
 
-  // 轮询检测评估进度
+  // 轮询检测评估进度（优化版：带页面可见性检查和最大次数限制）
   useEffect(() => {
     if (!isPolling || !session) return;
 
-    const pollInterval = setInterval(async () => {
-      const status = await fetchEvaluationStatus();
-      if (status) {
-        // 如果所有评估都完成或失败，停止轮询并刷新数据
-        if (status.pending === 0 && status.processing === 0) {
-          setIsPolling(false);
-          // 刷新会话数据以获取最新反馈
-          const updatedSession = await getInterviewSessionAsync(interviewId);
-          if (updatedSession) {
-            setSession(updatedSession);
+    let consecutiveErrors = 0;
+    const maxConsecutiveErrors = 3;
+
+    const poll = async () => {
+      // 页面不可见时跳过轮询
+      if (typeof document !== "undefined" && document.hidden) {
+        return;
+      }
+
+      // 超过最大轮询次数停止
+      if (pollCount >= maxPollCount) {
+        setIsPolling(false);
+        setIsGeneratingAIReport(false);
+        return;
+      }
+
+      try {
+        const status = await fetchEvaluationStatus();
+        consecutiveErrors = 0; // 重置错误计数
+        setPollCount((prev) => prev + 1);
+
+        if (status) {
+          // 如果所有评估都完成或失败，停止轮询并刷新数据
+          if (status.pending === 0 && status.processing === 0) {
+            setIsPolling(false);
+            setIsGeneratingAIReport(false);
+            // 刷新会话数据以获取最新反馈
+            const updatedSession = await getInterviewSessionAsync(interviewId);
+            if (updatedSession) {
+              setSession(updatedSession);
+            }
           }
         }
+      } catch (error) {
+        consecutiveErrors++;
+        // 连续错误超过阈值，停止轮询
+        if (consecutiveErrors >= maxConsecutiveErrors) {
+          setIsPolling(false);
+          setIsGeneratingAIReport(false);
+        }
       }
-    }, 3000); // 每 3 秒轮询一次
+    };
 
-    return () => clearInterval(pollInterval);
-  }, [isPolling, session?.id, interviewId]);
+    // 初始执行一次
+    poll();
+
+    // 使用 5 秒间隔，页面可见时才执行
+    const pollInterval = setInterval(poll, 5000);
+
+    // 监听页面可见性变化
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isPolling) {
+        poll(); // 页面重新可见时立即执行一次
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(pollInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isPolling, session?.id, interviewId, pollCount]);
 
   if (!session) {
     return (

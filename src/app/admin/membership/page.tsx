@@ -42,9 +42,6 @@ interface UsageRecord {
 }
 
 export default function AdminMembershipPage() {
-  const [adminToken, setAdminToken] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   // 用户搜索
   const [searchQuery, setSearchQuery] = useState("");
   const [users, setUsers] = useState<User[]>([]);
@@ -66,12 +63,13 @@ export default function AdminMembershipPage() {
     text: string;
   } | null>(null);
 
-  // 认证
-  const handleAuth = () => {
-    if (adminToken) {
-      setIsAuthenticated(true);
-    }
-  };
+  // 修复状态
+  const [isFixing, setIsFixing] = useState(false);
+  const [fixMessage, setFixMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
 
   // 搜索用户
   const searchUsers = async () => {
@@ -80,10 +78,7 @@ export default function AdminMembershipPage() {
     setIsSearching(true);
     try {
       const response = await fetch(
-        `/api/admin/users?search=${encodeURIComponent(searchQuery)}`,
-        {
-          headers: { "x-admin-token": adminToken },
-        }
+        `/api/admin/users?search=${encodeURIComponent(searchQuery)}`
       );
 
       if (response.ok) {
@@ -101,27 +96,88 @@ export default function AdminMembershipPage() {
   };
 
   // 选择用户
+  // 修复用户会员状态
+  const fixMembershipStatus = async () => {
+    if (!selectedUser) return;
+
+    setIsFixing(true);
+    setFixMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/membership/fix-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: selectedUser.id }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setFixMessage({
+          type: "success",
+          text: data.message,
+        });
+        // 刷新会员列表
+        selectUser(selectedUser);
+      } else {
+        setFixMessage({
+          type: "error",
+          text: data.error || "修复失败",
+        });
+      }
+    } catch (error) {
+      console.error("Fix status error:", error);
+      setFixMessage({ type: "error", text: "修复失败" });
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  // 修复单个会员状态
+  const fixSingleMembership = async (membershipId: string) => {
+    if (!selectedUser) return;
+
+    try {
+      const response = await fetch("/api/admin/membership/fix-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          membershipId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.fixed) {
+        // 刷新会员列表
+        selectUser(selectedUser);
+      }
+    } catch (error) {
+      console.error("Fix single membership error:", error);
+    }
+  };
+
   const selectUser = async (user: User) => {
     setSelectedUser(user);
     setGrantMessage(null);
+    setFixMessage(null);
 
     // 获取会员订单
     try {
       const membershipRes = await fetch(
-        `/api/admin/membership?userId=${user.id}`,
-        {
-          headers: { "x-admin-token": adminToken },
-        }
-      );
+        `/api/admin/membership?userId=${user.id}`);
       if (membershipRes.ok) {
         const data = await membershipRes.json();
         setMemberships(data.memberships);
       }
 
       // 获取消费记录
-      const usageRes = await fetch(`/api/admin/usage?userId=${user.id}`, {
-        headers: { "x-admin-token": adminToken },
-      });
+      const usageRes = await fetch(`/api/admin/usage?userId=${user.id}`);
       if (usageRes.ok) {
         const data = await usageRes.json();
         setUsageRecords(data.records);
@@ -143,7 +199,6 @@ export default function AdminMembershipPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-token": adminToken,
         },
         body: JSON.stringify({
           userId: selectedUser.id,
@@ -170,37 +225,6 @@ export default function AdminMembershipPage() {
       setIsGranting(false);
     }
   };
-
-  // 未认证时显示登录表单
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>管理员认证</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Admin Token
-              </label>
-              <input
-                type="password"
-                value={adminToken}
-                onChange={(e) => setAdminToken(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
-                placeholder="输入管理员 Token"
-                onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-              />
-            </div>
-            <Button onClick={handleAuth} className="w-full">
-              登录
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -398,10 +422,29 @@ export default function AdminMembershipPage() {
 
                 {/* 会员订单 */}
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-lg">会员订单</CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={fixMembershipStatus}
+                      disabled={isFixing}
+                    >
+                      {isFixing ? "修复中..." : "修复状态"}
+                    </Button>
                   </CardHeader>
                   <CardContent>
+                    {fixMessage && (
+                      <div
+                        className={`mb-4 p-3 rounded-lg text-sm ${
+                          fixMessage.type === "success"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-red-50 text-red-700"
+                        }`}
+                      >
+                        {fixMessage.text}
+                      </div>
+                    )}
                     {memberships.length === 0 ? (
                       <p className="text-sm text-gray-500 text-center py-4">
                         暂无会员订单

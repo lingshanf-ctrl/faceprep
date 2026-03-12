@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { grantMembership } from "@/lib/membership-service";
 import { MembershipType } from "@prisma/client";
-
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "hellodata";
-
-function isAdmin(req: NextRequest): boolean {
-  const token = req.headers.get("x-admin-token");
-  return token === ADMIN_TOKEN;
-}
+import { verifyAdmin } from "@/lib/admin-auth";
 
 interface GrantRequestBody {
   userId: string;
@@ -24,10 +18,11 @@ interface GrantRequestBody {
  */
 export async function POST(req: NextRequest) {
   try {
-    // TODO: 暂时关闭鉴权
-    // if (!isAdmin(req)) {
-    //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    // }
+    // 验证管理员身份
+    const auth = await verifyAdmin(req);
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: auth.error }, { status: 401 });
+    }
 
     const body: GrantRequestBody = await req.json();
     const { userId, type, credits, totalCredits, durationDays, note } = body;

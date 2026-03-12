@@ -285,8 +285,8 @@ function FunnelChart({
 }
 
 export default function AnalyticsDashboardPage() {
-  const [adminToken, setAdminToken] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState(30);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -295,26 +295,31 @@ export default function AnalyticsDashboardPage() {
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [conversionData, setConversionData] = useState<any>(null);
 
-  // 认证
-  const handleAuth = () => {
-    if (adminToken) {
-      setIsAuthenticated(true);
+  // 检查管理员权限
+  useEffect(() => {
+    async function checkAdmin() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdmin(data.user?.isAdmin || false);
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
-  };
+    checkAdmin();
+  }, []);
 
   // 加载数据
   const loadData = async () => {
-    if (!isAuthenticated) return;
+    if (!isAdmin) return;
 
     setLoading(true);
     try {
       const [analyticsRes, conversionRes] = await Promise.all([
-        fetch(`/api/admin/analytics?period=${period}`, {
-          headers: { "x-admin-token": adminToken },
-        }),
-        fetch(`/api/admin/analytics/conversion?period=${period}`, {
-          headers: { "x-admin-token": adminToken },
-        }),
+        fetch(`/api/admin/analytics?period=${period}`),
+        fetch(`/api/admin/analytics/conversion?period=${period}`),
       ]);
 
       if (analyticsRes.ok) {
@@ -337,46 +342,43 @@ export default function AnalyticsDashboardPage() {
 
   // 初始加载
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAdmin) {
       loadData();
     }
-  }, [isAuthenticated, period]);
+  }, [isAdmin, period]);
 
   // 自动刷新
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAdmin) return;
 
     const interval = setInterval(() => {
       loadData();
     }, 30000); // 30秒刷新一次
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, period]);
+  }, [isAdmin, period]);
 
-  // 未认证
-  if (!isAuthenticated) {
+  // 加载中
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-gray-500">加载中...</div>
+      </div>
+    );
+  }
+
+  // 无权限
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>数据分析大屏 - 管理员认证</CardTitle>
+            <CardTitle>访问受限</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Admin Token
-              </label>
-              <input
-                type="password"
-                value={adminToken}
-                onChange={(e) => setAdminToken(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0025E0] focus:border-[#0025E0]"
-                placeholder="输入管理员 Token"
-                onKeyDown={(e) => e.key === "Enter" && handleAuth()}
-              />
-            </div>
-            <Button onClick={handleAuth} className="w-full bg-[#0025E0]">
-              登录
+            <p className="text-gray-600">需要管理员权限才能访问此页面。</p>
+            <Button onClick={() => window.location.href = "/"} className="w-full bg-[#0025E0]">
+              返回首页
             </Button>
           </CardContent>
         </Card>

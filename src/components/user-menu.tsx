@@ -189,18 +189,15 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
             {/* 免费用户 */}
             {type === "FREE" && (
               <button
-                className="w-full flex items-center gap-2 px-3 py-2 bg-accent/5 hover:bg-accent/10 rounded-lg mb-2 transition-colors group text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 text-foreground-muted hover:text-foreground hover:bg-surface rounded-lg mb-2 transition-colors group text-left"
                 onClick={() => {
                   setIsOpen(false);
                   setShowUpgradeModal(true);
                 }}
               >
-                <Sparkles className="w-4 h-4 text-accent" />
+                <Sparkles className="w-4 h-4 text-foreground-muted group-hover:text-foreground" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-accent">升级到会员</p>
-                  <p className="text-xs text-foreground-muted">
-                    解锁 AI 深度评估
-                  </p>
+                  <p className="text-sm">升级到会员</p>
                 </div>
               </button>
             )}

@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "hellodata";
-
-function isAdmin(req: NextRequest): boolean {
-  const token = req.headers.get("x-admin-token");
-  return token === ADMIN_TOKEN;
-}
+import { verifyAdmin } from "@/lib/admin-auth";
 
 // 获取日期范围
 function getDateRange(days: number) {
@@ -32,8 +26,10 @@ function getDayRange(date: Date) {
  */
 export async function GET(req: NextRequest) {
   try {
-    if (!isAdmin(req)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 验证管理员身份
+    const auth = await verifyAdmin(req);
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: auth.error }, { status: 401 });
     }
 
     const searchParams = req.nextUrl.searchParams;

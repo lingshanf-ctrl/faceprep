@@ -2,13 +2,11 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   CheckCircle,
   ArrowUpCircle,
   BarChart3,
   Target,
-  Sparkles,
   Lock,
   ChevronRight,
   Lightbulb,
@@ -187,10 +185,9 @@ function DimensionPreviewCard({
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-50/80" />
           <button
             onClick={onUpgrade}
-            className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 text-xs text-accent hover:text-accent/80 font-medium py-1 bg-slate-50/90"
+            className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 text-xs text-slate-400 hover:text-slate-600 py-1 bg-slate-50/90 transition-colors"
           >
-            <Lock className="w-3 h-3" />
-            {locale === "zh" ? "解锁完整分析" : "Unlock full analysis"}
+            {locale === "zh" ? "了解更多" : "Learn more"}
           </button>
         </div>
       )}
@@ -393,18 +390,19 @@ export function BasicInterviewFeedback({
         </Card>
       )}
 
-      {/* 关键发现 */}
-      <Card className="border border-slate-200">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Target className="w-4 h-4 text-accent" />
-            {t.keyFindings}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* 关键缺失 */}
-            {criticalMissings.length > 0 && (
+      {/* 关键发现 - 仅在有数据时展示 */}
+      {(criticalMissings.length > 0 || allStrengths.length > 0 || allWeaknesses.length > 0) && (
+        <Card className="border border-slate-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-medium flex items-center gap-2">
+              <Target className="w-4 h-4 text-accent" />
+              {t.keyFindings}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* 关键缺失 */}
+              {criticalMissings.length > 0 && (
               <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
                 <h4 className="text-xs font-medium text-rose-700 mb-2 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" />
@@ -453,6 +451,7 @@ export function BasicInterviewFeedback({
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* 答题概览 */}
       <Card className="border border-slate-200">
@@ -533,15 +532,12 @@ export function BasicInterviewFeedback({
                           </ul>
                         </div>
                       )}
-                      <Button
+                      <button
                         onClick={onUpgrade}
-                        variant="ghost"
-                        size="sm"
-                        className="w-full mt-3 text-accent hover:text-accent/80"
+                        className="w-full mt-3 text-xs text-slate-400 hover:text-slate-600 flex items-center justify-center gap-1 transition-colors"
                       >
-                        <Sparkles className="w-4 h-4 mr-1" />
-                        {locale === "zh" ? "查看深度分析" : "View deep analysis"}
-                      </Button>
+                        {locale === "zh" ? "了解更多" : "Learn more"}
+                      </button>
                     </div>
                   )}
                 </div>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MembershipBadge } from "./membership-badge";
 import { UpgradeModal } from "./upgrade-modal";
 import { useAuth } from "./auth-provider";
 import { useLanguage } from "./language-provider";
@@ -125,16 +124,6 @@ export function Navbar() {
               <div className="w-20 h-10 bg-surface rounded-xl animate-pulse" />
             ) : user ? (
               <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
-                {/* 移动端简化的会员徽章 - 仅非会员时显示，且与UserMenu合并显示 */}
-                {membershipStatus?.membershipType === "FREE" && (
-                  <div className="sm:hidden">
-                    <MembershipBadge
-                      type={membershipStatus.membershipType}
-                      creditsRemaining={membershipStatus.creditsRemaining}
-                      onUpgrade={() => setShowUpgradeModal(true)}
-                    />
-                  </div>
-                )}
                 {/* 用户菜单 */}
                 <UserMenu
                   user={user}

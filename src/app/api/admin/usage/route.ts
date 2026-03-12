@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserUsageRecords } from "@/lib/membership-service";
-
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "hellodata";
-
-function isAdmin(req: NextRequest): boolean {
-  const token = req.headers.get("x-admin-token");
-  return token === ADMIN_TOKEN;
-}
+import { verifyAdmin } from "@/lib/admin-auth";
 
 /**
  * GET /api/admin/usage?userId=xxx&page=1&limit=20
@@ -14,8 +8,10 @@ function isAdmin(req: NextRequest): boolean {
  */
 export async function GET(req: NextRequest) {
   try {
-    if (!isAdmin(req)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 验证管理员身份
+    const auth = await verifyAdmin(req);
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: auth.error }, { status: 401 });
     }
 
     const searchParams = req.nextUrl.searchParams;

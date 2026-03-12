@@ -20,16 +20,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Cookie 操作工具
-function setCookie(name: string, value: string, days: number) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = name + "=" + encodeURIComponent(value) + "; expires=" + expires + "; path=/";
-}
-
-function getCookie(name: string): string | undefined {
-  return document.cookie.split("; ").find(row => row.startsWith(name + "="))?.split("=")[1];
-}
-
 // ============ 类型定义 ============
 interface StatsData {
   timestamp: string;
@@ -81,8 +71,8 @@ interface Membership {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [token, setToken] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"analytics" | "membership">("analytics");
 
   // 数据看板状态
@@ -104,32 +94,30 @@ export default function AdminDashboard() {
   const [isGranting, setIsGranting] = useState(false);
   const [grantMessage, setGrantMessage] = useState<{type: "success" | "error"; text: string} | null>(null);
 
-  // 检查是否已有 cookie
+  // 检查当前用户是否是管理员
   useEffect(() => {
-    const savedToken = getCookie("admin-token");
-    if (savedToken) {
-      setToken(savedToken);
-      setIsAuthenticated(true);
+    async function checkAdmin() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdmin(data.user?.isAdmin || false);
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    checkAdmin();
   }, []);
-
-  // 登录验证
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (token.trim()) {
-      setCookie("admin-token", token, 7);
-      setIsAuthenticated(true);
-    }
-  };
 
   // 退出登录
   const handleLogout = () => {
-    setCookie("admin-token", "", 0);
-    setIsAuthenticated(false);
-    setToken("");
-    setStats(null);
-    setUsers([]);
-    setSelectedUser(null);
+    // 跳转到首页
+    window.location.href = "/";
   };
 
   // 获取统计数据
@@ -137,9 +125,7 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/stats", {
-        headers: { "x-admin-token": token },
-      });
+      const res = await fetch("/api/admin/stats");
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setStats(data);
@@ -155,9 +141,7 @@ export default function AdminDashboard() {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     try {
-      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(searchQuery)}`, {
-        headers: { "x-admin-token": token },
-      });
+      const res = await fetch(`/api/admin/users?search=${encodeURIComponent(searchQuery)}`);
       if (!res.ok) throw new Error("Search failed");
       const data = await res.json();
       setUsers(data.users);
@@ -171,9 +155,7 @@ export default function AdminDashboard() {
   // 获取用户会员信息
   const fetchUserMemberships = async (userId: string) => {
     try {
-      const res = await fetch(`/api/admin/membership?userId=${userId}`, {
-        headers: { "x-admin-token": token },
-      });
+      const res = await fetch(`/api/admin/membership?userId=${userId}`);
       if (res.ok) {
         const data = await res.json();
         setMemberships(data.memberships);
@@ -193,8 +175,7 @@ export default function AdminDashboard() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-token": token,
-        },
+                  },
         body: JSON.stringify({
           userId: selectedUser.id,
           type: grantType,
@@ -227,45 +208,44 @@ export default function AdminDashboard() {
 
   // 自动刷新数据看板
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAdmin) return;
     if (activeTab === "analytics") {
       fetchStats();
       const interval = setInterval(fetchStats, 30000);
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated, activeTab]);
+  }, [isAdmin, activeTab]);
 
-  // 登录页面
-  if (!isAuthenticated) {
+  // 加载中
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="text-foreground-muted">加载中...</div>
+      </div>
+    );
+  }
+
+  // 无权限页面
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="bg-surface rounded-2xl p-8 shadow-soft-lg">
-            <div className="flex items-center justify-center w-16 h-16 bg-accent/10 rounded-2xl mx-auto mb-6">
-              <Lock className="w-8 h-8 text-accent" />
+            <div className="flex items-center justify-center w-16 h-16 bg-error/10 rounded-2xl mx-auto mb-6">
+              <Lock className="w-8 h-8 text-error" />
             </div>
             <h1 className="text-2xl font-bold text-center text-foreground mb-2">
-              管理员后台
+              访问受限
             </h1>
             <p className="text-foreground-muted text-center mb-8">
-              数据看板 + 会员管理
+              需要管理员权限才能访问此页面
             </p>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <input
-                type="password"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Admin Token"
-                className="w-full px-4 py-3 bg-background border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20"
-                autoFocus
-              />
-              <button
-                type="submit"
-                className="w-full py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark transition-all"
-              >
-                进入后台
-              </button>
-            </form>
+            <button
+              onClick={() => router.push("/")}
+              className="w-full py-3 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark transition-all"
+            >
+              返回首页
+            </button>
           </div>
         </div>
       </div>
