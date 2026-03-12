@@ -212,7 +212,11 @@ export function BasicFeedbackView({
   } else if (feedback.quickAdvice) {
     quickAdvice = feedback.quickAdvice;
   } else if (feedback.suggestion) {
-    quickAdvice = { primary: feedback.suggestion };
+    if (typeof feedback.suggestion === "string") {
+      quickAdvice = { primary: feedback.suggestion };
+    } else {
+      quickAdvice = feedback.suggestion;
+    }
   }
 
   const upgradeTeaser = feedback.upgradeTeaser || {};
