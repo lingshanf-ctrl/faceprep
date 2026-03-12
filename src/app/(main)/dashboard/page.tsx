@@ -63,7 +63,7 @@ interface DashboardStats {
 
 // 本地备用推荐逻辑（API 失败时使用）
 function getLocalRecommendations(locale: "zh" | "en", count: number = 3, records?: PracticeRecord[]) {
-  const practiceRecords = records || getPracticeRecordsSync();
+  const practiceRecords = records || [];
   const recs: Array<{ id: string; title: string; type: string; reason: string }> = [];
   const usedIds = new Set<string>();
 
