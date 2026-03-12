@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
@@ -9,7 +9,7 @@ import { ErrorBanner } from "@/components/ui/error-banner";
 import { InlineLoading } from "@/components/ui/loading-state";
 import { getAnonymousId } from "@/lib/anonymous-user";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, locale } = useLanguage();
@@ -244,5 +244,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><InlineLoading /></div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
