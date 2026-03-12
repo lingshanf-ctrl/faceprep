@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import { useLanguage } from "@/components/language-provider";
+import { InlineLoading } from "@/components/ui/loading-state";
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, locale } = useLanguage();
@@ -188,5 +189,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><InlineLoading /></div>}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }
