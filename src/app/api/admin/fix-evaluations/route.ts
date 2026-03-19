@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     const aiUpgradeFailed = await db.practice.findMany({
       where: {
         evaluationStatus: EvaluationStatus.COMPLETED,
-        feedback: { string_contains: '"aiUpgradeFailed":true' },
+        feedback: { contains: '"aiUpgradeFailed":true' },
       },
       orderBy: { evaluationCompletedAt: "desc" },
       take: 100,
@@ -426,7 +426,7 @@ export async function POST(req: NextRequest) {
             },
             {
               evaluationStatus: EvaluationStatus.COMPLETED,
-              feedback: { string_contains: '"aiUpgradeFailed":true' },
+              feedback: { contains: '"aiUpgradeFailed":true' },
             },
           ],
         }),
@@ -445,7 +445,7 @@ export async function POST(req: NextRequest) {
           },
           {
             evaluationStatus: EvaluationStatus.COMPLETED,
-            feedback: { string_contains: '"aiUpgradeFailed":true' },
+            feedback: { contains: '"aiUpgradeFailed":true' },
           },
         ],
       };
