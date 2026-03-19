@@ -53,6 +53,11 @@ export interface PracticeRecord {
     improve: string[];
     suggestion: string;
     starAnswer?: string;
+    // 模型信息
+    evaluationModel?: string;
+    evaluationDepth?: "basic" | "advanced";
+    // Phase-2 AI 深度分析仍在后台运行的标记
+    aiUpgrading?: boolean;
   };
   duration?: number;
   createdAt: string;

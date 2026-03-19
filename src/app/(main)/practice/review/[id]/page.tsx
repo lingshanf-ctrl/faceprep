@@ -776,6 +776,8 @@ export default function PracticeReviewPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [simplifiedFeedback, setSimplifiedFeedback] = useState<SimplifiedFeedback | null>(null);
   const [userType, setUserType] = useState<"free" | "credit_exhausted" | "monthly_expired">("free");
+  const [canUpgradeToDeep, setCanUpgradeToDeep] = useState(false);
+  const [isUpgradingToDeep, setIsUpgradingToDeep] = useState(false);
   const [membershipInfo, setMembershipInfo] = useState<{
     creditsRemaining: number | null;
     monthlyExpiresAt: Date | null;
@@ -990,6 +992,37 @@ export default function PracticeReviewPage() {
     }
   };
 
+  // 升级为深度分析
+  const handleUpgradeToDeep = async () => {
+    if (!record) return;
+    setIsUpgradingToDeep(true);
+    try {
+      // 先消费积分
+      const consumed = await checkAccessAndConsume(
+        recordId,
+        record.questionTitle,
+        undefined,
+        record.questionType
+      );
+      if (!consumed) {
+        setIsUpgradingToDeep(false);
+        return;
+      }
+      // 触发重新评估（强制深度分析）
+      await fetch("/api/practices/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ practiceId: recordId, forceReEvaluate: true }),
+      });
+      setCanUpgradeToDeep(false);
+      setEvaluationStatus("PROCESSING");
+    } catch (error) {
+      console.error("升级深度分析失败:", error);
+    } finally {
+      setIsUpgradingToDeep(false);
+    }
+  };
+
   // 初始加载
   useEffect(() => {
     async function loadRecord() {
@@ -1043,15 +1076,40 @@ export default function PracticeReviewPage() {
           const isEvaluationPending = data.evaluationStatus === "PENDING" || data.evaluationStatus === "PROCESSING";
           const hasFeedback = hasValidFeedback(data.feedback);
 
+          // 检测是否为基础版反馈（免费用户时生成的）
+          const feedbackModel = data.feedback?.evaluationModel;
+          const feedbackDepth = data.feedback?.evaluationDepth;
+          // aiUpgrading=true 表示 Phase-2 AI 深度分析仍在后台运行，不应视为"基础版已定型"
+          const isAIUpgrading = !!data.feedback?.aiUpgrading;
+          const isBasicFeedback = data.evaluationStatus === "COMPLETED" && hasFeedback && !isAIUpgrading && (
+            feedbackDepth === "basic" ||
+            feedbackModel === "qwen" ||
+            feedbackModel === "rule-engine" ||
+            // 旧记录没有 evaluationDepth 字段，认为是基础版
+            (!feedbackDepth && !feedbackModel)
+          );
+
           let accessGranted = false;
 
           if (isEvaluationPending && !hasFeedback) {
-            // 评估进行中：只检查权限，不消费积分
+            // 评估进行中（无任何反馈）：只检查权限，不消费积分
             // 如果用户有权限，会显示 AIEvaluationProgress 触发评估
             // 如果用户无权限，直接显示简化反馈，不触发 AI 评估
             accessGranted = await checkAccessOnly(recordId);
+          } else if (isAIUpgrading) {
+            // Phase-1 规则引擎结果已就绪，Phase-2 AI 深度分析仍在后台运行
+            // 不消费积分，等 Phase-2 完成后通过 onCompleted 回调再消费
+            accessGranted = await checkAccessOnly(recordId);
+          } else if (isBasicFeedback) {
+            // 基础版反馈已定型（Phase-2 已完成，结果仍为基础版）：
+            // 不消费积分，但检查权限以决定是否显示"升级深度分析"按钮
+            const hasPermission = await checkAccessOnly(recordId);
+            accessGranted = hasPermission;
+            if (hasPermission) {
+              setCanUpgradeToDeep(true);
+            }
           } else {
-            // 评估已完成或有有效反馈：检查权限并消费积分
+            // 深度分析已完成或有有效反馈：检查权限并消费积分
             accessGranted = await checkAccessAndConsume(
               recordId,
               data.questionTitle,
@@ -1134,53 +1192,90 @@ export default function PracticeReviewPage() {
           </p>
         </div>
 
-        {/* 判断是否应该显示评估进度：状态为 PENDING/PROCESSING 且没有有效反馈数据 且 用户有权限查看AI分析 */}
+        {/* AI 评估进度 */}
         {(() => {
           const hasFeedback = hasValidFeedback(record.feedback);
+          const isAIUpgradingNow = evaluationStatus === "COMPLETED" && !!record.feedback?.aiUpgrading;
+          const shouldShowProgress = (
+            (evaluationStatus === "PENDING" || evaluationStatus === "PROCESSING") && !hasFeedback
+          ) || isAIUpgradingNow;
 
-          console.log("[Debug] Render check - evaluationStatus:", evaluationStatus, "hasValidFeedback:", hasFeedback, "hasAccess:", hasAccess, "feedback:", record.feedback);
+          if (!shouldShowProgress) return null;
 
-          // 双模型架构：所有用户都触发AI评估，根据用户类型选择不同模型
-          // 免费用户 → Qwen-turbo 基础分析
-          // 付费用户 → Kimi k2.5 深度分析
-          // 需要显示进度：状态未完成 且 没有有效反馈
-          const shouldShowProgress = (evaluationStatus === "PENDING" || evaluationStatus === "PROCESSING") &&
-            !hasFeedback;
-
-          return shouldShowProgress;
-        })() ? (
-          <AIEvaluationProgress
-            practiceId={recordId}
-            onCompleted={async () => {
+          const sharedProps = {
+            practiceId: recordId,
+            // Phase-1 规则引擎完成：立即回显基础反馈，不消费积分
+            onPhase1Completed: (evalData: { id: string; status: string; progress: number; score?: number; feedback?: Record<string, unknown> | null }) => {
+              // 同步更新 evaluationStatus → "COMPLETED"，使 isAIUpgradingNow 变为 true
+              // 进度条从 card 模式切换为 banner 模式，继续轮询 Phase-2
               setEvaluationStatus("COMPLETED");
-              // 刷新记录以获取最新结果
-              const updatedRecord = await getPracticeRecordById(recordId);
-              if (updatedRecord) {
-                setRecord(updatedRecord);
-                // AI 分析完成后检查权限
-                const accessGranted = await checkAccessAndConsume(
-                  recordId,
-                  updatedRecord.questionTitle,
-                  undefined,
-                  updatedRecord.questionType
+              if (evalData?.feedback) {
+                setRecord((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        score: evalData.score ?? prev.score,
+                        feedback: evalData.feedback as PracticeRecord["feedback"],
+                        evaluationStatus: "COMPLETED",
+                      }
+                    : prev
                 );
-                // 付费用户：反馈数据应该已经在 updatedRecord 中
-                // 无需额外操作，setRecord(updatedRecord) 已经更新了状态
-                if (!accessGranted) {
-                  // 免费用户：生成简化反馈
-                  const simplified = generateRuleBasedFeedback(updatedRecord.answer || "", {
-                    keyPoints: undefined,
-                    type: updatedRecord.questionType,
-                  });
-                  setSimplifiedFeedback(simplified);
-                }
               }
-            }}
-            onFailed={() => {
-              setEvaluationStatus("FAILED");
-            }}
-          />
-        ) : null}
+            },
+            onCompleted: async (evalData: { id: string; status: string; progress: number; score?: number; feedback?: Record<string, unknown> | null }) => {
+              setEvaluationStatus("COMPLETED");
+              if (evalData?.feedback) {
+                setRecord((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        score: evalData.score ?? prev.score,
+                        feedback: evalData.feedback as PracticeRecord["feedback"],
+                        evaluationStatus: "COMPLETED",
+                      }
+                    : prev
+                );
+              } else {
+                const updatedRecord = await getPracticeRecordById(recordId);
+                if (updatedRecord) setRecord(updatedRecord);
+              }
+              const accessGranted = await checkAccessAndConsume(
+                recordId,
+                record?.questionTitle,
+                undefined,
+                record?.questionType
+              );
+              if (!accessGranted) {
+                const simplified = generateRuleBasedFeedback(record?.answer || "", {
+                  keyPoints: undefined,
+                  type: record?.questionType,
+                });
+                setSimplifiedFeedback(simplified);
+              }
+            },
+            onFailed: () => setEvaluationStatus("FAILED"),
+          };
+
+          // aiUpgrading 场景：有基础反馈，用 banner 模式（不遮挡内容）
+          if (isAIUpgradingNow) {
+            return (
+              <AIEvaluationProgress
+                {...sharedProps}
+                variant="banner"
+                nextQuestionHref="/questions"
+              />
+            );
+          }
+
+          // 无反馈场景：用 card 模式 + 跳过链接
+          return (
+            <AIEvaluationProgress
+              {...sharedProps}
+              variant="card"
+              nextQuestionHref="/questions"
+            />
+          );
+        })()}
 
         {/* 评估失败 Banner */}
         {evaluationStatus === "FAILED" && (
@@ -1216,6 +1311,40 @@ export default function PracticeReviewPage() {
                   : locale === "zh"
                     ? "重试"
                     : "Retry"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 升级深度分析提示 Banner */}
+        {canUpgradeToDeep && evaluationStatus !== "PROCESSING" && evaluationStatus !== "PENDING" && !record.feedback?.aiUpgrading && (
+          <div className="bg-gradient-to-r from-accent/5 to-purple-50 border border-accent/20 rounded-2xl p-5 mb-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground text-sm">
+                    {locale === "zh" ? "升级为深度分析" : "Upgrade to Deep Analysis"}
+                  </p>
+                  <p className="text-xs text-foreground-muted mt-0.5">
+                    {locale === "zh"
+                      ? "此答案使用了基础分析。升级后可获得四维评估、差距分析和优化回答示例（消耗 1 次点数）"
+                      : "This answer used basic analysis. Upgrade for 4-dimension evaluation, gap analysis, and optimized answer (costs 1 credit)"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleUpgradeToDeep}
+                disabled={isUpgradingToDeep}
+                className="flex-shrink-0 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                {isUpgradingToDeep
+                  ? (locale === "zh" ? "升级中..." : "Upgrading...")
+                  : (locale === "zh" ? "立即升级" : "Upgrade Now")}
               </button>
             </div>
           </div>

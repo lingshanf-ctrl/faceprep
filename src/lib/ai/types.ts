@@ -9,6 +9,7 @@ export interface AICompletionOptions {
   messages: AIMessage[];
   temperature?: number;
   maxTokens?: number;
+  timeoutMs?: number;
 }
 
 export interface AICompletionResult {

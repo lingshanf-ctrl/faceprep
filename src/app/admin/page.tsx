@@ -17,6 +17,11 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  AlertTriangle,
+  Wrench,
+  Loader2,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -69,11 +74,39 @@ interface Membership {
   note: string | null;
 }
 
+interface StuckEvaluation {
+  id: string;
+  sessionId?: string;
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  questionId?: string;
+  questionTitle?: string;
+  questionCategory?: string;
+  evaluationStatus: string;
+  evaluationStartedAt?: string;
+  evaluationRetries: number;
+  evaluationError?: string;
+  evaluationModel?: string;
+  createdAt: string;
+  stuckForMinutes?: number;
+  pendingForMinutes?: number;
+}
+
+interface FixEvaluationsSummary {
+  stuckProcessing: number;
+  stuckPending: number;
+  failed: number;
+  interviewProcessing: number;
+  interviewPending: number;
+  interviewFailed: number;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"analytics" | "membership">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "membership" | "fix-evaluations">("analytics");
 
   // 数据看板状态
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -93,6 +126,22 @@ export default function AdminDashboard() {
   const [note, setNote] = useState("");
   const [isGranting, setIsGranting] = useState(false);
   const [grantMessage, setGrantMessage] = useState<{type: "success" | "error"; text: string} | null>(null);
+
+  // 评估修复状态
+  const [stuckRecords, setStuckRecords] = useState<{
+    processing: StuckEvaluation[];
+    pending: StuckEvaluation[];
+    failed: StuckEvaluation[];
+    interviewProcessing: StuckEvaluation[];
+    interviewPending: StuckEvaluation[];
+    interviewFailed: StuckEvaluation[];
+  }>({ processing: [], pending: [], failed: [], interviewProcessing: [], interviewPending: [], interviewFailed: [] });
+  const [fixSummary, setFixSummary] = useState<FixEvaluationsSummary | null>(null);
+  const [isLoadingStuck, setIsLoadingStuck] = useState(false);
+  const [isFixing, setIsFixing] = useState(false);
+  const [fixMessage, setFixMessage] = useState<{type: "success" | "error"; text: string} | null>(null);
+  const [selectedRecords, setSelectedRecords] = useState<Set<string>>(new Set());
+  const [stuckMinutes, setStuckMinutes] = useState(5);
 
   // 检查当前用户是否是管理员
   useEffect(() => {
@@ -206,6 +255,118 @@ export default function AdminDashboard() {
     setGrantMessage(null);
   };
 
+  // 获取卡住的评估记录
+  const fetchStuckEvaluations = async () => {
+    setIsLoadingStuck(true);
+    setFixMessage(null);
+    try {
+      const res = await fetch(`/api/admin/fix-evaluations?stuckMinutes=${stuckMinutes}&includeFailed=true`);
+      const data = await res.json();
+      if (!res.ok) {
+        setFixMessage({ type: "error", text: data.error || `请求失败 (${res.status})` });
+        return;
+      }
+      setStuckRecords({
+        processing: data.records?.processing || [],
+        pending: data.records?.pending || [],
+        failed: data.records?.failed || [],
+        interviewProcessing: data.records?.interviewProcessing || [],
+        interviewPending: data.records?.interviewPending || [],
+        interviewFailed: data.records?.interviewFailed || [],
+      });
+      setFixSummary(data.summary);
+    } catch (err) {
+      setFixMessage({ type: "error", text: "获取卡住记录失败，请检查网络" });
+    } finally {
+      setIsLoadingStuck(false);
+    }
+  };
+
+  // 修复卡住的记录
+  const fixStuckEvaluations = async (action: "reset" | "mark-failed" | "trigger-evaluate") => {
+    setIsFixing(true);
+    setFixMessage(null);
+    try {
+      const ids = selectedRecords.size > 0 ? Array.from(selectedRecords) : undefined;
+      const res = await fetch("/api/admin/fix-evaluations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ids, stuckMinutes }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFixMessage({ type: "success", text: data.message });
+        setSelectedRecords(new Set());
+        fetchStuckEvaluations();
+      } else {
+        setFixMessage({ type: "error", text: data.error || "修复失败" });
+      }
+    } catch (error) {
+      setFixMessage({ type: "error", text: "网络错误" });
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  // 修复面试答案评估
+  const fixInterviewEvaluations = async (action: "reset" | "mark-failed" | "trigger-evaluate") => {
+    setIsFixing(true);
+    setFixMessage(null);
+    try {
+      const allInterviewIds = [
+        ...stuckRecords.interviewProcessing,
+        ...stuckRecords.interviewPending,
+        ...stuckRecords.interviewFailed,
+      ].map(r => r.id);
+      const ids = selectedRecords.size > 0
+        ? Array.from(selectedRecords).filter(id => allInterviewIds.includes(id))
+        : undefined;
+      const res = await fetch("/api/admin/fix-evaluations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ids, stuckMinutes, entityType: "interview" }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFixMessage({ type: "success", text: data.message });
+        setSelectedRecords(new Set());
+        fetchStuckEvaluations();
+      } else {
+        setFixMessage({ type: "error", text: data.error || "修复失败" });
+      }
+    } catch (error) {
+      setFixMessage({ type: "error", text: "网络错误" });
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
+  // 切换记录选择
+  const toggleRecordSelection = (id: string) => {
+    const newSet = new Set(selectedRecords);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedRecords(newSet);
+  };
+
+  // 全选/取消全选
+  const toggleAllSelection = (records: StuckEvaluation[]) => {
+    const allIds = records.map((r) => r.id);
+    const allSelected = allIds.every((id) => selectedRecords.has(id));
+    if (allSelected) {
+      const newSet = new Set(selectedRecords);
+      allIds.forEach((id) => newSet.delete(id));
+      setSelectedRecords(newSet);
+    } else {
+      const newSet = new Set(selectedRecords);
+      allIds.forEach((id) => newSet.add(id));
+      setSelectedRecords(newSet);
+    }
+  };
+
   // 自动刷新数据看板
   useEffect(() => {
     if (!isAdmin) return;
@@ -213,6 +374,8 @@ export default function AdminDashboard() {
       fetchStats();
       const interval = setInterval(fetchStats, 30000);
       return () => clearInterval(interval);
+    } else if (activeTab === "fix-evaluations") {
+      fetchStuckEvaluations();
     }
   }, [isAdmin, activeTab]);
 
@@ -267,7 +430,7 @@ export default function AdminDashboard() {
                   FacePrep 管理员后台
                 </h1>
                 <p className="text-sm text-foreground-muted">
-                  数据看板 · 会员管理
+                  数据看板 · 会员管理 · 评估修复
                 </p>
               </div>
             </div>
@@ -293,6 +456,16 @@ export default function AdminDashboard() {
                   }`}
                 >
                   会员管理
+                </button>
+                <button
+                  onClick={() => setActiveTab("fix-evaluations")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    activeTab === "fix-evaluations"
+                      ? "bg-accent text-white"
+                      : "text-foreground-muted hover:text-foreground"
+                  }`}
+                >
+                  评估修复
                 </button>
               </div>
               <button
@@ -639,6 +812,201 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* ========== 评估修复选项卡 ========== */}
+        {activeTab === "fix-evaluations" && (
+          <div className="space-y-6">
+            {/* 统计卡片 */}
+            {fixSummary && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground-muted mb-3">练习评估</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <StatCard icon={Loader2} title="评估中卡住" value={fixSummary.stuckProcessing} color="orange" />
+                    <StatCard icon={Clock} title="等待中卡住" value={fixSummary.stuckPending} color="blue" />
+                    <StatCard icon={XCircle} title="评估失败" value={fixSummary.failed} color="orange" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground-muted mb-3">面试答案评估</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <StatCard icon={Loader2} title="面试评估中卡住" value={fixSummary.interviewProcessing} color="purple" />
+                    <StatCard icon={Clock} title="面试等待中卡住" value={fixSummary.interviewPending} color="blue" />
+                    <StatCard icon={XCircle} title="面试评估失败" value={fixSummary.interviewFailed} color="orange" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 操作栏 */}
+            <div className="bg-surface rounded-2xl p-6 border border-border">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-foreground-muted">卡住时间{"≥"}</label>
+                    <input
+                      type="number"
+                      value={stuckMinutes}
+                      onChange={(e) => setStuckMinutes(parseInt(e.target.value) || 5)}
+                      min={1}
+                      className="w-20 px-3 py-1 bg-background border border-border rounded-lg text-foreground text-center"
+                    />
+                    <span className="text-sm text-foreground-muted">分钟</span>
+                  </div>
+                  <Button
+                    onClick={fetchStuckEvaluations}
+                    disabled={isLoadingStuck}
+                    variant="outline"
+                  >
+                    {isLoadingStuck ? (
+                      <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />刷新中</>
+                    ) : (
+                      <><RefreshCw className="w-4 h-4 mr-2" />刷新</>
+                    )}
+                  </Button>
+                </div>
+
+                {fixMessage && (
+                  <div
+                    className={`px-4 py-2 rounded-lg text-sm ${
+                      fixMessage.type === "success"
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                    }`}
+                  >
+                    {fixMessage.text}
+                  </div>
+                )}
+
+                {selectedRecords.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground-muted">
+                      已选择 {selectedRecords.size} 条
+                    </span>
+                    <Button
+                      onClick={() => fixStuckEvaluations("reset")}
+                      disabled={isFixing}
+                      className="bg-accent hover:bg-accent-dark"
+                    >
+                      {isFixing ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />处理中</>
+                      ) : (
+                        <><RotateCcw className="w-4 h-4 mr-2" />重置选中</>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 卡住的记录列表 */}
+            {isLoadingStuck ? (
+              <div className="flex items-center justify-center h-64">
+                <RefreshCw className="w-8 h-8 animate-spin text-accent" />
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* 评估中卡住 */}
+                {stuckRecords.processing.length > 0 && (
+                  <EvaluationTable
+                    title="评估中卡住 (PROCESSING)"
+                    records={stuckRecords.processing}
+                    selectedRecords={selectedRecords}
+                    onToggleSelection={toggleRecordSelection}
+                    onToggleAll={() => toggleAllSelection(stuckRecords.processing)}
+                    onFix={(action) => fixStuckEvaluations(action)}
+                    isFixing={isFixing}
+                    type="processing"
+                  />
+                )}
+
+                {/* 等待中卡住 */}
+                {stuckRecords.pending.length > 0 && (
+                  <EvaluationTable
+                    title="等待中卡住 (PENDING)"
+                    records={stuckRecords.pending}
+                    selectedRecords={selectedRecords}
+                    onToggleSelection={toggleRecordSelection}
+                    onToggleAll={() => toggleAllSelection(stuckRecords.pending)}
+                    onFix={(action) => fixStuckEvaluations(action)}
+                    isFixing={isFixing}
+                    type="pending"
+                  />
+                )}
+
+                {/* 评估失败 */}
+                {stuckRecords.failed.length > 0 && (
+                  <EvaluationTable
+                    title="评估失败 (FAILED)"
+                    records={stuckRecords.failed}
+                    selectedRecords={selectedRecords}
+                    onToggleSelection={toggleRecordSelection}
+                    onToggleAll={() => toggleAllSelection(stuckRecords.failed)}
+                    onFix={(action) => fixStuckEvaluations(action)}
+                    isFixing={isFixing}
+                    type="failed"
+                  />
+                )}
+
+                {/* 面试评估中卡住 */}
+                {stuckRecords.interviewProcessing.length > 0 && (
+                  <EvaluationTable
+                    title="面试评估中卡住 (PROCESSING)"
+                    records={stuckRecords.interviewProcessing}
+                    selectedRecords={selectedRecords}
+                    onToggleSelection={toggleRecordSelection}
+                    onToggleAll={() => toggleAllSelection(stuckRecords.interviewProcessing)}
+                    onFix={(action) => fixInterviewEvaluations(action)}
+                    isFixing={isFixing}
+                    type="processing"
+                  />
+                )}
+
+                {/* 面试等待中卡住 */}
+                {stuckRecords.interviewPending.length > 0 && (
+                  <EvaluationTable
+                    title="面试等待中卡住 (PENDING)"
+                    records={stuckRecords.interviewPending}
+                    selectedRecords={selectedRecords}
+                    onToggleSelection={toggleRecordSelection}
+                    onToggleAll={() => toggleAllSelection(stuckRecords.interviewPending)}
+                    onFix={(action) => fixInterviewEvaluations(action)}
+                    isFixing={isFixing}
+                    type="pending"
+                  />
+                )}
+
+                {/* 面试评估失败 */}
+                {stuckRecords.interviewFailed.length > 0 && (
+                  <EvaluationTable
+                    title="面试评估失败 (FAILED)"
+                    records={stuckRecords.interviewFailed}
+                    selectedRecords={selectedRecords}
+                    onToggleSelection={toggleRecordSelection}
+                    onToggleAll={() => toggleAllSelection(stuckRecords.interviewFailed)}
+                    onFix={(action) => fixInterviewEvaluations(action)}
+                    isFixing={isFixing}
+                    type="failed"
+                  />
+                )}
+
+                {stuckRecords.processing.length === 0 &&
+                  stuckRecords.pending.length === 0 &&
+                  stuckRecords.failed.length === 0 &&
+                  stuckRecords.interviewProcessing.length === 0 &&
+                  stuckRecords.interviewPending.length === 0 &&
+                  stuckRecords.interviewFailed.length === 0 && (
+                    <div className="bg-surface rounded-2xl p-12 border border-border text-center">
+                      <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                      <p className="text-foreground-muted">
+                        没有发现卡住的评估记录
+                      </p>
+                    </div>
+                  )}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
@@ -722,6 +1090,192 @@ function MetricItem({
     <div className="text-center p-4 bg-background rounded-xl">
       <div className="text-2xl font-bold text-foreground">{value}</div>
       <div className="text-xs text-foreground-muted mt-1">{label}</div>
+    </div>
+  );
+}
+
+function EvaluationTable({
+  title,
+  records,
+  selectedRecords,
+  onToggleSelection,
+  onToggleAll,
+  onFix,
+  isFixing,
+  type,
+}: {
+  title: string;
+  records: StuckEvaluation[];
+  selectedRecords: Set<string>;
+  onToggleSelection: (id: string) => void;
+  onToggleAll: () => void;
+  onFix: (action: "reset" | "mark-failed" | "trigger-evaluate") => void;
+  isFixing: boolean;
+  type: "processing" | "pending" | "failed";
+}) {
+  const allSelected = records.every((r) => selectedRecords.has(r.id));
+  const someSelected = records.some((r) => selectedRecords.has(r.id)) && !allSelected;
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "PROCESSING":
+        return "text-orange-500";
+      case "PENDING":
+        return "text-blue-500";
+      case "FAILED":
+        return "text-red-500";
+      default:
+        return "text-gray-500";
+    }
+  };
+
+  return (
+    <div className="bg-surface rounded-2xl border border-border overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-background/50">
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = someSelected;
+            }}
+            onChange={onToggleAll}
+            className="w-4 h-4 rounded border-border"
+          />
+          <h3 className="font-semibold text-foreground">
+            {title}
+            <span className="ml-2 text-sm font-normal text-foreground-muted">
+              ({records.length}条)
+            </span>
+          </h3>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => onFix("reset")}
+            disabled={isFixing}
+            variant="outline"
+            size="sm"
+          >
+            <RotateCcw className="w-4 h-4 mr-1" />
+            全部重置
+          </Button>
+          {type === "failed" && (
+            <Button
+              onClick={() => onFix("mark-failed")}
+              disabled={isFixing}
+              variant="outline"
+              size="sm"
+              className="text-red-500 hover:text-red-600"
+            >
+              <AlertTriangle className="w-4 h-4 mr-1" />
+              标记失败
+            </Button>
+          )}
+        </div>
+      </div>
+      <div className="max-h-96 overflow-y-auto">
+        <table className="w-full">
+          <thead className="bg-background sticky top-0">
+            <tr className="text-left text-xs text-foreground-muted">
+              <th className="p-3 w-10"></th>
+              <th className="p-3">用户</th>
+              <th className="p-3">题目</th>
+              <th className="p-3">状态</th>
+              <th className="p-3">模型</th>
+              <th className="p-3">卡住时间</th>
+              <th className="p-3">错误信息</th>
+              <th className="p-3 w-24">操作</th>
+            </tr>
+          </thead>
+          <tbody className="text-sm">
+            {records.map((record) => (
+              <tr key={record.id} className="border-t border-border hover:bg-background/50">
+                <td className="p-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedRecords.has(record.id)}
+                    onChange={() => onToggleSelection(record.id)}
+                    className="w-4 h-4 rounded border-border"
+                  />
+                </td>
+                <td className="p-3">
+                  <div className="font-medium text-foreground">
+                    {record.userName || record.userEmail || record.userId}
+                  </div>
+                  {record.userEmail && (
+                    <div className="text-xs text-foreground-muted">{record.userEmail}</div>
+                  )}
+                </td>
+                <td className="p-3">
+                  <div className="text-foreground truncate max-w-xs">
+                    {record.questionTitle || "未知题目"}
+                  </div>
+                  {record.questionCategory && (
+                    <div className="text-xs text-foreground-muted">{record.questionCategory}</div>
+                  )}
+                </td>
+                <td className="p-3">
+                  <span className={`text-xs font-medium ${getStatusColor(record.evaluationStatus)}`}>
+                    {record.evaluationStatus}
+                  </span>
+                </td>
+                <td className="p-3">
+                  {record.evaluationModel ? (
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      record.evaluationModel === "deepseek"
+                        ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                        : record.evaluationModel === "kimi"
+                        ? "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                        : record.evaluationModel === "qwen"
+                        ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                    }`}>
+                      {record.evaluationModel}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-foreground-muted">-</span>
+                  )}
+                </td>
+                <td className="p-3 text-foreground-muted">
+                  {record.stuckForMinutes
+                    ? `${record.stuckForMinutes}分钟`
+                    : record.pendingForMinutes
+                    ? `${record.pendingForMinutes}分钟`
+                    : "-"}
+                </td>
+                <td className="p-3">
+                  {record.evaluationError ? (
+                    <div
+                      className="text-xs text-red-500 truncate max-w-xs"
+                      title={record.evaluationError}
+                    >
+                      {record.evaluationError}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-foreground-muted">-</span>
+                  )}
+                </td>
+                <td className="p-3">
+                  <Button
+                    onClick={() => onToggleSelection(record.id)}
+                    disabled={isFixing}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    title="选中以批量处理"
+                  >
+                    {selectedRecords.has(record.id) ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <div className="w-4 h-4 rounded border border-border" />
+                    )}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { processPendingEvaluations, resetStaleEvaluations } from "@/lib/evaluation-service";
 
 // 评估状态摘要类型
 interface EvaluationStatusSummary {
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
         evaluationStatus: true,
         evaluationError: true,
         evaluationRetries: true,
+        evaluationStartedAt: true,
       },
       orderBy: { orderIndex: "asc" },
     });
@@ -77,6 +79,27 @@ export async function GET(request: NextRequest) {
         retries: a.evaluationRetries,
       })),
     };
+
+    // 自动恢复卡住的评估
+    const PROCESSING_STUCK_MS = 5 * 60 * 1000;
+
+    const hasStuckProcessing = answers.some(
+      (a) =>
+        a.evaluationStatus === "PROCESSING" &&
+        a.evaluationStartedAt !== null &&
+        Date.now() - new Date(a.evaluationStartedAt).getTime() > PROCESSING_STUCK_MS
+    );
+
+    if (hasStuckProcessing) {
+      console.log(`[EvalStatus] Session ${sessionId} has stuck PROCESSING answers, resetting and retrying`);
+      resetStaleEvaluations(PROCESSING_STUCK_MS)
+        .then(() => processPendingEvaluations(sessionId))
+        .catch(console.error);
+    } else if (summary.pending > 0 && summary.processing === 0) {
+      // 有待处理但没有正在处理的 → 触发评估
+      console.log(`[EvalStatus] Session ${sessionId} has ${summary.pending} pending answers with no active processing, triggering`);
+      processPendingEvaluations(sessionId).catch(console.error);
+    }
 
     return NextResponse.json(summary);
   } catch (error) {

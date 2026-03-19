@@ -295,19 +295,37 @@ export default function InterviewReportPage() {
     loadSession();
   }, [interviewId, router]);
 
-  // 触发 AI 异步生成（不等待结果）
+  // 触发 AI 异步生成，并轮询直到 aiEvaluation 完成
+  // 静默触发整体摘要生成，不显示进度条，完成后自动更新页面
   const triggerAIGeneration = async (sessionId: string) => {
-    setIsGeneratingAIReport(true);
     try {
-      // 触发后台生成，不等待完成
-      fetch(`/api/interview/trigger-ai-evaluation?sessionId=${sessionId}`, {
+      await fetch(`/api/interview/trigger-ai-evaluation?sessionId=${sessionId}`, {
         method: "POST",
-      }).catch(() => {
-        // 忽略错误，轮询会处理状态
       });
-    } finally {
-      // 不阻塞，立即显示页面
+    } catch {
+      return;
     }
+
+    // 后台轮询直到 aiEvaluation 完成，完成后静默更新摘要区域
+    let attempts = 0;
+    const maxAttempts = 24; // 最多等待 2 分钟
+
+    const checkCompletion = async () => {
+      attempts++;
+      if (attempts >= maxAttempts) return;
+      try {
+        const updated = await getInterviewSessionAsync(sessionId);
+        if (updated?.aiEvaluation) {
+          setSession(updated);
+          return;
+        }
+      } catch {
+        // 忽略单次错误，继续重试
+      }
+      setTimeout(checkCompletion, 5000);
+    };
+
+    setTimeout(checkCompletion, 3000);
   };
 
   // 获取评估状态

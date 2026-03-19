@@ -23,7 +23,9 @@ import {
   X,
   History,
   Target,
-  Calendar
+  Calendar,
+  Brain,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -36,6 +38,8 @@ interface CombinedRecord {
   date: string;
   details?: string;
   questionCount?: number;
+  evaluationStatus?: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+  isAIUpgrading?: boolean;
 }
 
 function formatTime(dateStr: string) {
@@ -132,6 +136,8 @@ export default function HistoryPage() {
       score: r.score,
       date: r.createdAt,
       details: r.answer.slice(0, 60) + "...",
+      evaluationStatus: r.evaluationStatus,
+      isAIUpgrading: !!(r.evaluationStatus === "COMPLETED" && (r.feedback as unknown as { aiUpgrading?: boolean })?.aiUpgrading),
     }));
 
     const interviews: CombinedRecord[] = interviewSessions.map((s) => ({
@@ -591,7 +597,19 @@ export default function HistoryPage() {
                                 }
                                 className="flex-shrink-0"
                               >
-                                <ScoreBadge score={record.score} size="sm" className="sm:text-sm" />
+                                {record.type === "practice" && (record.evaluationStatus === "PENDING" || record.evaluationStatus === "PROCESSING") ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                    {locale === "zh" ? "分析中" : "Analyzing"}
+                                  </span>
+                                ) : record.type === "practice" && record.isAIUpgrading ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-600 border border-purple-200">
+                                    <Brain className="w-3 h-3" />
+                                    {locale === "zh" ? "AI分析中" : "AI analyzing"}
+                                  </span>
+                                ) : (
+                                  <ScoreBadge score={record.score} size="sm" className="sm:text-sm" />
+                                )}
                               </Link>
                             </div>
                           )}

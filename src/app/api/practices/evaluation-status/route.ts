@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { EvaluationStatus } from "@prisma/client";
+import { triggerPracticeEvaluation } from "@/lib/practice-evaluation";
 
 // 获取匿名ID
 function getAnonymousId(request: NextRequest): string | null {
@@ -74,6 +75,36 @@ export async function GET(request: NextRequest) {
         { error: "Forbidden" },
         { status: 403 }
       );
+    }
+
+    // 检测卡住的评估，自动恢复
+    const PENDING_STUCK_MS = 2 * 60 * 1000;    // PENDING 超过 2 分钟
+    const PROCESSING_STUCK_MS = 5 * 60 * 1000; // PROCESSING 超过 5 分钟
+
+    const isPendingStuck =
+      practice.evaluationStatus === EvaluationStatus.PENDING &&
+      Date.now() - new Date(practice.createdAt).getTime() > PENDING_STUCK_MS;
+
+    const isProcessingStuck =
+      practice.evaluationStatus === EvaluationStatus.PROCESSING &&
+      practice.evaluationStartedAt !== null &&
+      Date.now() - new Date(practice.evaluationStartedAt).getTime() > PROCESSING_STUCK_MS;
+
+    if (isPendingStuck || isProcessingStuck) {
+      console.log(`[EvalStatus] Practice ${practice.id} is stuck (${practice.evaluationStatus}), auto-triggering recovery`);
+      triggerPracticeEvaluation(practice.id).catch(console.error);
+      return NextResponse.json({
+        id: practice.id,
+        status: "PROCESSING",
+        progress: 5,
+        score: null,
+        feedback: null,
+        error: null,
+        retries: practice.evaluationRetries,
+        startedAt: new Date().toISOString(),
+        completedAt: null,
+        createdAt: practice.createdAt,
+      });
     }
 
     // 解析feedback
@@ -155,7 +186,8 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         userId: true,
-        evaluationStatus: true
+        evaluationStatus: true,
+        evaluationStartedAt: true,
       },
     });
 
@@ -173,10 +205,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 只能重试失败的评估
-    if (practice.evaluationStatus !== EvaluationStatus.FAILED) {
+    // 只能重试失败的评估，或者卡住超过5分钟的PROCESSING记录
+    const STUCK_THRESHOLD_MS = 5 * 60 * 1000; // 5分钟
+    const isStuckProcessing =
+      practice.evaluationStatus === EvaluationStatus.PROCESSING &&
+      practice.evaluationStartedAt &&
+      Date.now() - new Date(practice.evaluationStartedAt).getTime() > STUCK_THRESHOLD_MS;
+
+    if (practice.evaluationStatus !== EvaluationStatus.FAILED && !isStuckProcessing) {
       return NextResponse.json(
-        { error: "Only failed evaluations can be retried" },
+        { error: "Only failed or stuck evaluations can be retried" },
         { status: 400 }
       );
     }

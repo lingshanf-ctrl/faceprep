@@ -30,11 +30,12 @@ export class DeepSeekProvider implements AIProvider {
 
         // 检查是否应该重试
         if (error instanceof AIError) {
-          // 不重试的错误类型
+          // 不重试的错误类型（超时说明服务慢，重试只会更慢）
           if (!error.retryable ||
               error.code === "INVALID_API_KEY" ||
               error.code === "INSUFFICIENT_BALANCE" ||
-              error.code === "CONTENT_FILTERED") {
+              error.code === "CONTENT_FILTERED" ||
+              error.code === "TIMEOUT") {
             throw error;
           }
 
@@ -63,7 +64,8 @@ export class DeepSeekProvider implements AIProvider {
     externalSignal?: AbortSignal
   ): Promise<AICompletionResult> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    const effectiveTimeout = options.timeoutMs ?? API_TIMEOUT;
+    const timeoutId = setTimeout(() => controller.abort(), effectiveTimeout);
 
     // 合并外部 signal（如果提供）
     if (externalSignal) {

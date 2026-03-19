@@ -198,6 +198,12 @@ export function BasicFeedbackView({
 
   const score = feedback.totalScore || feedback.score || 0;
   const dimensions = feedback.dimensions || {};
+  const hasDimensions = !!(
+    dimensions.content?.score ||
+    dimensions.structure?.score ||
+    dimensions.expression?.score ||
+    dimensions.highlights?.score
+  );
 
   // 兼容新旧数据结构
   const keyFindings = feedback.keyFindings || {
@@ -247,48 +253,50 @@ export function BasicFeedbackView({
         </CardContent>
       </Card>
 
-      {/* 四维能力分析 */}
-      <Card className="border border-slate-200">
-        <CardHeader>
-          <CardTitle className="text-base font-medium">{t.dimensionAnalysis}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <EnhancedDimensionCard
-              label={t.content}
-              score={dimensions.content?.score || 0}
-              feedback={dimensions.content?.feedback}
-              preview={dimensions.content?.preview}
-              icon={CheckCircle}
-              color="bg-blue-500"
-            />
-            <EnhancedDimensionCard
-              label={t.structure}
-              score={dimensions.structure?.score || 0}
-              feedback={dimensions.structure?.feedback}
-              preview={dimensions.structure?.preview}
-              icon={ListTodo}
-              color="bg-purple-500"
-            />
-            <EnhancedDimensionCard
-              label={t.expression}
-              score={dimensions.expression?.score || 0}
-              feedback={dimensions.expression?.feedback}
-              preview={dimensions.expression?.preview}
-              icon={Lightbulb}
-              color="bg-amber-500"
-            />
-            <EnhancedDimensionCard
-              label={t.highlights}
-              score={dimensions.highlights?.score || 0}
-              feedback={dimensions.highlights?.feedback}
-              preview={dimensions.highlights?.potential}
-              icon={Sparkles}
-              color="bg-emerald-500"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* 四维能力分析（有数据才展示） */}
+      {hasDimensions && (
+        <Card className="border border-slate-200">
+          <CardHeader>
+            <CardTitle className="text-base font-medium">{t.dimensionAnalysis}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <EnhancedDimensionCard
+                label={t.content}
+                score={dimensions.content?.score || 0}
+                feedback={dimensions.content?.feedback}
+                preview={dimensions.content?.preview}
+                icon={CheckCircle}
+                color="bg-blue-500"
+              />
+              <EnhancedDimensionCard
+                label={t.structure}
+                score={dimensions.structure?.score || 0}
+                feedback={dimensions.structure?.feedback}
+                preview={dimensions.structure?.preview}
+                icon={ListTodo}
+                color="bg-purple-500"
+              />
+              <EnhancedDimensionCard
+                label={t.expression}
+                score={dimensions.expression?.score || 0}
+                feedback={dimensions.expression?.feedback}
+                preview={dimensions.expression?.preview}
+                icon={Lightbulb}
+                color="bg-amber-500"
+              />
+              <EnhancedDimensionCard
+                label={t.highlights}
+                score={dimensions.highlights?.score || 0}
+                feedback={dimensions.highlights?.feedback}
+                preview={dimensions.highlights?.potential}
+                icon={Sparkles}
+                color="bg-emerald-500"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 关键发现 */}
       {(keyFindings.strengths?.length || keyFindings.weaknesses?.length || keyFindings.criticalMissing) && (

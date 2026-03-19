@@ -173,6 +173,7 @@ export async function evaluateAnswer(task: EvaluationTask): Promise<EvaluationRe
         evaluationStatus: "COMPLETED",
         evaluationCompletedAt: new Date(),
         evaluationError: null,
+        evaluationModel: feedback.evaluationModel,
       },
     });
 

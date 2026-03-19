@@ -119,6 +119,7 @@ model Practice {
   evaluationRetries     Int              @default(0) // 重试次数
   evaluationStartedAt   DateTime?        // 评估开始时间
   evaluationCompletedAt DateTime?        // 评估完成时间
+  evaluationModel       String?          // 评估使用的模型: qwen/deepseek/kimi/rule-engine
 
   // AI 生成题目关联
   aiGeneratedQuestionId String?
@@ -279,6 +280,7 @@ model InterviewAnswer {
   evaluationRetries     Int              @default(0) // 重试次数
   evaluationStartedAt   DateTime?        // 评估开始时间
   evaluationCompletedAt DateTime?        // 评估完成时间
+  evaluationModel       String?          // 评估使用的模型: qwen/deepseek/kimi/rule-engine
 
   session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 

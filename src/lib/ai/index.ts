@@ -77,14 +77,23 @@ const AI_CONFIG = {
     temperature: 0.3,
     timeout: 15000, // 15秒超时
   },
-  // 深度分析（付费场景）- Kimi k2.5
+  // 深度分析（付费场景）- DeepSeek-v3（主）
   advanced: {
-    provider: "kimi" as const,
-    model: "kimi-k2-turbo-preview",
+    provider: "deepseek" as const,
+    model: "deepseek-chat",
     maxTokens: 3000,
     temperature: 0.5,
-    timeout: 45000, // 45秒超时
+    timeout: 30000, // DeepSeek 更快，30s 足够
   },
+};
+
+// 付费用户备用配置 - Kimi K2.5
+const ADVANCED_FALLBACK_CONFIG = {
+  provider: "kimi" as const,
+  model: "kimi-k2.5",
+  maxTokens: 3000,
+  temperature: 0.5,
+  timeout: 45000, // Kimi 较慢，45s
 };
 
 // 按场景获取提供商
@@ -100,13 +109,8 @@ export function getProviderForScenario(scenario: "basic" | "advanced"): AIProvid
         model: config.model,
       });
 
-    case "kimi":
-      return new OpenAICompatibleProvider({
-        name: "kimi-advanced",
-        apiKey: process.env.KIMI_API_KEY || "",
-        baseUrl: "https://api.moonshot.cn/v1",
-        model: config.model,
-      });
+    case "deepseek":
+      return new DeepSeekProvider();
 
     default:
       return new DeepSeekProvider();
@@ -249,7 +253,7 @@ export interface EvaluationOptions {
   depth: "basic" | "advanced";
   userType: "free" | "paid";
   question?: string;
-  forceProvider?: "qwen" | "kimi"; // 强制指定提供商（用于降级场景）
+  forceProvider?: "qwen" | "kimi" | "deepseek"; // 强制指定提供商（用于降级场景）
 }
 
 // 构建基础分析 Prompt
@@ -298,9 +302,14 @@ export async function generateFeedbackDualModel(
   }
 
   const actualProviderName = forceProvider || config.provider;
-  const actualModelName = forceProvider === 'qwen' ? 'qwen-turbo' : (forceProvider === 'kimi' ? 'kimi-k2.5' : config.model);
+  const actualModelName = forceProvider === 'qwen' ? 'qwen-turbo'
+    : forceProvider === 'kimi' ? 'kimi-k2.5'
+    : forceProvider === 'deepseek' ? 'deepseek-chat'
+    : config.model;
+  // Use forceProvider timeout from fallback config, otherwise use depth config timeout
+  const effectiveTimeout = forceProvider === 'kimi' ? ADVANCED_FALLBACK_CONFIG.timeout : config.timeout;
   console.log(`[DualModel] Provider: ${actualProviderName}, Model: ${actualModelName}, Depth: ${depth}`);
-  console.log(`[DualModel] Timeout: ${config.timeout}ms, MaxTokens: ${config.maxTokens}`);
+  console.log(`[DualModel] Timeout: ${effectiveTimeout}ms, MaxTokens: ${config.maxTokens}`);
 
   // 构建对应提示词
   const prompt =
@@ -321,6 +330,7 @@ export async function generateFeedbackDualModel(
     ],
     temperature: config.temperature,
     maxTokens: config.maxTokens,
+    timeoutMs: effectiveTimeout,
   });
 
   console.log(`[DualModel] Provider response received. Content length: ${result.content.length} chars`);
@@ -388,12 +398,20 @@ export async function generateFeedbackDualModel(
       improvements: isAdvanced
         ? (parsed.improvements || [])
         : parsed.quickAdvice
-          ? [{ priority: "medium" as const, action: parsed.quickAdvice, expectedGain: "提升回答质量" }]
+          ? [{
+              priority: "medium" as const,
+              action: typeof parsed.quickAdvice === "string"
+                ? parsed.quickAdvice
+                : (parsed.quickAdvice?.primary || JSON.stringify(parsed.quickAdvice)),
+              expectedGain: "提升回答质量",
+            }]
           : [],
       optimizedAnswer: isAdvanced ? (parsed.optimizedAnswer || "") : "",
       coachMessage: isAdvanced
         ? (parsed.coachMessage || parsed.suggestion || "继续加油！")
-        : (parsed.quickAdvice || "继续加油！"),
+        : typeof parsed.quickAdvice === "string"
+          ? parsed.quickAdvice
+          : (parsed.quickAdvice?.primary || parsed.coachTip || "继续加油！"),
       // 兼容旧版字段
       score: Math.min(100, Math.max(0, Number(parsed.totalScore) || 60)),
       good: isAdvanced
@@ -578,30 +596,24 @@ export async function generateFeedbackWithFallback(
     console.error(`[Feedback] Error details:`, error instanceof Error ? error.message : String(error));
 
     if (depth === "advanced") {
-      // 深度模型失败，尝试用 qwen 运行 advanced 提示词
-      console.log("[Feedback] Kimi failed, trying advanced prompt with qwen...");
+      // 付费用户：DeepSeek 失败，尝试 Kimi 作为高质量备份
+      console.log("[Feedback] DeepSeek failed, trying Kimi as fallback...");
       try {
-        const fallbackResult = await generateFeedbackDualModel(answer, metadata, {
+        const kimiResult = await generateFeedbackDualModel(answer, metadata, {
           depth: "advanced",
           userType,
-          forceProvider: "qwen",
+          forceProvider: "kimi",
         });
-        console.log(`[Feedback] Advanced+Qwen fallback succeeded. evaluationModel=${fallbackResult.evaluationModel}`);
-        return fallbackResult;
-      } catch (qwenError) {
-        console.error("[Feedback] Advanced+Qwen also failed:", qwenError);
-        // 最后降级到 basic
-        console.log("[Feedback] Falling back to basic model as last resort");
-        const basicResult = await generateFeedbackDualModel(answer, metadata, {
-          depth: "basic",
-          userType,
-        });
-        console.log(`[Feedback] Basic fallback completed. evaluationModel=${basicResult.evaluationModel}`);
-        return basicResult;
+        console.log(`[Feedback] Kimi fallback succeeded. evaluationModel=${kimiResult.evaluationModel}`);
+        return kimiResult;
+      } catch (kimiError) {
+        // Kimi 也失败 → 抛出错误，由外层重试机制处理，最终标记 FAILED 不扣次数
+        console.error("[Feedback] Kimi fallback also failed, marking as FAILED");
+        throw kimiError;
       }
     }
 
-    // 基础模型也失败，使用规则引擎
+    // 基础模型失败，使用规则引擎
     console.log("[Feedback] Falling back to rule engine");
     const ruleFeedback = generateRuleBasedFeedback(answer, {
       keyPoints: metadata.keyPoints,
