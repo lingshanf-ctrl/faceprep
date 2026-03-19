@@ -22,6 +22,20 @@ export async function GET(req: NextRequest) {
 
     const cutoffTime = new Date(Date.now() - stuckMinutes * 60 * 1000);
 
+    // 查询 AI Phase-2 失败的记录（COMPLETED 但 feedback 中含 aiUpgradeFailed=true）
+    const aiUpgradeFailed = await db.practice.findMany({
+      where: {
+        evaluationStatus: EvaluationStatus.COMPLETED,
+        feedback: { string_contains: '"aiUpgradeFailed":true' },
+      },
+      orderBy: { evaluationCompletedAt: "desc" },
+      take: 100,
+      include: {
+        user: { select: { id: true, email: true, name: true } },
+        question: { select: { id: true, title: true, category: true } },
+      },
+    });
+
     // 查询卡住的 PROCESSING 记录
     const stuckProcessing = await db.practice.findMany({
       where: {
@@ -179,12 +193,26 @@ export async function GET(req: NextRequest) {
         stuckProcessing: stuckProcessing.length,
         stuckPending: stuckPending.length,
         failed: failedRecords.length,
+        aiUpgradeFailed: aiUpgradeFailed.length,
         interviewProcessing: stuckInterviewProcessing.length,
         interviewPending: stuckInterviewPending.length,
         interviewFailed: failedInterviewRecords.length,
         stuckMinutes,
       },
       records: {
+        aiUpgradeFailed: aiUpgradeFailed.map(p => ({
+          id: p.id,
+          userId: p.userId,
+          userEmail: p.user?.email,
+          userName: p.user?.name,
+          questionId: p.questionId,
+          questionTitle: p.question?.title,
+          questionCategory: p.question?.category,
+          evaluationStatus: p.evaluationStatus,
+          evaluationModel: p.evaluationModel,
+          evaluationCompletedAt: p.evaluationCompletedAt,
+          createdAt: p.createdAt,
+        })),
         processing: stuckProcessing.map(p => ({
           id: p.id,
           userId: p.userId,
@@ -386,17 +414,25 @@ export async function POST(req: NextRequest) {
     let whereClause: any;
 
     if (ids && ids.length > 0) {
-      // 使用指定的ID列表 - 支持 PROCESSING, PENDING, FAILED 状态
+      // 使用指定的ID列表 - 支持 PROCESSING, PENDING, FAILED, 以及 COMPLETED+aiUpgradeFailed 状态
       whereClause = {
         id: { in: ids },
         ...(force ? {} : {
-          evaluationStatus: {
-            in: [EvaluationStatus.PROCESSING, EvaluationStatus.PENDING, EvaluationStatus.FAILED],
-          },
+          OR: [
+            {
+              evaluationStatus: {
+                in: [EvaluationStatus.PROCESSING, EvaluationStatus.PENDING, EvaluationStatus.FAILED],
+              },
+            },
+            {
+              evaluationStatus: EvaluationStatus.COMPLETED,
+              feedback: { string_contains: '"aiUpgradeFailed":true' },
+            },
+          ],
         }),
       };
     } else {
-      // 自动查找卡住的记录
+      // 自动查找卡住的记录（含 aiUpgradeFailed）
       whereClause = {
         OR: [
           {
@@ -406,6 +442,10 @@ export async function POST(req: NextRequest) {
           {
             evaluationStatus: EvaluationStatus.PENDING,
             createdAt: { lt: cutoffTime },
+          },
+          {
+            evaluationStatus: EvaluationStatus.COMPLETED,
+            feedback: { string_contains: '"aiUpgradeFailed":true' },
           },
         ],
       };
