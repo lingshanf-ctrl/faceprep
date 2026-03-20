@@ -25,12 +25,10 @@ import {
   Trash2,
   Play,
   X,
-  Filter,
   ChevronRight,
   Sparkles,
   BookOpen,
   CheckCircle2,
-  Layers,
 } from "lucide-react";
 
 // Design System Imports
@@ -51,15 +49,20 @@ interface UnifiedQuestion {
   frequency?: number;
 }
 
-// 分类配置（仅用于图标）
-const categoryIcons: Record<string, string> = {
-  FRONTEND: "💻",
-  BACKEND: "⚙️",
-  PRODUCT: "📱",
-  DESIGN: "🎨",
-  OPERATION: "📊",
-  GENERAL: "🎯",
-};
+// 分类筛选配置
+const CATEGORY_TABS = [
+  { value: "ALL", label: { zh: "全部", en: "All" }, icon: "✨" },
+  { value: "FRONTEND", label: { zh: "前端", en: "Frontend" }, icon: "💻" },
+  { value: "BACKEND", label: { zh: "后端", en: "Backend" }, icon: "⚙️" },
+  { value: "PRODUCT", label: { zh: "产品", en: "Product" }, icon: "📱" },
+  { value: "DESIGN", label: { zh: "设计", en: "Design" }, icon: "🎨" },
+  { value: "OPERATION", label: { zh: "运营", en: "Operation" }, icon: "📊" },
+  { value: "GENERAL", label: { zh: "通用", en: "General" }, icon: "🎯" },
+  { value: "DATA", label: { zh: "数据分析", en: "Data" }, icon: "📈" },
+  { value: "AI", label: { zh: "算法/AI", en: "AI" }, icon: "🤖" },
+  { value: "MARKETING", label: { zh: "市场/品牌", en: "Marketing" }, icon: "📣" },
+  { value: "MANAGEMENT", label: { zh: "管理", en: "Management" }, icon: "👥" },
+];
 
 function QuestionsContent() {
   const { locale } = useLanguage();
@@ -68,10 +71,11 @@ function QuestionsContent() {
   const { showConfirm, DialogComponent } = useConfirmDialog();
 
   // 来源筛选: all | system | custom
-  const [sourceFilter, setSourceFilter] = useState<"all" | "system" | "custom">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "system" | "custom">("system");
 
   // 其他筛选
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("");
 
@@ -162,6 +166,11 @@ function QuestionsContent() {
       result = result.filter((q) => q.source === sourceFilter);
     }
 
+    // 方向筛选
+    if (categoryFilter !== "ALL") {
+      result = result.filter((q) => q.category === categoryFilter);
+    }
+
     // 题型筛选
     if (typeFilter) {
       result = result.filter((q) => q.type === typeFilter);
@@ -182,7 +191,7 @@ function QuestionsContent() {
     }
 
     return result;
-  }, [allQuestions, sourceFilter, typeFilter, difficultyFilter, searchQuery]);
+  }, [allQuestions, sourceFilter, categoryFilter, typeFilter, difficultyFilter, searchQuery]);
 
   // 解析题目
   const handleParseText = () => {
@@ -208,7 +217,6 @@ function QuestionsContent() {
     setShowAddModal(false);
     setParseText("");
     setParsedPreview(null);
-    // 切换到显示自定义题目
     setSourceFilter("custom");
   };
 
@@ -269,27 +277,27 @@ function QuestionsContent() {
     router.push(`/interview/${session.id}`);
   };
 
-  // 清空所有筛选
+  // 清空次级筛选（不重置 sourceFilter，那是页面级导航）
   const clearFilters = () => {
     setSearchQuery("");
+    setCategoryFilter("ALL");
     setTypeFilter("");
     setDifficultyFilter("");
-    setSourceFilter("all");
   };
 
-  // 是否有筛选条件
-  const hasFilters = Boolean(searchQuery || typeFilter || difficultyFilter || sourceFilter !== "all");
+  // 是否有次级筛选条件
+  const hasFilters = Boolean(searchQuery || categoryFilter !== "ALL" || typeFilter || difficultyFilter);
 
   // 统计
   const stats = useMemo(() => ({
-    total: allQuestions.length,
     system: systemUnifiedQuestions.length,
     custom: customUnifiedQuestions.length,
-  }), [allQuestions, systemUnifiedQuestions, customUnifiedQuestions]);
+    total: systemUnifiedQuestions.length + customUnifiedQuestions.length,
+  }), [systemUnifiedQuestions, customUnifiedQuestions]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Enhanced Background Effects */}
+      {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-accent/10 rounded-full blur-[120px]" />
         <div className="absolute top-40 -right-20 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
@@ -297,186 +305,177 @@ function QuestionsContent() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-10 relative z-10">
-        {/* Hero Header */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6"
         >
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-medium text-accent">
-              {locale === "zh" ? "精选题目" : "Curated Questions"}
-            </span>
-          </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-2">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-1">
             {locale === "zh" ? "题库" : "Questions"}
           </h1>
-          <p className="text-foreground-muted text-base">
+          <p className="text-foreground-muted text-sm">
             {locale === "zh"
-              ? `官方精选 ${stats.system} 道题目 · ${stats.custom} 道专属定制`
-              : `${stats.system} official questions · ${stats.custom} custom`}
+              ? `精选 ${stats.system} 道面试题，${stats.custom} 道专属定制`
+              : `${stats.system} curated · ${stats.custom} custom`}
           </p>
         </motion.div>
 
-        {/* Search Bar */}
-        <div className="relative mb-6 animate-fade-up" style={{ animationDelay: "0.1s" }}>
-          <div className="relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground-muted transition-colors group-focus-within:text-accent" />
-            <input
-              type="text"
-              placeholder={locale === "zh" ? "搜索题目标题、关键点..." : "Search questions..."}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-14 pr-14 py-4 bg-white/80 backdrop-blur-sm border-2 border-border rounded-2xl text-foreground placeholder-foreground-muted
-                focus:outline-none focus:border-accent focus:bg-white focus:shadow-soft-md
-                transition-all duration-300"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-5 top-1/2 -translate-y-1/2 p-1.5 text-foreground-muted hover:text-foreground hover:bg-surface rounded-lg transition-all"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Source Filter Tabs - 与历史页面保持一致 */}
+        {/* ── Source Tab Switcher (Top Level) ── */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide"
+          transition={{ duration: 0.4, delay: 0.08 }}
+          className="flex items-center gap-2 mb-5"
         >
-          <button
-            onClick={() => setSourceFilter("all")}
-            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
-              sourceFilter === "all"
-                ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-glow scale-105"
-                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-accent/30 hover:shadow-soft-sm"
-            }`}
-          >
-            <span className="relative z-10 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5" />
-              {locale === "zh" ? "全部" : "All"}
-            </span>
-            <span className="ml-1.5 text-xs opacity-70">({stats.total})</span>
-          </button>
+          {[
+            { value: "system", label: locale === "zh" ? "官方题库" : "Official", icon: <BookOpen className="w-4 h-4" />, count: stats.system },
+            { value: "custom", label: locale === "zh" ? "我的题目" : "My Questions", icon: <Sparkles className="w-4 h-4" />, count: stats.custom },
+          ].map((tab) => {
+            const isActive = sourceFilter === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setSourceFilter(tab.value as typeof sourceFilter)}
+                className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                  isActive
+                    ? "bg-accent text-white shadow-md shadow-accent/20"
+                    : "bg-white border border-border text-foreground-muted hover:text-foreground hover:border-accent/40 hover:bg-accent/5"
+                }`}
+              >
+                <span className={isActive ? "text-white/90" : "text-foreground-muted group-hover:text-accent"}>{tab.icon}</span>
+                <span>{tab.label}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${
+                  isActive ? "bg-white/20 text-white" : "bg-surface text-foreground-muted"
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
 
-          <button
-            onClick={() => setSourceFilter("system")}
-            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
-              sourceFilter === "system"
-                ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-glow scale-105"
-                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-accent/30 hover:shadow-soft-sm"
-            }`}
-          >
-            <span className="relative z-10 flex items-center gap-1.5">
-              <BookOpen className="w-3.5 h-3.5" />
-              {locale === "zh" ? "官方题库" : "Official"}
-            </span>
-            <span className="ml-1.5 text-xs opacity-70">({stats.system})</span>
-          </button>
-
-          <button
-            onClick={() => setSourceFilter("custom")}
-            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
-              sourceFilter === "custom"
-                ? "bg-gradient-to-r from-success to-success-light text-white shadow-glow scale-105"
-                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-success/30 hover:shadow-soft-sm"
-            }`}
-          >
-            <span className="relative z-10 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              {locale === "zh" ? "我的专属" : "My Custom"}
-            </span>
-            <span className="ml-1.5 text-xs opacity-70">({stats.custom})</span>
-          </button>
-
-          <div className="flex-1" />
-
-          {/* Add Button */}
-          {(sourceFilter === "custom" || sourceFilter === "all") && (
+          {/* Add button — only visible in custom tab */}
+          {sourceFilter === "custom" && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="group relative flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-accent to-accent-light text-white text-sm font-semibold rounded-full
-                hover:shadow-glow transition-all duration-300 hover:scale-105 flex-shrink-0"
+              className="ml-auto flex items-center gap-1.5 px-3.5 py-2.5 bg-accent text-white text-sm font-semibold rounded-xl
+                hover:bg-accent/90 transition-all duration-200 shadow-sm"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 rounded-full" />
-              <Plus className="w-4 h-4 relative z-10" />
-              <span className="relative z-10">{locale === "zh" ? "添加" : "Add"}</span>
+              <Plus className="w-4 h-4" />
+              <span>{locale === "zh" ? "添加题目" : "Add"}</span>
             </button>
           )}
         </motion.div>
 
-        {/* Type & Difficulty Filter Tags with Gradient Fade */}
-        <div className="relative mb-6 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-          {/* Left gradient fade - stronger on mobile */}
-          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+        {/* ── Filter Panel ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="mb-5 bg-white/90 backdrop-blur-sm border border-border rounded-2xl shadow-soft-sm overflow-hidden"
+        >
+          {/* Row 1: Category tabs + Search */}
+          <div className="flex items-center gap-2 border-b border-border/60 pr-3">
+            {/* Category scroll */}
+            <div className="relative flex-1 min-w-0">
+              <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent pointer-events-none z-10" />
+              <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent pointer-events-none z-10" />
+              <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide px-3 py-2">
+                {CATEGORY_TABS.map((tab) => {
+                  const isActive = categoryFilter === tab.value;
+                  return (
+                    <button
+                      key={tab.value}
+                      onClick={() => setCategoryFilter(tab.value)}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
+                        isActive
+                          ? "bg-accent text-white shadow-sm"
+                          : "text-foreground-muted hover:text-foreground hover:bg-surface"
+                      }`}
+                    >
+                      <span>{tab.icon}</span>
+                      <span>{tab.label[locale as "zh" | "en"]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-          {/* Right gradient fade - stronger on mobile */}
-          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
-
-          {/* Scroll hint indicator (mobile only) */}
-          <div className="sm:hidden absolute right-2 top-1/2 -translate-y-1/2 z-20 pointer-events-none">
-            <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center animate-pulse">
-              <ChevronRight className="w-4 h-4 text-accent" />
+            {/* Compact inline search */}
+            <div className="relative flex-shrink-0 group">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground-muted transition-colors group-focus-within:text-accent pointer-events-none" />
+              <input
+                type="text"
+                placeholder={locale === "zh" ? "搜索..." : "Search..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-32 focus:w-48 pl-8 pr-7 py-1.5 bg-surface border border-border rounded-lg text-xs text-foreground placeholder-foreground-muted
+                  focus:outline-none focus:border-accent focus:bg-white
+                  transition-all duration-300"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-3 pt-1 scrollbar-hide scroll-smooth -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div className="flex-shrink-0 flex items-center gap-2">
-              <Filter className="w-4 h-4 text-foreground-muted ml-1" />
-
+          {/* Row 2: Type · Difficulty · Clear */}
+          <div className="flex items-center gap-1 px-3 py-1.5 flex-wrap">
             {/* Type filters */}
             {Object.entries(typeColorConfig).map(([key, config]) => (
               <button
                 key={key}
                 onClick={() => setTypeFilter(typeFilter === key ? "" : key)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   typeFilter === key
-                    ? `${config.bg} ${config.color} ring-2 ring-current shadow-soft-sm scale-105`
-                    : "bg-white/80 text-foreground-muted border border-border hover:border-accent/40 hover:bg-white hover:shadow-soft-sm"
+                    ? `${config.bg} ${config.color} ring-1 ring-current/30`
+                    : "text-foreground-muted hover:text-foreground hover:bg-surface"
                 }`}
               >
-                <span className="mr-1">{config.icon}</span>
-                {config.label[locale as "zh" | "en"]}
+                <span>{config.icon}</span>
+                <span>{config.label[locale as "zh" | "en"]}</span>
               </button>
             ))}
 
-            <span className="w-px h-5 bg-border mx-1 flex-shrink-0" />
+            {/* Divider */}
+            <span className="w-px h-3.5 bg-border/70 flex-shrink-0 mx-0.5" />
 
             {/* Difficulty filters */}
             {Object.entries(difficultyColorConfig).map(([key, config]) => (
               <button
                 key={key}
                 onClick={() => setDifficultyFilter(difficultyFilter === key ? "" : key)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-300 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   difficultyFilter === key
-                    ? `${config.bg} ${config.color} ring-2 ring-current shadow-soft-sm scale-105`
-                    : "bg-white/80 text-foreground-muted border border-border hover:border-accent/40 hover:bg-white hover:shadow-soft-sm"
+                    ? `${config.bg} ${config.color} ring-1 ring-current/30`
+                    : "text-foreground-muted hover:text-foreground hover:bg-surface"
                 }`}
               >
                 {config.label[locale as "zh" | "en"]}
               </button>
             ))}
 
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Clear filters */}
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="px-4 py-2 text-xs font-medium text-error hover:bg-error/5 rounded-full transition-all flex-shrink-0 mr-8 sm:mr-1"
+                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-error hover:bg-error/5 rounded-lg transition-all"
               >
-                {locale === "zh" ? "清空筛选" : "Clear"}
+                <X className="w-3 h-3" />
+                <span>{locale === "zh" ? "清除筛选" : "Clear"}</span>
               </button>
             )}
-            </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Custom Questions Selection Bar */}
         {sourceFilter === "custom" && customQuestions.length > 0 && (
