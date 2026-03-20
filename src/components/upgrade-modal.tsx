@@ -6,7 +6,7 @@ import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 
 // 用户类型
-type UserType = "free" | "credit_exhausted" | "monthly_expired";
+type UserType = "free" | "credit_exhausted" | "monthly_expired" | "renew";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -30,6 +30,10 @@ const translations = {
     monthlyExpiredTitle: "月卡已过期",
     monthlyExpiredSubtitle: "你的月卡已到期，续费可继续享受不限次分析",
     monthlyExpiredCta: "续费月卡",
+    // 主动续费
+    renewTitle: "续费会员",
+    renewSubtitle: "提前续费，无缝衔接当前会员权益",
+    renewCta: "立即续费",
     // 通用
     features: [
       "四维能力评估",
@@ -72,6 +76,10 @@ const translations = {
     monthlyExpiredTitle: "Monthly Plan Expired",
     monthlyExpiredSubtitle: "Your monthly plan has expired, renew for unlimited access",
     monthlyExpiredCta: "Renew Monthly",
+    // Proactive renew
+    renewTitle: "Renew Membership",
+    renewSubtitle: "Renew early to seamlessly extend your current benefits",
+    renewCta: "Renew Now",
     // Common
     features: [
       "4-Dimension Assessment",
@@ -143,6 +151,21 @@ export function UpgradeModal({
           title: t.monthlyExpiredTitle,
           subtitle: t.monthlyExpiredSubtitle,
           cta: t.monthlyExpiredCta,
+          hint: t.renewHint,
+          theme: {
+            gradient: "from-purple-500 to-purple-600",
+            bg: "bg-purple-50",
+            border: "border-purple-200",
+            text: "text-purple-700",
+            accent: "text-purple-600",
+            icon: "text-purple-500",
+          },
+        };
+      case "renew":
+        return {
+          title: t.renewTitle,
+          subtitle: t.renewSubtitle,
+          cta: t.renewCta,
           hint: t.renewHint,
           theme: {
             gradient: "from-purple-500 to-purple-600",

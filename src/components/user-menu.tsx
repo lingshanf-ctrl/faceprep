@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MembershipBadge } from "./membership-badge";
 import { UpgradeModal } from "./upgrade-modal";
-import { Settings, LogOut, Crown, CreditCard, Sparkles } from "lucide-react";
+import { Settings, LogOut, Crown, CreditCard, Sparkles, RefreshCw } from "lucide-react";
 
 interface UserMenuProps {
   user: {
@@ -149,11 +149,18 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
             {/* 月卡用户 */}
             {type === "MONTHLY" && expiresAt && (
               <div className="px-3 py-2 bg-purple-50 rounded-lg mb-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <Crown className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm font-medium text-purple-700">
-                    会员专享
-                  </span>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm font-medium text-purple-700">会员专享</span>
+                  </div>
+                  <button
+                    onClick={() => { setIsOpen(false); setShowUpgradeModal(true); }}
+                    className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    续费
+                  </button>
                 </div>
                 <p className="text-xs text-purple-600">
                   {getDaysRemaining(expiresAt)}天后到期（{formatExpiry(expiresAt)}）
@@ -164,11 +171,18 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
             {/* 次卡用户 */}
             {type === "CREDIT" && creditsRemaining !== null && creditsRemaining !== undefined && (
               <div className="px-3 py-2 bg-accent/5 rounded-lg mb-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <CreditCard className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-medium text-foreground">
-                    剩余次数
-                  </span>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-accent" />
+                    <span className="text-sm font-medium text-foreground">剩余次数</span>
+                  </div>
+                  <button
+                    onClick={() => { setIsOpen(false); setShowUpgradeModal(true); }}
+                    className="flex items-center gap-1 text-xs text-accent hover:text-accent/80 font-medium transition-colors"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    充值
+                  </button>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
@@ -263,7 +277,12 @@ export function UserMenu({ user, membershipStatus, onLogout }: UserMenuProps) {
       <UpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        userType={type === "FREE" ? "free" : type === "CREDIT" && creditsRemaining === 0 ? "credit_exhausted" : "monthly_expired"}
+        userType={
+        type === "FREE" ? "free"
+        : type === "CREDIT" && creditsRemaining === 0 ? "credit_exhausted"
+        : type === "MONTHLY" && expiresAt && getDaysRemaining(expiresAt) === 0 ? "monthly_expired"
+        : "renew"
+      }
         creditsRemaining={creditsRemaining}
         monthlyExpiresAt={expiresAt ? new Date(expiresAt) : null}
       />
