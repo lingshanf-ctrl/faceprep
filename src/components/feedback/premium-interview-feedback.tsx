@@ -625,6 +625,9 @@ function AnswerCard({
               icon={Wand2}
             >
               <div className="space-y-3">
+                <p className="text-xs text-slate-400 -mt-1 mb-1">
+                  {locale === "zh" ? "基于你的回答优化生成" : "Generated based on your answer"}
+                </p>
                 <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
                   <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                     {answer.feedback!.optimizedAnswer}

@@ -730,23 +730,34 @@ export function PremiumFeedbackView({ feedback }: PremiumFeedbackViewProps) {
 
       {/* 评分卡片 */}
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}>
-        <Card className="border-0 bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <CardContent className="pt-6 relative z-10">
+        <Card className="border border-slate-200 bg-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.04] to-transparent pointer-events-none" />
+          <CardContent className="pt-5 pb-5 relative z-10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-400 mb-1">{t.overallScore}</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-6xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">{score}</span>
-                  <span className="text-slate-500">/100</span>
+                <p className="text-xs text-slate-400 uppercase tracking-widest mb-2">{t.overallScore}</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className={`text-5xl font-bold tabular-nums ${getScoreColor(score)}`}>{score}</span>
+                  <span className="text-sm text-slate-300 font-light">/100</span>
                 </div>
-                <p className={`mt-1 ${getScoreColor(score)}`}>{getScoreLevel(score, locale)}</p>
+                <p className={`text-sm mt-1.5 font-medium ${getScoreColor(score)}`}>{getScoreLevel(score, locale)}</p>
               </div>
-              <div className="text-right">
-                <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm ${getScoreColor(score)} bg-white/10`}>
-                  <Sparkles className="w-4 h-4" />
-                  {locale === "zh" ? "AI深度评估" : "AI Deep Analysis"}
-                </div>
+              <div className="flex flex-col items-end gap-2">
+                {/* 环形进度指示 */}
+                <svg width="64" height="64" viewBox="0 0 64 64" className="-rotate-90">
+                  <circle cx="32" cy="32" r="26" fill="none" stroke="#f1f5f9" strokeWidth="6" />
+                  <circle
+                    cx="32" cy="32" r="26" fill="none"
+                    stroke={score >= 80 ? "#10b981" : score >= 60 ? "#f59e0b" : "#f43f5e"}
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(score / 100) * 163.4} 163.4`}
+                  />
+                </svg>
+                <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-accent" />
+                  {locale === "zh" ? "AI深度评估" : "AI Analysis"}
+                </span>
               </div>
             </div>
           </CardContent>

@@ -32,11 +32,11 @@ const translations = {
     monthlyExpiredCta: "续费月卡",
     // 通用
     features: [
-      "四维能力评估（内容、结构、表达、亮点）",
-      "详细的差距分析和定位",
-      "AI 优化答案示例",
+      "四维能力评估",
+      "差距分析定位",
+      "AI优化答案示例",
       "个性化改进建议",
-      "教练寄语和鼓励",
+      "教练寄语",
     ],
     freePlan: "免费版",
     freeDesc: "基础分析，关键点覆盖检查",
@@ -44,7 +44,11 @@ const translations = {
     creditDesc: "按需使用，灵活便捷",
     monthlyPlan: "月卡",
     monthlyDesc: "畅享无限次专业分析",
-    contactAdmin: "请联系管理员开通会员",
+    contactAdmin: "扫码进入小红书店铺下单",
+    contactStep1: "① 扫描下方二维码",
+    contactStep2: "② 小红书店铺下单领取早鸟价会员",
+    contactStep3: "③ 下单后备注栏将收到会员激活链接",
+    contactNote: "早鸟价限时优惠，先到先得",
     close: "暂不需要",
     currentPlan: "当前套餐",
     creditsLeft: "剩余",
@@ -70,11 +74,11 @@ const translations = {
     monthlyExpiredCta: "Renew Monthly",
     // Common
     features: [
-      "4-Dimension Assessment (Content, Structure, Expression, Highlights)",
-      "Detailed Gap Analysis",
-      "AI-Optimized Answer Examples",
-      "Personalized Improvement Suggestions",
-      "Coach Message and Encouragement",
+      "4-Dimension Assessment",
+      "Gap Analysis",
+      "AI-Optimized Answers",
+      "Personalized Suggestions",
+      "Coach Message",
     ],
     freePlan: "Free",
     freeDesc: "Basic analysis, key points coverage check",
@@ -82,7 +86,11 @@ const translations = {
     creditDesc: "Use as needed, flexible",
     monthlyPlan: "Monthly",
     monthlyDesc: "Unlimited professional analysis",
-    contactAdmin: "Contact admin to activate membership",
+    contactAdmin: "Scan QR to order on Xiaohongshu",
+    contactStep1: "① Scan the QR code below",
+    contactStep2: "② Place order on Xiaohongshu at early bird price",
+    contactStep3: "③ Activation link sent in order notes after purchase",
+    contactNote: "Early bird pricing — limited time offer",
     close: "Not Now",
     currentPlan: "Current Plan",
     creditsLeft: "Remaining",
@@ -203,99 +211,45 @@ export function UpgradeModal({
           </div>
 
           {/* Content */}
-          <div className="p-6">
-            <ul className="space-y-3 mb-6">
+          <div className="p-5">
+            {/* 功能亮点 — 紧凑横排 */}
+            <div className="flex flex-wrap gap-2 mb-5">
               {t.features.map((feature, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <svg
-                    className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
+                <span key={index} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
+                  <svg className="w-3 h-3 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span className="text-sm text-foreground">{feature}</span>
-                </li>
+                  {feature}
+                </span>
               ))}
-            </ul>
-
-            {/* Plans */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-              <div className="border border-border rounded-xl p-3 text-center opacity-50 flex sm:block items-center justify-between">
-                <p className="text-xs text-foreground-muted mb-0 sm:mb-1 font-medium">
-                  {t.freePlan}
-                </p>
-                <p className="text-xs text-foreground-muted">{t.freeDesc}</p>
-              </div>
-              <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5 flex sm:block items-center justify-between">
-                <p className="text-xs font-medium text-accent mb-0 sm:mb-1">
-                  {t.creditPlan}
-                </p>
-                <p className="text-xs text-foreground-muted">{t.creditDesc}</p>
-              </div>
-              <div className="border-2 border-accent rounded-xl p-3 text-center bg-accent/5 flex sm:block items-center justify-between">
-                <p className="text-xs font-medium text-accent mb-0 sm:mb-1">
-                  {t.monthlyPlan}
-                </p>
-                <p className="text-xs text-foreground-muted">{t.monthlyDesc}</p>
-              </div>
             </div>
 
-            {/* Current status if applicable */}
-            {(creditsRemaining !== null || monthlyExpiresAt !== null) && (
-              <div className={`rounded-lg p-3 mb-4 border ${content.theme.bg} ${content.theme.border}`}>
-                <p className={`text-xs mb-1 ${content.theme.text}`}>
-                  {t.currentPlan}
-                </p>
-                {monthlyExpiresAt && (
-                  <p className="text-sm font-medium text-foreground">
-                    {userType === "monthly_expired" ? (
-                      <>
-                        {t.monthlyPlan} · {t.expiredAt}{" "}
-                        {new Date(monthlyExpiresAt).toLocaleDateString()}{t.expired}
-                      </>
-                    ) : (
-                      <>
-                        {t.monthlyPlan} · {t.expiresAt}{" "}
-                        {new Date(monthlyExpiresAt).toLocaleDateString()}
-                      </>
-                    )}
-                  </p>
-                )}
-                {creditsRemaining !== null && (
-                  <p className="text-sm font-medium text-foreground">
-                    {userType === "credit_exhausted" ? (
-                      <>
-                        {t.creditPlan} · {t.creditsLeft} 0 {t.times}
-                      </>
-                    ) : (
-                      <>
-                        {t.creditPlan} · {t.creditsLeft} {creditsRemaining} {t.times}
-                      </>
-                    )}
-                  </p>
-                )}
+            {/* 开通步骤 + 二维码 — 左右布局 */}
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 flex items-center gap-4">
+              {/* 左：步骤 */}
+              <div className="flex-1 space-y-2">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">{t.contactAdmin}</p>
+                {[t.contactStep1, t.contactStep2, t.contactStep3].map((step, i) => (
+                  <p key={i} className="text-sm text-slate-700">{step}</p>
+                ))}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <p className="text-xs text-amber-600 font-medium">{t.contactNote}</p>
+                </div>
               </div>
-            )}
 
-            {/* Hint */}
-            <div className={`rounded-lg p-3 mb-4 border ${content.theme.bg} ${content.theme.border}`}>
-              <p className={`text-sm text-center ${content.theme.text}`}>
-                {content.hint}
-              </p>
-            </div>
-
-            {/* Contact Admin */}
-            <div className="bg-surface border border-border rounded-lg p-3 mb-4">
-              <p className="text-sm text-foreground-muted text-center">
-                {t.contactAdmin}
-              </p>
+              {/* 右：二维码 */}
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <div className="bg-white rounded-xl p-1.5 border border-slate-200 shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/qrcode-xiaohongshu.jpg"
+                    alt="小红书二维码"
+                    className="w-28 h-28 object-contain rounded-lg"
+                  />
+                </div>
+                <p className="text-xs text-slate-400">@是昭乐呀</p>
+              </div>
             </div>
 
             {/* Actions */}

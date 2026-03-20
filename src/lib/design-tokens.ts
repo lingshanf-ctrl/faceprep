@@ -86,6 +86,30 @@ export const categoryColorConfig = {
     label: { zh: "通用", en: "General" },
     icon: "🎯" as const,
   },
+  DATA: {
+    color: "text-success" as const,
+    bg: "bg-success/10" as const,
+    label: { zh: "数据分析", en: "Data" },
+    icon: "📈" as const,
+  },
+  AI: {
+    color: "text-accent" as const,
+    bg: "bg-accent/10" as const,
+    label: { zh: "算法/AI", en: "AI" },
+    icon: "🤖" as const,
+  },
+  MARKETING: {
+    color: "text-warning" as const,
+    bg: "bg-warning/10" as const,
+    label: { zh: "市场/品牌", en: "Marketing" },
+    icon: "📣" as const,
+  },
+  MANAGEMENT: {
+    color: "text-error" as const,
+    bg: "bg-error/10" as const,
+    label: { zh: "管理", en: "Management" },
+    icon: "👥" as const,
+  },
 } as const;
 
 export type CategoryType = keyof typeof categoryColorConfig;

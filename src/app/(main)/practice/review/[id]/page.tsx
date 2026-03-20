@@ -768,6 +768,7 @@ export default function PracticeReviewPage() {
   const [evaluationStatus, setEvaluationStatus] = useState<"PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [questionData, setQuestionData] = useState<{ referenceAnswer?: string } | null>(null);
+  const [answerTab, setAnswerTab] = useState<"yours" | "reference">("yours");
 
   // 会员权限状态
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
@@ -1404,15 +1405,35 @@ export default function PracticeReviewPage() {
           <CompareView record={record} locale={locale} />
         ) : (
           <React.Fragment>
-            {/* Your Answer (始终显示) - 带分数徽章 */}
+            {/* Your Answer (始终显示) - 带分数徽章 + 参考答案 Tab */}
             <Card className="mb-6">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                  <svg className="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  {t.yourAnswer}
-                </CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                {/* Tab 切换 */}
+                <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setAnswerTab("yours")}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      answerTab === "yours"
+                        ? "bg-white text-slate-800 shadow-sm"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    {t.yourAnswer}
+                  </button>
+                  {/* 参考答案 Tab：仅免费用户显示（专业版有 AI 优化答案，无需重复） */}
+                  {!hasAccess && questionData?.referenceAnswer && (
+                    <button
+                      onClick={() => setAnswerTab("reference")}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        answerTab === "reference"
+                          ? "bg-white text-slate-800 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      {locale === "zh" ? "参考答案" : "Reference"}
+                    </button>
+                  )}
+                </div>
                 {/* 分数徽章 - 右上角 */}
                 <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${getScoreColor(record.score)} bg-opacity-10`}>
                   <span className="text-sm font-medium text-foreground-muted">得分</span>
@@ -1420,9 +1441,15 @@ export default function PracticeReviewPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="bg-surface rounded-xl p-4 whitespace-pre-wrap text-foreground leading-relaxed">
-                  {record.answer}
-                </div>
+                {answerTab === "yours" ? (
+                  <div className="bg-surface rounded-xl p-4 whitespace-pre-wrap text-foreground leading-relaxed">
+                    {record.answer}
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50/60 rounded-xl p-4 whitespace-pre-wrap text-slate-700 leading-relaxed border border-emerald-100 text-sm">
+                    {questionData?.referenceAnswer}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -1477,7 +1504,6 @@ export default function PracticeReviewPage() {
                     isUnauthenticated={isUnauthenticated}
                     onLogin={handleLogin}
                     onUpgrade={() => setShowUpgradeModal(true)}
-                    referenceAnswer={questionData?.referenceAnswer}
                   />
                 )}
               </>

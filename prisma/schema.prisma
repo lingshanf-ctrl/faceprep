@@ -87,6 +87,10 @@ enum Category {
   DESIGN     // 设计
   OPERATION  // 运营
   GENERAL    // 通用
+  DATA        // 数据分析
+  AI          // 算法/AI
+  MARKETING   // 市场/品牌
+  MANAGEMENT  // 管理/Leader
 }
 
 enum QuestionType {
