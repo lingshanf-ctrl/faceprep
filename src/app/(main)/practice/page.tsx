@@ -199,10 +199,7 @@ export default function PracticePage() {
           >
             {/* 智能推荐 - 占3列 */}
             <motion.div variants={itemVariants} className="md:col-span-3">
-              <div className="h-full bg-gradient-to-br from-accent to-accent-dark rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 text-white relative overflow-hidden group">
-                {/* 背景装饰 */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
+              <div className="h-full bg-accent rounded-xl p-5 sm:p-6 md:p-8 text-white relative overflow-hidden group">
 
                 <div className="relative z-10">
                   {/* Header */}
@@ -314,24 +311,16 @@ export default function PracticePage() {
                   )}
                 </div>
 
-                {/* 装饰元素 */}
-                <div className="absolute top-4 right-4 opacity-10">
-                  <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
               </div>
             </motion.div>
 
             {/* 浏览题库 - 占2列 */}
             <motion.div variants={itemVariants} className="md:col-span-2">
               <Link href="/questions" className="block h-full group">
-                <div className="h-full bg-surface border border-border hover:border-accent/30 rounded-2xl md:rounded-3xl p-5 sm:p-6 transition-all hover:shadow-lg relative overflow-hidden">
-                  {/* Hover 效果背景 */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="h-full bg-surface border border-border/50 hover:border-accent/40 rounded-xl p-5 sm:p-6 transition-all relative overflow-hidden">
 
                   <div className="relative z-10 h-full flex flex-col">
-                    <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                       <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                       </svg>
@@ -360,49 +349,24 @@ export default function PracticePage() {
         </div>
       </section>
 
-      {/* ========== 下半部分：模拟面试（深色沉浸主题） ========== */}
-      <section className="relative bg-gradient-to-b from-slate-900 via-slate-900 to-black text-white py-12 md:py-16 overflow-hidden">
-        {/* 背景装饰 */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* 渐变光晕 */}
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/20 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-[100px]" />
-
-          {/* 网格图案 */}
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-              backgroundSize: '60px 60px'
-            }}
-          />
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+      {/* ========== 下半部分：模拟面试 ========== */}
+      <section className="relative bg-[#FAFAFA] border-t border-border/50 py-12 md:py-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
           {/* Header */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-10"
+            transition={{ duration: 0.4 }}
+            className="mb-10"
           >
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-4">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <span className="text-sm font-medium">
-                {locale === 'zh' ? '模拟面试' : 'Mock Interview'}
-              </span>
+            <div className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground-muted mb-3">
+              {locale === 'zh' ? '模拟面试' : 'Mock Interview'}
             </div>
-
-            <h2 className="font-display text-3xl md:text-4xl font-bold mb-3">
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-2">
               {locale === 'zh' ? '沉浸式面试体验' : 'Immersive Interview Experience'}
             </h2>
-            <p className="text-slate-100 text-base md:text-lg max-w-2xl mx-auto">
+            <p className="text-foreground-muted text-base max-w-xl">
               {locale === 'zh'
                 ? '完整流程 · 多题连贯 · AI 综合评估 · 20-30分钟'
                 : 'Full flow · Multi-questions · AI assessment · 20-30 min'}
@@ -420,61 +384,55 @@ export default function PracticePage() {
             {/* 标准模拟 */}
             <motion.div variants={itemVariants}>
               <Link href="/practice/mock" className="block h-full group">
-                <div className="h-full bg-slate-800/80 border border-slate-700 hover:border-accent/50 rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-8 transition-all hover:bg-slate-700/90 relative overflow-hidden">
-                  {/* 光晕效果 */}
-                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-accent/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="h-full bg-white border border-border/50 hover:border-accent/40 rounded-xl p-5 sm:p-6 md:p-8 transition-all relative overflow-hidden">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <span className="px-2.5 py-1 bg-accent/10 text-accent text-xs font-semibold rounded-full">
+                      {locale === 'zh' ? '热门' : 'Popular'}
+                    </span>
+                  </div>
 
-                  <div className="relative z-10">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center">
-                        <svg className="w-7 h-7 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  <h3 className="font-display text-xl font-semibold text-foreground mb-2">
+                    {locale === 'zh' ? '标准模拟' : 'Standard Mock'}
+                  </h3>
+                  <p className="text-sm text-foreground-muted mb-5">
+                    {locale === 'zh'
+                      ? '8道精选经典题，覆盖自我介绍、项目经历、技术、行为面试等全类型'
+                      : '8 classic questions covering all interview types'}
+                  </p>
+
+                  <div className="space-y-2 mb-6">
+                    {[
+                      locale === 'zh' ? '通用题库，适合所有岗位' : 'General questions for all roles',
+                      locale === 'zh' ? '完整面试流程模拟' : 'Full interview flow simulation',
+                      locale === 'zh' ? '综合评分与详细反馈' : 'Comprehensive scoring & feedback'
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm text-foreground-muted">
+                        <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
+                        {item}
                       </div>
-                      <span className="px-3 py-1 bg-accent/20 text-accent text-xs font-medium rounded-full">
-                        {locale === 'zh' ? '热门' : 'Popular'}
-                      </span>
-                    </div>
+                    ))}
+                  </div>
 
-                    <h3 className="font-display text-xl md:text-2xl font-semibold mb-2">
-                      {locale === 'zh' ? '标准模拟' : 'Standard Mock'}
-                    </h3>
-                    <p className="text-slate-200 text-sm mb-6">
-                      {locale === 'zh'
-                        ? '8道精选经典题，覆盖自我介绍、项目经历、技术、行为面试等全类型'
-                        : '8 classic questions covering all interview types'}
-                    </p>
-
-                    {/* 特点列表 */}
-                    <div className="space-y-2 mb-6">
-                      {[
-                        locale === 'zh' ? '通用题库，适合所有岗位' : 'General questions for all roles',
-                        locale === 'zh' ? '完整面试流程模拟' : 'Full interview flow simulation',
-                        locale === 'zh' ? '综合评分与详细反馈' : 'Comprehensive scoring & feedback'
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm text-slate-100">
-                          <svg className="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 text-sm flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        ~20 {locale === 'zh' ? '分钟' : 'min'}
-                      </span>
-                      <span className="text-accent text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-                        {locale === 'zh' ? '开始准备' : 'Get Ready'}
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground-muted text-sm flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      ~20 {locale === 'zh' ? '分钟' : 'min'}
+                    </span>
+                    <span className="text-accent text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+                      {locale === 'zh' ? '开始准备' : 'Get Ready'}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -483,61 +441,55 @@ export default function PracticePage() {
             {/* AI 定制 */}
             <motion.div variants={itemVariants}>
               <Link href="/practice/ai-custom" className="block h-full group">
-                <div className="h-full bg-slate-800/80 border border-slate-700 hover:border-purple-500/50 rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-700/90 relative overflow-hidden">
-                  {/* 光晕效果 */}
-                  <div className="absolute -top-20 -right-20 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="h-full bg-white border border-border/50 hover:border-accent/40 rounded-xl p-6 md:p-8 transition-all relative overflow-hidden">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <span className="px-2.5 py-1 bg-accent/10 text-accent text-xs font-semibold rounded-full">
+                      AI
+                    </span>
+                  </div>
 
-                  <div className="relative z-10">
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 border border-purple-500/20 flex items-center justify-center">
-                        <svg className="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <h3 className="font-display text-xl font-semibold text-foreground mb-2">
+                    {locale === 'zh' ? 'AI 定制模拟' : 'AI Custom Mock'}
+                  </h3>
+                  <p className="text-sm text-foreground-muted mb-5">
+                    {locale === 'zh'
+                      ? '上传简历和职位描述，AI 生成专属面试题目，精准匹配目标岗位'
+                      : 'Upload resume & JD, AI generates tailored questions for your target role'}
+                  </p>
+
+                  <div className="space-y-2 mb-6">
+                    {[
+                      locale === 'zh' ? '基于真实 JD 定制' : 'Tailored to real job descriptions',
+                      locale === 'zh' ? '针对简历内容深挖' : 'Deep dive into your resume',
+                      locale === 'zh' ? '岗位匹配度分析' : 'Role compatibility analysis'
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-sm text-foreground-muted">
+                        <svg className="w-4 h-4 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
+                        {item}
                       </div>
-                      <span className="px-3 py-1 bg-purple-500/20 text-purple-300 text-xs font-medium rounded-full">
-                        AI
-                      </span>
-                    </div>
+                    ))}
+                  </div>
 
-                    <h3 className="font-display text-xl md:text-2xl font-semibold mb-2">
-                      {locale === 'zh' ? 'AI 定制模拟' : 'AI Custom Mock'}
-                    </h3>
-                    <p className="text-slate-200 text-sm mb-6">
-                      {locale === 'zh'
-                        ? '上传简历和职位描述，AI 生成专属面试题目，精准匹配目标岗位'
-                        : 'Upload resume & JD, AI generates tailored questions for your target role'}
-                    </p>
-
-                    {/* 特点列表 */}
-                    <div className="space-y-2 mb-6">
-                      {[
-                        locale === 'zh' ? '基于真实 JD 定制' : 'Tailored to real job descriptions',
-                        locale === 'zh' ? '针对简历内容深挖' : 'Deep dive into your resume',
-                        locale === 'zh' ? '岗位匹配度分析' : 'Role compatibility analysis'
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-2 text-sm text-slate-100">
-                          <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {item}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-400 text-sm flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        ~30 {locale === 'zh' ? '分钟' : 'min'}
-                      </span>
-                      <span className="text-purple-400 text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-                        {locale === 'zh' ? '创建专属面试' : 'Create Custom'}
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground-muted text-sm flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      ~30 {locale === 'zh' ? '分钟' : 'min'}
+                    </span>
+                    <span className="text-accent text-sm font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+                      {locale === 'zh' ? '创建专属面试' : 'Create Custom'}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -552,7 +504,7 @@ export default function PracticePage() {
             transition={{ delay: 0.3 }}
             className="text-center"
           >
-            <p className="text-white/30 text-sm">
+            <p className="text-foreground-muted text-sm">
               {locale === 'zh'
                 ? '模拟面试会消耗更多精力，建议预留完整时间段'
                 : 'Mock interviews require more energy, plan accordingly'}

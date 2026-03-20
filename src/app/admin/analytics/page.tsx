@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 // ─── 图表组件 ──────────────────────────────────────────────────────────────────
 
@@ -281,7 +282,10 @@ export default function AnalyticsDashboardPage() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">数据分析</h1>
+              <div className="flex items-center gap-3">
+                <Link href="/admin" className="text-gray-400 hover:text-gray-600 text-sm transition-colors">← 管理后台</Link>
+                <h1 className="text-xl font-bold text-gray-900">数据分析</h1>
+              </div>
               <p className="text-xs text-gray-400 mt-0.5">
                 {lastUpdated ? `更新于 ${lastUpdated.toLocaleTimeString()}` : "加载中..."}
               </p>

@@ -360,6 +360,7 @@ export async function POST(req: NextRequest) {
           OR: [
             { evaluationStatus: EvaluationStatus.PROCESSING, evaluationStartedAt: { lt: cutoffTime } },
             { evaluationStatus: EvaluationStatus.PENDING, startedAt: { lt: cutoffTime } },
+            { evaluationStatus: EvaluationStatus.FAILED },
           ],
         };
       }
@@ -432,7 +433,7 @@ export async function POST(req: NextRequest) {
         }),
       };
     } else {
-      // 自动查找卡住的记录（含 aiUpgradeFailed）
+      // 自动查找卡住的记录（含 aiUpgradeFailed 和 FAILED）
       whereClause = {
         OR: [
           {
@@ -442,6 +443,9 @@ export async function POST(req: NextRequest) {
           {
             evaluationStatus: EvaluationStatus.PENDING,
             createdAt: { lt: cutoffTime },
+          },
+          {
+            evaluationStatus: EvaluationStatus.FAILED,
           },
           {
             evaluationStatus: EvaluationStatus.COMPLETED,

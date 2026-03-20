@@ -24,6 +24,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 // ============ 类型定义 ============
 interface StatsData {
@@ -318,9 +319,12 @@ export default function AdminDashboard() {
         ...stuckRecords.interviewPending,
         ...stuckRecords.interviewFailed,
       ].map(r => r.id);
-      const ids = selectedRecords.size > 0
+      const filteredIds = selectedRecords.size > 0
         ? Array.from(selectedRecords).filter(id => allInterviewIds.includes(id))
         : undefined;
+      // 如果选中了记录但没有面试记录，跳过（由 fixStuckEvaluations 处理练习记录）
+      if (filteredIds !== undefined && filteredIds.length === 0) { setIsFixing(false); return; }
+      const ids = filteredIds;
       const res = await fetch("/api/admin/fix-evaluations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -468,6 +472,12 @@ export default function AdminDashboard() {
                   评估修复
                 </button>
               </div>
+              <Link
+                href="/admin/analytics"
+                className="px-4 py-2 text-sm font-medium text-accent hover:text-accent-dark border border-accent/30 rounded-lg hover:bg-accent/5 transition-all"
+              >
+                深度分析
+              </Link>
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 text-foreground-muted hover:text-foreground transition-colors"
@@ -884,7 +894,17 @@ export default function AdminDashboard() {
                       已选择 {selectedRecords.size} 条
                     </span>
                     <Button
-                      onClick={() => fixStuckEvaluations("reset")}
+                      onClick={() => {
+                        const allInterviewIds = new Set([
+                          ...stuckRecords.interviewProcessing,
+                          ...stuckRecords.interviewPending,
+                          ...stuckRecords.interviewFailed,
+                        ].map(r => r.id));
+                        const hasInterview = Array.from(selectedRecords).some(id => allInterviewIds.has(id));
+                        const hasPractice = Array.from(selectedRecords).some(id => !allInterviewIds.has(id));
+                        if (hasInterview) fixInterviewEvaluations("reset");
+                        if (hasPractice) fixStuckEvaluations("reset");
+                      }}
                       disabled={isFixing}
                       className="bg-accent hover:bg-accent-dark"
                     >

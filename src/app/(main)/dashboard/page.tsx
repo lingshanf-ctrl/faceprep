@@ -575,8 +575,9 @@ export default function DashboardPage() {
               ) : (
                 <div className="divide-y divide-border/50">
                   {recentRecords.map((record) => {
-                    const question = questions.find((q) => q.id === record.questionId);
-                    if (!question) return null;
+                    const title = record.questionTitle ||
+                      questions.find((q) => q.id === record.questionId)?.title ||
+                      (locale === "zh" ? "未知题目" : "Unknown");
 
                     const date = new Date(record.createdAt);
                     const dateStr = locale === "zh"
@@ -591,7 +592,7 @@ export default function DashboardPage() {
                       >
                         <ScoreBadge score={record.score} size="sm" />
                         <p className="flex-1 text-sm text-foreground line-clamp-1 min-w-0">
-                          {question.title}
+                          {title}
                         </p>
                         <span className="text-xs text-foreground-muted shrink-0">{dateStr}</span>
                       </Link>

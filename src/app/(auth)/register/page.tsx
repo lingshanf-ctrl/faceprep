@@ -106,7 +106,7 @@ function RegisterPageContent() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={locale === "zh" ? "请输入您的姓名" : "Enter your name"}
-                className="w-full px-5 py-4 bg-surface border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
@@ -121,7 +121,7 @@ function RegisterPageContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={locale === "zh" ? "请输入邮箱" : "Enter your email"}
                 required
-                className="w-full px-5 py-4 bg-surface border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
@@ -136,7 +136,7 @@ function RegisterPageContent() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={locale === "zh" ? "请输入密码（至少6位）" : "Enter password (min 6 chars)"}
                 required
-                className="w-full px-5 py-4 bg-surface border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
@@ -151,12 +151,12 @@ function RegisterPageContent() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={locale === "zh" ? "请再次输入密码" : "Confirm your password"}
                 required
-                className="w-full px-5 py-4 bg-surface border border-border rounded-2xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
             {error && (
-              <div className="p-4 rounded-2xl text-sm bg-error/5 border border-error/20 text-error">
+              <div className="p-4 rounded-xl text-sm bg-error/5 border border-error/20 text-error">
                 {error}
               </div>
             )}
@@ -164,7 +164,7 @@ function RegisterPageContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-accent text-white rounded-full font-medium hover:bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-glow"
+              className="w-full py-4 bg-accent text-white rounded-full font-medium hover:bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">

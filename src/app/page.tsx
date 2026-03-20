@@ -3,614 +3,447 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
+  ArrowRight,
+  CheckCircle2,
+  Mic,
   Sparkles,
   BookOpen,
   Zap,
-  TrendingUp,
-  ArrowRight,
-  Play,
-  Star,
-  CheckCircle2,
-  Mic,
   Target,
-  Award,
 } from "lucide-react";
 
-// Animation variants
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({
+const reveal = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number = 0) => ({
     opacity: 1,
     y: 0,
-    transition: {
-      delay: i * 0.1,
-      duration: 0.6,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
+    transition: { duration: 0.5, delay: i * 0.09, ease: [0.16, 1, 0.3, 1] as const },
   }),
 };
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
-  },
-};
-
-// Feature card component
-function FeatureCard({
-  icon: Icon,
-  title,
-  description,
-  index,
-}: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  index: number;
-}) {
-  return (
-    <motion.div
-      custom={index}
-      variants={fadeUp}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-50px" }}
-      className="group relative"
-    >
-      <div className="relative overflow-hidden rounded-3xl bg-surface p-6 md:p-8 transition-all duration-500 hover:shadow-soft-lg border border-transparent hover:border-accent/10">
-        {/* Icon */}
-        <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 transition-transform duration-500 group-hover:scale-110 group-hover:bg-accent/20">
-          <Icon className="h-7 w-7 text-accent" strokeWidth={1.5} />
-        </div>
-
-        {/* Content */}
-        <h3 className="mb-3 font-display text-xl font-semibold text-foreground">
-          {title}
-        </h3>
-        <p className="text-body leading-relaxed text-foreground-muted">
-          {description}
-        </p>
-
-        {/* Hover accent line */}
-        <div className="absolute bottom-0 left-0 h-1 w-0 bg-accent transition-all duration-500 group-hover:w-full" />
-      </div>
-    </motion.div>
-  );
-}
-
-// Step card component
-function StepCard({
-  number,
-  title,
-  description,
-  align,
-  index,
-}: {
-  number: string;
-  title: string;
-  description: string;
-  align: "left" | "right";
-  index: number;
-}) {
-  return (
-    <motion.div
-      custom={index}
-      variants={fadeUp}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-50px" }}
-      className={`flex flex-col ${
-        align === "right" ? "md:flex-row-reverse" : "md:flex-row"
-      } items-center gap-8 md:gap-16`}
-    >
-      {/* Number */}
-      <div className="relative">
-        <span className="font-display text-[8rem] font-bold leading-none text-accent/10 md:text-[10rem]">
-          {number}
-        </span>
-      </div>
-
-      {/* Content */}
-      <div className={`text-center ${align === "right" ? "md:text-right" : "md:text-left"} max-w-md`}>
-        <h3 className="mb-3 font-display text-2xl font-semibold text-foreground">
-          {title}
-        </h3>
-        <p className="text-body-lg text-foreground-muted leading-relaxed">
-          {description}
-        </p>
-      </div>
-    </motion.div>
-  );
-}
-
-// Stat item component
-function StatItem({
-  value,
-  label,
-  index,
-}: {
-  value: string;
-  label: string;
-  index: number;
-}) {
-  return (
-    <motion.div
-      custom={index}
-      variants={fadeUp}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true }}
-      className="text-center"
-    >
-      <div className="mb-2 font-display text-4xl font-bold text-foreground md:text-5xl">
-        {value}
-      </div>
-      <div className="text-sm font-medium uppercase tracking-wider text-foreground-muted">
-        {label}
-      </div>
-    </motion.div>
-  );
-}
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
-      {/* Navigation */}
-      <motion.nav
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50"
-      >
-        <div className="max-w-5xl mx-auto px-4 md:px-6">
-          <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent shadow-glow">
-                <span className="font-display text-sm font-bold text-white">FP</span>
-              </div>
-              <span className="font-display text-lg font-semibold text-foreground hidden sm:block">
-                FacePrep
-              </span>
-            </Link>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3">
+      {/* ── Nav ─────────────────────────────────────────────── */}
+      <motion.nav
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border/50"
+      >
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex h-16 items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded bg-accent flex items-center justify-center">
+                <span className="text-white text-xs font-bold font-display tracking-tight">FP</span>
+              </div>
+              <span className="font-display font-semibold text-foreground tracking-tight">FacePrep</span>
+            </Link>
+            <div className="flex items-center gap-6">
+              <Link
+                href="/questions"
+                className="text-sm text-foreground-muted hover:text-foreground transition-colors hidden sm:block"
+              >
+                题库
+              </Link>
               <Link
                 href="/login"
-                className="hidden sm:block text-sm font-medium text-foreground-muted hover:text-foreground transition-colors"
+                className="text-sm text-foreground-muted hover:text-foreground transition-colors hidden sm:block"
               >
                 登录
               </Link>
               <Link
                 href="/practice"
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white shadow-glow hover:bg-accent-dark hover:shadow-glow-lg transition-all"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-dark transition-colors"
               >
-                开始使用
-                <ArrowRight className="h-4 w-4" />
+                开始使用 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           </div>
         </div>
       </motion.nav>
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
-        {/* Background decorations */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 right-0 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/3 rounded-full blur-3xl" />
-        </div>
+      {/* ── Hero ────────────────────────────────────────────── */}
+      <section className="relative pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden">
+        {/* Dot grid */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(circle, #CFCFCF 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            opacity: 0.55,
+          }}
+        />
+        {/* Fade edges */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0) 40%, #fff 100%)",
+          }}
+        />
 
-        <div className="relative max-w-5xl mx-auto px-4 md:px-6">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left content */}
+        <div className="relative max-w-6xl mx-auto px-6">
+          <div className="grid lg:grid-cols-[1fr_440px] gap-16 lg:gap-20 items-center">
+
+            {/* Left */}
             <motion.div
-              variants={staggerContainer}
+              variants={{ visible: { transition: { staggerChildren: 0.09 } } }}
               initial="hidden"
               animate="visible"
-              className="text-center lg:text-left"
             >
-              {/* Badge */}
-              <motion.div
-                variants={fadeUp}
-                custom={0}
-                className="inline-flex items-center gap-2 rounded-full bg-accent/10 border border-accent/20 px-4 py-2 mb-8"
-              >
-                <Sparkles className="h-4 w-4 text-accent" />
-                <span className="text-sm font-medium text-accent">
-                  AI 驱动的面试练习
+              <motion.div variants={reveal} custom={0} className="mb-7">
+                <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-accent bg-accent/8 border border-accent/15 rounded-full px-3.5 py-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent inline-block" />
+                  AI 面试教练 · 国内可用
                 </span>
               </motion.div>
 
-              {/* Heading */}
               <motion.h1
-                variants={fadeUp}
+                variants={reveal}
                 custom={1}
-                className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-[1.1] tracking-tight mb-6"
+                className="font-display text-5xl md:text-6xl lg:text-[4.5rem] font-bold text-foreground leading-[1.05] tracking-tight mb-8"
               >
-                掌控你的
+                让面试
                 <br />
-                <span className="text-accent">面试表现</span>
+                <span className="text-accent">不再焦虑</span>
               </motion.h1>
 
-              {/* Subtitle */}
               <motion.p
-                variants={fadeUp}
+                variants={reveal}
                 custom={2}
-                className="text-body-lg text-foreground-muted max-w-lg mx-auto lg:mx-0 mb-8 leading-relaxed"
+                className="text-lg text-foreground-muted leading-relaxed max-w-md mb-10"
               >
-                为求职者打造的智能面试准备平台。通过 AI 反馈、精选题库和进度追踪，助你拿下理想工作。
+                真实题库 · AI 即时反馈 · 盲点定位
+                <br />
+                系统性备战，陪你拿下下一个 offer。
               </motion.p>
 
-              {/* CTAs */}
               <motion.div
-                variants={fadeUp}
+                variants={reveal}
                 custom={3}
-                className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
+                className="flex flex-wrap gap-3 mb-10"
               >
                 <Link
                   href="/practice"
-                  className="w-full sm:w-auto inline-flex h-12 items-center justify-center gap-2 rounded-full bg-accent px-8 text-base font-semibold text-white shadow-glow hover:bg-accent-dark hover:shadow-glow-lg hover:scale-[1.02] transition-all"
+                  className="inline-flex h-12 items-center gap-2 rounded-full bg-accent px-7 text-sm font-semibold text-white hover:bg-accent-dark transition-colors"
                 >
-                  开始练习
-                  <ArrowRight className="h-5 w-5" />
+                  免费开始练习
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/questions"
-                  className="w-full sm:w-auto inline-flex h-12 items-center justify-center gap-2 rounded-full bg-surface border border-border px-8 text-base font-medium text-foreground hover:bg-accent/5 hover:border-accent/20 transition-all"
+                  className="inline-flex h-12 items-center gap-2 rounded-full bg-white border border-border px-7 text-sm font-medium text-foreground hover:border-border-hover transition-colors"
                 >
-                  <Play className="h-4 w-4" />
                   浏览题库
                 </Link>
               </motion.div>
 
-              {/* Trust indicators */}
               <motion.div
-                variants={fadeUp}
+                variants={reveal}
                 custom={4}
-                className="mt-10 flex items-center gap-6 justify-center lg:justify-start text-sm text-foreground-muted"
+                className="flex flex-wrap items-center gap-5 text-sm text-foreground-muted"
               >
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  <span>免费开始</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  <span>无需信用卡</span>
-                </div>
+                {["免费开始", "无需注册", "国内直连"].map((t) => (
+                  <div key={t} className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                    {t}
+                  </div>
+                ))}
               </motion.div>
             </motion.div>
 
-            {/* Right content - Visual */}
+            {/* Right — Mock Product UI */}
             <motion.div
-              variants={scaleIn}
-              initial="hidden"
-              animate="visible"
-              className="relative hidden lg:block"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="hidden lg:block"
             >
-              <div className="relative">
-                {/* Main card */}
-                <div className="relative bg-surface rounded-3xl border border-border p-6 shadow-soft-xl">
-                  {/* Card header */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="h-3 w-3 rounded-full bg-error" />
-                    <div className="h-3 w-3 rounded-full bg-warning" />
-                    <div className="h-3 w-3 rounded-full bg-success" />
-                  </div>
+              <div className="bg-white rounded-2xl border border-border shadow-soft-xl overflow-hidden">
+                {/* Title bar */}
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface/60">
+                  <div className="h-2.5 w-2.5 rounded-full bg-error/70" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-warning/70" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-success/70" />
+                  <div className="ml-auto text-xs text-foreground-muted tabular-nums">FacePrep</div>
+                </div>
 
-                  {/* Question preview */}
-                  <div className="mb-6">
-                    <div className="text-xs font-medium text-foreground-muted uppercase tracking-wider mb-2">
-                      项目经历
-                    </div>
-                    <div className="font-display text-lg font-semibold text-foreground">
-                      "介绍一个你做过的最有挑战的项目"
-                    </div>
-                  </div>
-
-                  {/* Answer area */}
-                  <div className="bg-background rounded-2xl border border-border p-4 mb-4">
-                    <div className="flex items-start gap-3">
-                      <div className="h-8 w-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                        <Mic className="h-4 w-4 text-accent" />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-2 bg-border rounded w-full" />
-                        <div className="h-2 bg-border rounded w-3/4" />
-                        <div className="h-2 bg-border rounded w-1/2" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* AI Feedback preview */}
-                  <div className="bg-accent/5 rounded-2xl border border-accent/10 p-4">
+                <div className="p-5">
+                  {/* Question */}
+                  <div className="mb-5">
                     <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="h-4 w-4 text-accent" />
-                      <span className="text-sm font-semibold text-accent">AI 反馈</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-foreground-muted">
+                        项目经历
+                      </span>
+                      <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full font-medium">
+                        中等
+                      </span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-foreground">78</div>
-                        <div className="text-xs text-foreground-muted">综合得分</div>
+                    <div className="font-display text-sm font-semibold text-foreground leading-snug">
+                      "介绍一个你负责过的最有挑战的项目，你是如何解决核心问题的？"
+                    </div>
+                  </div>
+
+                  {/* Answer */}
+                  <div className="bg-surface rounded-xl border border-border/60 p-4 mb-4">
+                    <div className="flex items-start gap-3">
+                      <div className="h-7 w-7 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Mic className="h-3.5 w-3.5 text-accent" />
                       </div>
-                      <div className="flex-1 space-y-1">
-                        <div className="h-1.5 bg-border rounded-full overflow-hidden">
-                          <div className="h-full w-3/4 bg-accent rounded-full" />
+                      <div className="flex-1 space-y-2 pt-0.5">
+                        <div className="h-1.5 bg-border rounded-full w-full" />
+                        <div className="h-1.5 bg-border rounded-full w-5/6" />
+                        <div className="h-1.5 bg-border rounded-full w-2/3" />
+                        <div className="h-1.5 bg-border/50 rounded-full w-1/2" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Feedback */}
+                  <div className="bg-accent/[0.04] rounded-xl border border-accent/10 p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-accent" />
+                        <span className="text-xs font-semibold text-accent uppercase tracking-wider">
+                          AI 评估
+                        </span>
+                      </div>
+                      <div className="tabular-nums font-display text-2xl font-bold text-foreground">
+                        78
+                        <span className="text-sm font-normal text-foreground-muted ml-0.5">分</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2.5">
+                      {[
+                        { label: "内容完整", w: "78%" },
+                        { label: "结构清晰", w: "82%" },
+                        { label: "表达流畅", w: "70%" },
+                        { label: "亮点突出", w: "65%" },
+                      ].map(({ label, w }) => (
+                        <div key={label} className="flex items-center gap-3">
+                          <div className="text-xs text-foreground-muted w-16 shrink-0">{label}</div>
+                          <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
+                            <div className="h-full bg-accent rounded-full" style={{ width: w }} />
+                          </div>
+                          <div className="tabular-nums text-xs text-foreground-muted w-7 text-right">{w}</div>
                         </div>
-                        <div className="text-xs text-foreground-muted">内容完整度</div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </div>
-
-                {/* Floating elements */}
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -top-4 -right-4 bg-white rounded-2xl shadow-soft-lg border border-border p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-success" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-foreground">+24%</div>
-                      <div className="text-xs text-foreground-muted">本周提升</div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                  className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-soft-lg border border-border p-4"
-                >
-                  <div className="flex items-center gap-2">
-                    <Award className="h-5 w-5 text-accent" />
-                    <span className="text-sm font-medium text-foreground">连续 7 天练习</span>
-                  </div>
-                </motion.div>
               </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 md:py-20 border-y border-border bg-surface/50">
-        <div className="max-w-5xl mx-auto px-4 md:px-6">
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12"
-          >
-            <StatItem value="100+" label="精选题目" index={0} />
-            <StatItem value="AI" label="智能反馈" index={1} />
-            <StatItem value="24/7" label="随时练习" index={2} />
-            <StatItem value="免费" label="开始使用" index={3} />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-24 md:py-32">
-        <div className="max-w-5xl mx-auto px-4 md:px-6">
-          {/* Section header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16 md:mb-20"
-          >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              一切所需，尽在掌握
-            </h2>
-            <p className="text-body-lg text-foreground-muted max-w-2xl mx-auto">
-              完整的面试准备工具箱，助你从容应对每一次机会
-            </p>
-          </motion.div>
-
-          {/* Feature grid */}
-          <div className="grid md:grid-cols-3 gap-6">
-            <FeatureCard
-              icon={BookOpen}
-              title="精选题库"
-              description="100+ 道精选面试题，覆盖技术、行为、项目经历等全类型"
-              index={0}
-            />
-            <FeatureCard
-              icon={Zap}
-              title="AI 反馈"
-              description="即时获得详细分析和可操作的改进建议，快速提升回答质量"
-              index={1}
-            />
-            <FeatureCard
-              icon={Target}
-              title="进度追踪"
-              description="可视化你的成长轨迹，精准识别薄弱环节，针对性突破"
-              index={2}
-            />
+      {/* ── Stats Band ──────────────────────────────────────── */}
+      <section className="border-y border-border/60">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="max-w-6xl mx-auto"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border/50">
+            {[
+              { value: "150+", label: "精选面试题", sub: "覆盖各类题型" },
+              { value: "5",    label: "AI 评估维度", sub: "深度量化反馈" },
+              { value: "11",   label: "职能方向",   sub: "前端·后端·产品等" },
+              { value: "∞",    label: "免费练习",   sub: "基础版无限次" },
+            ].map(({ value, label, sub }) => (
+              <div key={label} className="px-8 py-10 text-center bg-white">
+                <div className="tabular-nums font-display text-4xl font-bold text-foreground mb-1">
+                  {value}
+                </div>
+                <div className="text-sm font-semibold text-foreground mb-0.5">{label}</div>
+                <div className="text-xs text-foreground-muted">{sub}</div>
+              </div>
+            ))}
           </div>
-        </div>
+        </motion.div>
       </section>
 
-      {/* How it works */}
-      <section className="py-24 md:py-32 bg-surface/50">
-        <div className="max-w-4xl mx-auto px-4 md:px-6">
-          {/* Section header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-20"
-          >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              三步走向成功
-            </h2>
-            <p className="text-body-lg text-foreground-muted">
-              简单高效的练习流程，让进步看得见
-            </p>
-          </motion.div>
-
-          {/* Steps */}
-          <div className="space-y-16 md:space-y-24">
-            <StepCard
-              number="01"
-              title="选择题库"
-              description="浏览精选题库或获取智能推荐，找到最适合你的练习题目，模拟真实面试场景"
-              align="left"
-              index={0}
-            />
-            <StepCard
-              number="02"
-              title="练习回答"
-              description="思考并组织你的回答，支持语音输入，就像在真实面试中一样自然表达"
-              align="right"
-              index={1}
-            />
-            <StepCard
-              number="03"
-              title="获取 AI 反馈"
-              description="接收多维度分析，包括综合得分、优点总结和具体改进建议，持续精进"
-              align="left"
-              index={2}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials / Trust */}
+      {/* ── Features ────────────────────────────────────────── */}
       <section className="py-24 md:py-32">
-        <div className="max-w-5xl mx-auto px-4 md:px-6">
+        <div className="max-w-6xl mx-auto px-6">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            transition={{ duration: 0.5 }}
+            className="mb-14"
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              用户怎么说
+            <div className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground-muted mb-4">
+              功能
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+              你需要的，<br className="md:hidden" />都在这里
             </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          {/* gap-px panel grid — editorial feel */}
+          <div className="grid md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
             {[
               {
-                quote: "通过 FacePrep 的练习，我在字节跳动的面试中表现出色，成功拿到了offer！",
-                author: "张明",
-                role: "前端工程师",
+                num: "01",
+                Icon: BookOpen,
+                title: "题库系统",
+                desc: "覆盖自我介绍、项目复盘、技术深挖、行为面试，按职能方向精选分类，找准你的练习方向。",
               },
               {
-                quote: "AI 反馈非常实用，帮我发现了自己回答中的很多问题，进步很明显。",
-                author: "李雪",
-                role: "产品经理",
+                num: "02",
+                Icon: Zap,
+                title: "AI 即时反馈",
+                desc: "每次作答获得量化得分、优点分析、改进建议和 AI 参考答案，精准深入，而非泛泛评论。",
               },
               {
-                quote: "每天练习30分钟，一个月后面试信心大增。现在已经入职心仪的公司了！",
-                author: "王鹏",
-                role: "后端开发",
+                num: "03",
+                Icon: Target,
+                title: "盲点定位",
+                desc: "多维度追踪得分趋势，精准识别短板，针对性强化，让每一分钟的练习都有价值。",
               },
-            ].map((testimonial, index) => (
+            ].map(({ num, Icon, title, desc }) => (
               <motion.div
-                key={index}
-                custom={index}
-                variants={fadeUp}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                className="bg-surface rounded-3xl p-6 md:p-8 border border-border"
+                key={num}
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4 }}
+                className="bg-white p-8 md:p-10 group"
               >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-accent text-accent" />
-                  ))}
+                {/* Ghost number */}
+                <div className="tabular-nums font-display text-6xl font-bold text-border/80 mb-6 leading-none select-none">
+                  {num}
                 </div>
-                <p className="text-foreground mb-6 leading-relaxed">
-                  "{testimonial.quote}"
-                </p>
-                <div>
-                  <div className="font-semibold text-foreground">{testimonial.author}</div>
-                  <div className="text-sm text-foreground-muted">{testimonial.role}</div>
+                <div className="h-10 w-10 rounded-xl bg-accent/8 flex items-center justify-center mb-5 group-hover:bg-accent/15 transition-colors">
+                  <Icon className="h-5 w-5 text-accent" strokeWidth={1.5} />
                 </div>
+                <h3 className="font-display text-xl font-semibold text-foreground mb-3">{title}</h3>
+                <p className="text-sm text-foreground-muted leading-relaxed">{desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 md:py-32">
-        <div className="max-w-4xl mx-auto px-4 md:px-6">
+      {/* ── How it Works ────────────────────────────────────── */}
+      <section className="py-24 md:py-32 bg-[#FAFAFA] border-y border-border/50">
+        <div className="max-w-4xl mx-auto px-6">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="relative overflow-hidden rounded-3xl bg-accent p-8 md:p-16 text-center"
+            transition={{ duration: 0.5 }}
+            className="mb-14"
           >
-            {/* Background decoration */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-0 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-              <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
+            <div className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground-muted mb-4">
+              流程
             </div>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+              三步，系统性备战
+            </h2>
+          </motion.div>
 
-            <div className="relative z-10">
-              <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-6">
-                准备好拿下
-                <br />
-                下一场面试了吗？
-              </h2>
-              <p className="text-white/70 text-lg mb-10 max-w-xl mx-auto">
-                加入数千名通过 FacePrep 提升面试技能的求职者，开启你的成功之路
-              </p>
-              <Link
-                href="/practice"
-                className="inline-flex h-14 items-center gap-3 rounded-full bg-white px-10 text-base font-semibold text-accent shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="border border-border/50 rounded-2xl overflow-hidden bg-white"
+          >
+            {[
+              {
+                step: "01",
+                title: "选题",
+                desc: "按职能方向或难度筛选，也可直接用 AI 推荐，快速定位适合你当前阶段的练习题目。",
+              },
+              {
+                step: "02",
+                title: "作答",
+                desc: "文字或语音作答，模拟真实面试节奏，支持反复练习，找到最自然的表达方式。",
+              },
+              {
+                step: "03",
+                title: "复盘",
+                desc: "获取多维度 AI 分析报告，精准定位改进点，形成有效的练习闭环，持续进步。",
+              },
+            ].map(({ step, title, desc }, i) => (
+              <div
+                key={step}
+                className={`flex items-start gap-8 px-8 md:px-12 py-8${
+                  i < 2 ? " border-b border-border/50" : ""
+                }`}
               >
-                免费开始练习
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-            </div>
+                <div className="tabular-nums font-display text-4xl font-bold text-accent/20 leading-none pt-0.5 w-14 shrink-0">
+                  {step}
+                </div>
+                <div className="flex-1">
+                  <div className="font-display text-lg font-semibold text-foreground mb-1.5">
+                    {title}
+                  </div>
+                  <div className="text-sm text-foreground-muted leading-relaxed">{desc}</div>
+                </div>
+                <div className="hidden md:flex h-8 w-8 rounded-full border border-accent/20 items-center justify-center mt-1 shrink-0">
+                  <ArrowRight className="h-3.5 w-3.5 text-accent/50" />
+                </div>
+              </div>
+            ))}
           </motion.div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-border">
-        <div className="max-w-5xl mx-auto px-4 md:px-6">
+      {/* ── CTA ─────────────────────────────────────────────── */}
+      <section className="py-24 md:py-32">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="rounded-2xl bg-accent px-10 py-16 md:py-24 text-center"
+          >
+            <div className="text-xs font-semibold uppercase tracking-[0.15em] text-white/40 mb-6">
+              开始行动
+            </div>
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+              下一个 offer，
+              <br />
+              从今天开始练。
+            </h2>
+            <p className="text-white/55 text-base mb-10 max-w-xs mx-auto leading-relaxed">
+              免费开始，按需升级。
+              <br />
+              加入正在系统备战的求职者。
+            </p>
+            <Link
+              href="/practice"
+              className="inline-flex h-12 items-center gap-2.5 rounded-full bg-white px-8 text-sm font-semibold text-accent hover:bg-white/90 transition-colors"
+            >
+              免费开始练习
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Footer ──────────────────────────────────────────── */}
+      <footer className="py-10 border-t border-border">
+        <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent">
-                <span className="font-display text-sm font-bold text-white">FP</span>
+            <div className="flex items-center gap-2.5">
+              <div className="h-7 w-7 rounded bg-accent flex items-center justify-center">
+                <span className="text-white text-xs font-bold font-display">FP</span>
               </div>
               <span className="font-display font-semibold text-foreground">FacePrep</span>
             </div>
-            <div className="text-sm text-foreground-muted">
-              © 2025 FacePrep. 保留所有权利。
-            </div>
+            <div className="text-sm text-foreground-muted">© 2025 FacePrep. 保留所有权利。</div>
           </div>
         </div>
       </footer>
+
     </main>
   );
 }

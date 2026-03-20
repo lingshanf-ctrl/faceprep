@@ -178,6 +178,7 @@ export async function savePracticeRecord(
     answer: record.answer,
     score: record.score,
     feedback: JSON.stringify(record.feedback),
+    duration: record.duration,
     asyncEvaluate: options?.asyncEvaluate,
   });
 

@@ -46,52 +46,34 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden">
-      {/* Animated Background Gradient Orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-0 w-[800px] h-[800px] bg-accent/20 rounded-full blur-[120px] animate-float" />
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-accent/15 rounded-full blur-[100px] animate-float" style={{ animationDelay: "1s", animationDuration: "4s" }} />
-      </div>
-
+    <div className="min-h-screen flex">
       {/* Left Side - Brand Showcase */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-accent via-accent-dark to-[#000B4D] relative overflow-hidden">
-        {/* Animated Grid Pattern */}
-        <div className="absolute inset-0 opacity-10">
+      <div className="hidden lg:flex lg:w-1/2 bg-accent relative overflow-hidden">
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 opacity-[0.07]">
           <div className="absolute inset-0" style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px'
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)`,
+            backgroundSize: '40px 40px'
           }} />
         </div>
-
-        {/* Floating Geometric Shapes */}
-        <div className="absolute top-20 left-20 w-32 h-32 border-2 border-white/20 rounded-2xl backdrop-blur-sm animate-float" style={{ animationDuration: "6s" }} />
-        <div className="absolute bottom-32 right-32 w-24 h-24 border-2 border-white/15 rounded-full backdrop-blur-sm animate-float" style={{ animationDuration: "5s", animationDelay: "1s" }} />
-        <div className="absolute top-1/2 right-20 w-16 h-16 bg-white/10 rounded-xl backdrop-blur-sm animate-float" style={{ animationDuration: "7s", animationDelay: "2s" }} />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group animate-fade-in">
-            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md transition-all duration-300 group-hover:scale-105 group-hover:bg-white/30 group-hover:shadow-glow">
-              <span className="text-white font-display font-bold text-lg">{t.appShortName}</span>
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <span className="text-white font-display font-bold">{t.appShortName}</span>
             </div>
-            <span className="font-display text-2xl font-semibold tracking-tight">{t.appName}</span>
+            <span className="font-display text-xl font-semibold tracking-tight">{t.appName}</span>
           </Link>
 
-          {/* Quote Card with Glass Morphism */}
-          <div className="max-w-lg animate-fade-up" style={{ animationDelay: "0.2s" }}>
-            <div className="relative p-8 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
-              {/* Decorative Quote Mark */}
-              <div className="absolute -top-4 -left-4 w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z" />
-                </svg>
-              </div>
-
-              <blockquote className="text-2xl font-display font-light leading-relaxed mb-4 mt-2">
+          {/* Quote */}
+          <div className="max-w-md">
+            <div className="p-8 rounded-2xl bg-white/10 border border-white/15">
+              <blockquote className="text-2xl font-display font-light leading-relaxed mb-4">
                 &ldquo;{t.auth.quote.login}&rdquo;
               </blockquote>
-              <p className="text-white/80 text-sm">{t.tagline}</p>
+              <p className="text-white/70 text-sm">{t.tagline}</p>
             </div>
           </div>
 
@@ -137,14 +119,11 @@ function LoginPageContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={locale === "zh" ? "请输入邮箱" : "Enter your email"}
                   required
-                  className="w-full px-5 py-4 bg-surface/50 border-2 border-border rounded-2xl text-foreground placeholder-foreground-muted
+                  className="w-full px-5 py-4 bg-surface/50 border border-border/50 rounded-xl text-foreground placeholder-foreground-muted
                     focus:outline-none focus:border-accent focus:bg-white focus:shadow-soft-md
                     transition-all duration-300
                     hover:border-accent/40"
                 />
-                <div className="absolute inset-0 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none">
-                  <div className="absolute inset-0 rounded-2xl ring-2 ring-accent/20 ring-offset-2" />
-                </div>
               </div>
             </div>
 
@@ -160,7 +139,7 @@ function LoginPageContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={locale === "zh" ? "请输入密码" : "Enter your password"}
                   required
-                  className="w-full px-5 py-4 pr-12 bg-surface/50 border-2 border-border rounded-2xl text-foreground placeholder-foreground-muted
+                  className="w-full px-5 py-4 pr-12 bg-surface/50 border border-border/50 rounded-xl text-foreground placeholder-foreground-muted
                     focus:outline-none focus:border-accent focus:bg-white focus:shadow-soft-md
                     transition-all duration-300
                     hover:border-accent/40"
@@ -182,9 +161,6 @@ function LoginPageContent() {
                     </svg>
                   )}
                 </button>
-                <div className="absolute inset-0 rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none">
-                  <div className="absolute inset-0 rounded-2xl ring-2 ring-accent/20 ring-offset-2" />
-                </div>
               </div>
             </div>
 
@@ -199,28 +175,18 @@ function LoginPageContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full py-4 bg-accent text-white rounded-full font-semibold text-base
-                transition-all duration-300 overflow-hidden
-                hover:bg-accent-dark hover:shadow-glow hover:scale-[1.02]
-                active:scale-[0.98]
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="w-full py-3.5 bg-accent text-white rounded-full font-semibold text-base
+                hover:bg-accent-dark transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {/* Button Shine Effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-
-              <span className="relative flex items-center justify-center gap-2">
+              <span className="flex items-center justify-center gap-2">
                 {isLoading ? (
                   <>
                     <InlineLoading />
                     <span>{locale === "zh" ? "登录中..." : "Signing in..."}</span>
                   </>
                 ) : (
-                  <>
-                    <span>{locale === "zh" ? "登录" : "Sign In"}</span>
-                    <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </>
+                  <span>{locale === "zh" ? "登录" : "Sign In"}</span>
                 )}
               </span>
             </button>
@@ -231,16 +197,11 @@ function LoginPageContent() {
             {locale === "zh" ? "还没有账号？" : "Don't have an account?"}{" "}
             <Link
               href="/register"
-              className="text-accent hover:text-accent-dark font-semibold transition-colors relative group"
+              className="text-accent hover:text-accent-dark font-semibold transition-colors"
             >
               {locale === "zh" ? "立即注册" : "Sign up"}
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300" />
             </Link>
           </p>
-
-          {/* Decorative Elements */}
-          <div className="absolute top-10 right-10 w-20 h-20 bg-accent/5 rounded-full blur-2xl animate-float hidden lg:block" />
-          <div className="absolute bottom-20 left-10 w-16 h-16 bg-accent/5 rounded-2xl blur-xl animate-float hidden lg:block" style={{ animationDelay: "1s" }} />
         </div>
       </div>
     </div>
