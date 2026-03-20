@@ -129,13 +129,18 @@ export default function AchievementsPage() {
     setMounted(true);
 
     async function loadData() {
-      const [unlocked, allProgress] = await Promise.all([
-        getUnlockedAchievements(),
-        getAllAchievementProgress(),
-      ]);
-      setUnlockedIds(new Set(unlocked.map((u) => u.id)));
-      setProgressList(allProgress);
-      setLoading(false);
+      try {
+        const [unlocked, allProgress] = await Promise.all([
+          getUnlockedAchievements(),
+          getAllAchievementProgress(),
+        ]);
+        setUnlockedIds(new Set(unlocked.map((u) => u.id)));
+        setProgressList(allProgress);
+      } catch (e) {
+        console.error("[Achievements] Failed to load data:", e);
+      } finally {
+        setLoading(false);
+      }
     }
 
     loadData();
@@ -178,8 +183,8 @@ export default function AchievementsPage() {
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-surface">
-        <LoadingState variant="skeleton" fullScreen message="加载成就数据..." />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingState variant="spinner" message="加载成就数据..." />
       </div>
     );
   }

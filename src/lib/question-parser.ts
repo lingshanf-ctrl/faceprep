@@ -151,8 +151,8 @@ function cleanText(text: string): string {
 function splitQuestions(text: string): string[] {
   const cleaned = cleanText(text);
 
-  // 如果文本很短，直接返回
-  if (cleaned.length < 10) return [];
+  // 如果文本很短，直接返回（单个问题也保留）
+  if (cleaned.length < 4) return [];
 
   // 智能检测最佳分隔符并分割
   const delimiters = [
@@ -201,7 +201,7 @@ function splitQuestions(text: string): string[] {
   return result
     .map(p => p.trim())
     .filter(p => {
-      if (p.length < 8) return false; // 太短
+      if (p.length < 4) return false; // 太短
       if (p.length > 500 && !p.includes('？') && !p.includes('?')) return false; // 太长且无问号，可能是答案
       return true;
     });
@@ -274,7 +274,7 @@ function trySplitSubQuestions(text: string): string[] {
  * 解析单道题目 - 增强版
  */
 function parseSingleQuestion(text: string, options: ParseOptions = {}): ParsedQuestion | null {
-  const { minLength = 5, maxLength = 300 } = options;
+  const { minLength = 3, maxLength = 300 } = options;
   const cleaned = text.trim();
 
   if (cleaned.length < minLength) return null;
@@ -330,7 +330,13 @@ function parseSingleQuestion(text: string, options: ParseOptions = {}): ParsedQu
 export function parseQuestionsFromText(text: string, options: ParseOptions = {}): ParsedQuestion[] {
   if (!text?.trim()) return [];
 
-  const rawQuestions = splitQuestions(text);
+  let rawQuestions = splitQuestions(text);
+
+  // 如果分割结果为空，但文本有内容，把整段文本当作一道题处理
+  if (rawQuestions.length === 0 && text.trim().length >= 3) {
+    rawQuestions = [text.trim()];
+  }
+
   const parsed: ParsedQuestion[] = [];
 
   for (const raw of rawQuestions) {

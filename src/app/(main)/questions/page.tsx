@@ -470,20 +470,20 @@ function QuestionsContent() {
 
         {/* Custom Questions Selection Bar */}
         {sourceFilter === "custom" && customQuestions.length > 0 && (
-          <div className="flex items-center justify-between mb-5 p-4 bg-white border border-border/50 rounded-xl animate-fade-up" style={{ animationDelay: "0.4s" }}>
-            <label className="flex items-center gap-3 cursor-pointer group">
+          <div className="flex items-center justify-between mb-5 px-3 py-2.5 sm:px-4 sm:py-3 bg-white border border-border/50 rounded-xl animate-fade-up" style={{ animationDelay: "0.4s" }}>
+            <label className="flex items-center gap-2.5 cursor-pointer group">
               <button
                 onClick={toggleSelectAll}
-                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                   selectedQuestions.size === filteredQuestions.length && filteredQuestions.length > 0
-                    ? "bg-accent border-accent shadow-soft-sm scale-110"
+                    ? "bg-accent border-accent"
                     : selectedQuestions.size > 0
                     ? "bg-accent/50 border-accent"
                     : "border-border bg-white group-hover:border-accent"
                 }`}
               >
                 {selectedQuestions.size > 0 && (
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
@@ -498,10 +498,10 @@ function QuestionsContent() {
             {selectedQuestions.size > 0 && (
               <button
                 onClick={startCustomInterview}
-                className="group relative flex items-center gap-2 px-6 py-2.5 bg-foreground text-white text-sm font-semibold rounded-full
-                  hover:bg-foreground/90 hover:shadow-soft-md transition-all duration-300 hover:scale-105"
+                className="flex items-center gap-2 px-5 py-2 bg-accent text-white text-sm font-semibold rounded-full
+                  hover:bg-accent-dark transition-colors"
               >
-                <Play className="w-4 h-4 fill-current" />
+                <Play className="w-3.5 h-3.5 fill-current" />
                 <span>{locale === "zh" ? `开始面试 (${selectedQuestions.size})` : `Start (${selectedQuestions.size})`}</span>
               </button>
             )}
@@ -613,19 +613,19 @@ function QuestionCard({
       )}
 
       <div className="p-4 sm:p-5 pl-5 sm:pl-6">
-        <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+        <div className="flex flex-row items-start gap-3">
           {/* Selection Checkbox (custom only) */}
           {isCustom && (
             <button
               onClick={onToggleSelect}
-              className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 shrink-0 ${
+              className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
                 isSelected
-                  ? "bg-accent border-accent shadow-soft-sm scale-110"
-                  : "border-border bg-white hover:border-accent hover:scale-105"
+                  ? "bg-accent border-accent"
+                  : "border-border bg-white hover:border-accent"
               }`}
             >
               {isSelected && (
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               )}
