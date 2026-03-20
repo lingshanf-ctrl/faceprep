@@ -381,14 +381,13 @@ function QuestionsContent() {
                     <button
                       key={tab.value}
                       onClick={() => setCategoryFilter(tab.value)}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
                         isActive
-                          ? "bg-accent text-white shadow-sm"
+                          ? "bg-accent text-white"
                           : "text-foreground-muted hover:text-foreground hover:bg-surface"
                       }`}
                     >
-                      <span>{tab.icon}</span>
-                      <span>{tab.label[locale as "zh" | "en"]}</span>
+                      {tab.label[locale as "zh" | "en"]}
                     </button>
                   );
                 })}
@@ -425,14 +424,13 @@ function QuestionsContent() {
               <button
                 key={key}
                 onClick={() => setTypeFilter(typeFilter === key ? "" : key)}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   typeFilter === key
                     ? `${config.bg} ${config.color} ring-1 ring-current/30`
                     : "text-foreground-muted hover:text-foreground hover:bg-surface"
                 }`}
               >
-                <span>{config.icon}</span>
-                <span>{config.label[locale as "zh" | "en"]}</span>
+                {config.label[locale as "zh" | "en"]}
               </button>
             ))}
 
