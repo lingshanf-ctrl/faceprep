@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CheckCircle,
@@ -68,6 +69,7 @@ interface BasicFeedbackViewProps {
   isUnauthenticated: boolean;
   onLogin: () => void;
   onUpgrade: () => void;
+  referenceAnswer?: string;
 }
 
 const translations = {
@@ -190,8 +192,10 @@ export function BasicFeedbackView({
   isUnauthenticated,
   onLogin,
   onUpgrade,
+  referenceAnswer,
 }: BasicFeedbackViewProps) {
   const { locale } = useLanguage();
+  const [showReference, setShowReference] = useState(false);
   const t = translations[locale === "zh" ? "zh" : "en"];
 
   if (!feedback) return null;
@@ -404,6 +408,43 @@ export function BasicFeedbackView({
               </p>
             )}
           </CardContent>
+        </Card>
+      )}
+
+      {/* 参考答案 */}
+      {referenceAnswer && (
+        <Card className="border border-slate-200 overflow-hidden">
+          <button
+            onClick={() => setShowReference(!showReference)}
+            className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-slate-50 transition-colors text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-800">
+                  {locale === "zh" ? "参考答案" : "Reference Answer"}
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {locale === "zh" ? "点击查看标准参考，对照改进" : "Compare with the reference to improve"}
+                </p>
+              </div>
+            </div>
+            <svg
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${showReference ? "rotate-180" : ""}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {showReference && (
+            <div className="px-5 pb-5 pt-1 border-t border-slate-100 bg-slate-50/50">
+              <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">{referenceAnswer}</pre>
+            </div>
+          )}
         </Card>
       )}
 

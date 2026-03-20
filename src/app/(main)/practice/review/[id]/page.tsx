@@ -767,6 +767,7 @@ export default function PracticeReviewPage() {
   const [progressHistory, setProgressHistory] = useState<Array<{ attempt: number; score: number; date: string }>>([]);
   const [evaluationStatus, setEvaluationStatus] = useState<"PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [questionData, setQuestionData] = useState<{ referenceAnswer?: string } | null>(null);
 
   // 会员权限状态
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
@@ -1045,10 +1046,14 @@ export default function PracticeReviewPage() {
             await loadEvaluationStatus();
           }
 
-          // 检查题目是否存在
+          // 检查题目是否存在，并获取题目数据
           try {
             const response = await fetch(`/api/questions/${data.questionId}`);
             setQuestionExists(response.ok);
+            if (response.ok) {
+              const qData = await response.json();
+              setQuestionData(qData.question || null);
+            }
           } catch {
             setQuestionExists(false);
           }
@@ -1472,6 +1477,7 @@ export default function PracticeReviewPage() {
                     isUnauthenticated={isUnauthenticated}
                     onLogin={handleLogin}
                     onUpgrade={() => setShowUpgradeModal(true)}
+                    referenceAnswer={questionData?.referenceAnswer}
                   />
                 )}
               </>
