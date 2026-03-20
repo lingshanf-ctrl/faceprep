@@ -245,20 +245,13 @@ export default function HistoryPage() {
   // Empty state
   if (!loading && combinedRecords.length === 0) {
     return (
-      <div className="min-h-screen bg-background relative overflow-hidden">
-        {/* Background gradient */}
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-12 relative z-10">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-              <History className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+      <div className="min-h-screen bg-background">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+          <div className="mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
               {locale === "zh" ? "学习记录" : "History"}
             </h1>
+            <p className="text-sm text-foreground-muted">{locale === "zh" ? "追踪你的进步轨迹" : "Track your progress"}</p>
           </div>
 
           {/* 未登录用户提示 */}
@@ -308,35 +301,20 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Enhanced Background Effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-accent/10 rounded-full blur-[120px]" />
-        <div className="absolute top-40 -right-20 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-20 -left-20 w-[500px] h-[500px] bg-success/5 rounded-full blur-[100px]" />
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-12 relative z-10">
-        {/* Hero Header */}
+    <div className="min-h-screen bg-background">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
+          transition={{ duration: 0.4 }}
+          className="mb-6"
         >
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-              <History className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-medium text-accent">
-              {locale === "zh" ? "学习轨迹" : "Learning Journey"}
-            </span>
-          </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-2">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-1">
             {locale === "zh" ? "学习记录" : "History"}
           </h1>
-          <p className="text-foreground-muted text-base">
-            {locale === "zh" ? "追踪你的进步轨迹，见证每一步成长" : "Track your progress and witness every step of growth"}
+          <p className="text-foreground-muted text-sm">
+            {locale === "zh" ? "追踪你的进步轨迹" : "Track your progress"}
           </p>
         </motion.div>
 
@@ -376,60 +354,38 @@ export default function HistoryPage() {
           </motion.div>
         )}
 
-        {/* Stats - Enhanced with gradient effects */}
+        {/* Stats KPI Panel */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="grid grid-cols-3 gap-4 mb-8"
+          transition={{ duration: 0.4, delay: 0.05 }}
+          className="bg-white border border-border/50 rounded-xl mb-6 overflow-hidden"
         >
-          {/* Practice Count */}
-          <div className="group relative bg-white rounded-2xl p-4 text-center border border-border overflow-hidden transition-all duration-300 hover:shadow-soft-lg hover:border-accent/30 hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative z-10">
-              <div className="flex items-center justify-center gap-1.5 text-foreground-muted mb-2">
-                <div className="p-1.5 bg-gradient-to-br from-accent/20 to-accent/5 rounded-lg border border-accent/20">
-                  <Target className="w-3.5 h-3.5 text-accent" />
-                </div>
-                <span className="text-xs font-medium">{locale === "zh" ? "练习" : "Practices"}</span>
+          <div className="grid grid-cols-3 divide-x divide-border/50">
+            <div className="p-4 text-center">
+              <div className="text-xs text-foreground-muted mb-1.5 flex items-center justify-center gap-1">
+                <Target className="w-3.5 h-3.5" />
+                {locale === "zh" ? "练习" : "Practices"}
               </div>
-              <div className="text-2xl font-display font-bold text-foreground group-hover:text-accent transition-colors">
-                {stats.totalPractices}
+              <div className="text-2xl font-bold tabular-nums text-foreground">{stats.totalPractices}</div>
+            </div>
+            <div className="p-4 text-center">
+              <div className="text-xs text-foreground-muted mb-1.5 flex items-center justify-center gap-1">
+                <TrendingUp className="w-3.5 h-3.5" />
+                {locale === "zh" ? "平均分" : "Average"}
+              </div>
+              <div className={`text-2xl font-bold tabular-nums ${getScoreColor(stats.averageScore)}`}>
+                {stats.averageScore > 0 ? stats.averageScore : "—"}
               </div>
             </div>
-          </div>
-
-          {/* Average Score */}
-          <div className="group relative bg-white rounded-2xl p-4 text-center border border-border overflow-hidden transition-all duration-300 hover:shadow-soft-lg hover:border-success/30 hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-success/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative z-10">
-              <div className="flex items-center justify-center gap-1.5 text-foreground-muted mb-2">
-                <div className="p-1.5 bg-gradient-to-br from-success/20 to-success/5 rounded-lg border border-success/20">
-                  <TrendingUp className="w-3.5 h-3.5 text-success" />
-                </div>
-                <span className="text-xs font-medium">{locale === "zh" ? "平均分" : "Average"}</span>
+            <div className="p-4 text-center">
+              <div className="text-xs text-foreground-muted mb-1.5 flex items-center justify-center gap-1">
+                <Flame className="w-3.5 h-3.5" />
+                {locale === "zh" ? "连续天" : "Streak"}
               </div>
-              <div className={`text-2xl font-display font-bold ${getScoreColor(stats.averageScore)}`}>
-                {stats.averageScore > 0 ? stats.averageScore : "-"}
-              </div>
-            </div>
-          </div>
-
-          {/* Streak */}
-          <div className="group relative bg-white rounded-2xl p-4 text-center border border-border overflow-hidden transition-all duration-300 hover:shadow-soft-lg hover:border-warning/30 hover:-translate-y-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-warning/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative z-10">
-              <div className="flex items-center justify-center gap-1.5 text-foreground-muted mb-2">
-                <div className="p-1.5 bg-gradient-to-br from-warning/20 to-warning/5 rounded-lg border border-warning/20">
-                  <Flame className="w-3.5 h-3.5 text-warning" />
-                </div>
-                <span className="text-xs font-medium">{locale === "zh" ? "连续" : "Streak"}</span>
-              </div>
-              <div className="text-2xl font-display font-bold text-foreground flex items-center justify-center gap-1">
+              <div className="text-2xl font-bold tabular-nums text-foreground flex items-center justify-center gap-1">
                 {stats.streak}
-                {stats.streak > 0 && (
-                  <Flame className="w-5 h-5 text-warning fill-warning animate-pulse" />
-                )}
+                {stats.streak > 0 && <Flame className="w-4 h-4 text-warning fill-warning" />}
               </div>
             </div>
           </div>
@@ -437,62 +393,37 @@ export default function HistoryPage() {
 
         {/* Filter Tabs */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide"
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="flex items-center gap-2 mb-6"
         >
-          <button
-            onClick={() => setFilter("all")}
-            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
-              filter === "all"
-                ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-glow scale-105"
-                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-accent/30 hover:shadow-soft-sm"
-            }`}
-          >
-            <span className="relative z-10 flex items-center gap-1.5">
-              <History className="w-3.5 h-3.5" />
-              {locale === "zh" ? "全部" : "All"}
-            </span>
-            <span className="ml-1.5 text-xs opacity-70">({stats.totalRecords})</span>
-          </button>
-
-          <button
-            onClick={() => setFilter("practice")}
-            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
-              filter === "practice"
-                ? "bg-gradient-to-r from-accent to-accent-light text-white shadow-glow scale-105"
-                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-accent/30 hover:shadow-soft-sm"
-            }`}
-          >
-            <span className="relative z-10 flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5" />
-              {locale === "zh" ? "练习" : "Practice"}
-            </span>
-            <span className="ml-1.5 text-xs opacity-70">({stats.totalPractices})</span>
-          </button>
-
-          <button
-            onClick={() => setFilter("interview")}
-            className={`group relative px-6 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-300 ${
-              filter === "interview"
-                ? "bg-gradient-to-r from-success to-success-light text-white shadow-glow scale-105"
-                : "bg-white text-foreground-muted hover:text-foreground border border-border hover:border-success/30 hover:shadow-soft-sm"
-            }`}
-          >
-            <span className="relative z-10 flex items-center gap-1.5">
-              <MessageSquare className="w-3.5 h-3.5" />
-              {locale === "zh" ? "面试" : "Interview"}
-            </span>
-            <span className="ml-1.5 text-xs opacity-70">({stats.totalInterviews})</span>
-          </button>
+          {([
+            { value: "all" as const, label: locale === "zh" ? "全部" : "All", icon: <History className="w-3.5 h-3.5" />, count: stats.totalRecords },
+            { value: "practice" as const, label: locale === "zh" ? "练习" : "Practice", icon: <Target className="w-3.5 h-3.5" />, count: stats.totalPractices },
+            { value: "interview" as const, label: locale === "zh" ? "面试" : "Interview", icon: <MessageSquare className="w-3.5 h-3.5" />, count: stats.totalInterviews },
+          ]).map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setFilter(tab.value)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                filter === tab.value
+                  ? "bg-accent text-white"
+                  : "bg-white border border-border text-foreground-muted hover:text-foreground hover:border-accent/30"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+              <span className={`text-xs tabular-nums ${filter === tab.value ? "opacity-70" : ""}`}>{tab.count}</span>
+            </button>
+          ))}
         </motion.div>
 
         {/* Timeline */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
           className="space-y-8"
         >
           {groupedRecords.map((group, groupIndex) => (
@@ -520,7 +451,7 @@ export default function HistoryPage() {
                   return (
                     <div
                       key={`${record.type}-${record.id}`}
-                      className="group p-4 bg-white rounded-2xl border-2 border-border hover:border-accent/30 hover:shadow-soft-md hover:-translate-y-0.5 transition-all duration-300"
+                      className="group p-4 bg-white rounded-xl border border-border/50 hover:border-accent/30 transition-all duration-200"
                       style={{ animationDelay: `${recordIndex * 0.05}s` }}
                     >
                       {/* Mobile & Desktop Layout */}
@@ -532,10 +463,10 @@ export default function HistoryPage() {
                               ? `/practice/review/${record.id}`
                               : `/interview/${record.id}/report`
                           }
-                          className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
                             record.type === "practice"
-                              ? "bg-gradient-to-br from-accent/20 to-accent/10 text-accent group-hover:shadow-soft-sm"
-                              : "bg-gradient-to-br from-success/20 to-success/10 text-success group-hover:shadow-soft-sm"
+                              ? "bg-accent/10 text-accent"
+                              : "bg-success/10 text-success"
                           }`}
                         >
                           {record.type === "practice" ? (

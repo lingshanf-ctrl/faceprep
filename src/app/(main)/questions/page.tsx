@@ -296,15 +296,8 @@ function QuestionsContent() {
   }), [systemUnifiedQuestions, customUnifiedQuestions]);
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-accent/10 rounded-full blur-[120px]" />
-        <div className="absolute top-40 -right-20 w-[400px] h-[400px] bg-accent/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-20 -left-20 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px]" />
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-10 relative z-10">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -370,10 +363,10 @@ function QuestionsContent() {
 
         {/* ── Filter Panel ── */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className="mb-5 bg-white/90 backdrop-blur-sm border border-border rounded-2xl shadow-soft-sm overflow-hidden"
+          className="mb-5 bg-white border border-border/50 rounded-xl overflow-hidden"
         >
           {/* Row 1: Category tabs + Search */}
           <div className="flex items-center gap-2 border-b border-border/60 pr-3">
@@ -479,7 +472,7 @@ function QuestionsContent() {
 
         {/* Custom Questions Selection Bar */}
         {sourceFilter === "custom" && customQuestions.length > 0 && (
-          <div className="flex items-center justify-between mb-5 p-5 bg-gradient-to-r from-accent/5 to-accent/10 rounded-2xl border border-accent/20 backdrop-blur-sm animate-fade-up" style={{ animationDelay: "0.4s" }}>
+          <div className="flex items-center justify-between mb-5 p-4 bg-white border border-border/50 rounded-xl animate-fade-up" style={{ animationDelay: "0.4s" }}>
             <label className="flex items-center gap-3 cursor-pointer group">
               <button
                 onClick={toggleSelectAll}
@@ -610,20 +603,15 @@ function QuestionCard({
 
   return (
     <div
-      className={`group relative bg-white rounded-2xl border-2 transition-all duration-300 overflow-hidden
+      className={`group relative bg-white rounded-xl border transition-all duration-200 overflow-hidden
         ${isCustom && isSelected
-          ? "border-accent shadow-soft-md scale-[1.01]"
-          : "border-border hover:border-accent/30 hover:-translate-y-1 hover:shadow-soft-lg"
+          ? "border-accent"
+          : "border-border/50 hover:border-accent/40"
         }`}
     >
-      {/* Official Question Gradient Indicator */}
+      {/* Official Question left accent */}
       {isOfficial && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-accent via-accent-light to-accent opacity-80" />
-      )}
-
-      {/* High Frequency Glow */}
-      {question.frequency && question.frequency >= 2 && (
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-400/5 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent/60" />
       )}
 
       <div className="p-4 sm:p-5 pl-5 sm:pl-6">
@@ -666,11 +654,8 @@ function QuestionCard({
               />
 
               {question.frequency && question.frequency >= 2 && (
-                <span className="relative text-xs px-3 py-1 rounded-full font-semibold text-amber-700 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 shadow-soft-sm">
-                  <span className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-transparent rounded-full animate-pulse" />
-                  <span className="relative flex items-center gap-1">
-                    ⚡ {locale === "zh" ? "高频" : "Hot"}
-                  </span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold text-amber-700 bg-amber-50 border border-amber-200">
+                  ⚡ {locale === "zh" ? "高频" : "Hot"}
                 </span>
               )}
 
@@ -755,19 +740,16 @@ interface EmptyStateProps {
 
 function EmptyState({ hasFilters, locale, onClearFilters, onAddQuestion }: EmptyStateProps) {
   return (
-    <div className="text-center py-20 px-4 animate-fade-up">
-      <div className="relative inline-block mb-6">
-        <div className="text-8xl animate-float">{hasFilters ? "🔍" : "📚"}</div>
-        <div className="absolute inset-0 bg-accent/10 blur-3xl rounded-full" />
-      </div>
+    <div className="text-center py-20 px-4">
+      <div className="text-5xl mb-4">{hasFilters ? "🔍" : "📚"}</div>
 
-      <h3 className="text-2xl font-display font-bold text-foreground mb-3">
+      <h3 className="text-xl font-semibold text-foreground mb-2">
         {hasFilters
           ? locale === "zh" ? "未找到匹配的题目" : "No questions found"
           : locale === "zh" ? "题库空空如也" : "No questions yet"}
       </h3>
 
-      <p className="text-foreground-muted text-base mb-8 max-w-md mx-auto leading-relaxed">
+      <p className="text-foreground-muted text-sm mb-6 max-w-sm mx-auto">
         {hasFilters
           ? locale === "zh"
             ? "试试调整筛选条件，或者清空筛选查看所有题目"
@@ -780,20 +762,17 @@ function EmptyState({ hasFilters, locale, onClearFilters, onAddQuestion }: Empty
       {hasFilters ? (
         <button
           onClick={onClearFilters}
-          className="px-8 py-3.5 bg-white text-foreground rounded-full font-semibold border-2 border-border hover:border-accent hover:bg-accent/5 transition-all duration-300 shadow-soft-sm hover:shadow-soft-md hover:scale-105"
+          className="px-6 py-2.5 bg-white text-foreground rounded-full font-medium border border-border hover:border-accent/40 transition-all"
         >
           {locale === "zh" ? "清除筛选条件" : "Clear filters"}
         </button>
       ) : (
         <button
           onClick={onAddQuestion}
-          className="group relative px-8 py-3.5 bg-gradient-to-r from-accent to-accent-light text-white rounded-full font-semibold transition-all duration-300 shadow-soft-md hover:shadow-glow hover:scale-105"
+          className="flex items-center gap-2 mx-auto px-6 py-2.5 bg-accent text-white rounded-full font-medium transition-all hover:bg-accent/90"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 rounded-full" />
-          <span className="relative flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            {locale === "zh" ? "添加专属题目" : "Add question"}
-          </span>
+          <Plus className="w-4 h-4" />
+          {locale === "zh" ? "添加专属题目" : "Add question"}
         </button>
       )}
     </div>
@@ -834,10 +813,10 @@ function AddQuestionModal({
   const selectedCount = parsedPreview?.questions.filter((q) => q.selected).length || 0;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border-2 border-border animate-scale-in">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-xl border border-border/50">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b-2 border-border">
+        <div className="flex items-center justify-between p-6 border-b border-border/50">
           <div>
             <h3 className="text-2xl font-display font-bold text-foreground">
               {locale === "zh" ? "添加专属题目" : "Add Custom Questions"}
@@ -859,9 +838,9 @@ function AddQuestionModal({
         <div className="flex-1 overflow-y-auto p-6">
           {!parsedPreview ? (
             <div className="space-y-5">
-              <div className="p-5 bg-gradient-to-r from-accent/10 to-accent/5 border border-accent/20 rounded-2xl">
-                <div className="flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-accent mt-0.5 flex-shrink-0" />
+              <div className="p-4 bg-surface border border-border/50 rounded-xl">
+                <div className="flex items-start gap-2.5">
+                  <Sparkles className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-foreground-muted leading-relaxed">
                     {locale === "zh"
                       ? "支持 1. / - / (1) / 第一题：等各种编号格式，AI 会自动识别题型和难度"
@@ -878,26 +857,25 @@ function AddQuestionModal({
                     ? "在此粘贴你的面试题目...\n\n例如：\n1. 请介绍一下你自己\n2. React 的虚拟 DOM 原理是什么？\n3. 描述一个你遇到的技术难题及解决方案"
                     : "Paste your interview questions here...\n\nExample:\n1. Tell me about yourself\n2. Explain React's Virtual DOM\n3. Describe a technical challenge you solved"
                 }
-                className="w-full h-56 px-5 py-4 bg-surface/50 border-2 border-border rounded-2xl text-foreground placeholder-foreground-muted
-                  focus:outline-none focus:border-accent focus:bg-white focus:shadow-soft-md resize-none transition-all duration-300"
+                className="w-full h-56 px-4 py-3.5 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted
+                  focus:outline-none focus:border-accent focus:bg-white resize-none transition-all"
               />
 
               <button
                 onClick={onParse}
                 disabled={!parseText.trim() || isParsing}
-                className="group relative w-full py-4 bg-gradient-to-r from-accent to-accent-light text-white rounded-2xl font-semibold
-                  hover:shadow-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 disabled:hover:shadow-none overflow-hidden"
+                className="w-full py-3.5 bg-accent text-white rounded-xl font-semibold
+                  hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                <span className="relative flex items-center justify-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   {isParsing ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       <span>{locale === "zh" ? "AI 解析中..." : "Parsing..."}</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles className="w-5 h-5" />
+                      <Sparkles className="w-4 h-4" />
                       <span>{locale === "zh" ? "AI 智能解析" : "AI Parse"}</span>
                     </>
                   )}
@@ -906,7 +884,7 @@ function AddQuestionModal({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-5 bg-gradient-to-r from-accent/5 to-transparent rounded-2xl border border-accent/20">
+              <div className="flex items-center justify-between p-4 bg-surface border border-border/50 rounded-xl">
                 <div>
                   <span className="font-semibold text-foreground text-lg">
                     {locale === "zh" ? `识别到 ${parsedPreview.total} 道题目` : `${parsedPreview.total} questions found`}
@@ -925,10 +903,10 @@ function AddQuestionModal({
                   <div
                     key={idx}
                     onClick={() => toggleSelection(idx)}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
+                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
                       q.selected
-                        ? "bg-accent/5 border-accent/40 shadow-soft-sm scale-[1.02]"
-                        : "bg-white border-border hover:border-accent/30 hover:bg-accent/5"
+                        ? "bg-accent/5 border-accent/40"
+                        : "bg-white border-border/50 hover:border-accent/30"
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -962,23 +940,20 @@ function AddQuestionModal({
 
         {/* Footer */}
         {parsedPreview && (
-          <div className="flex gap-3 p-6 border-t-2 border-border bg-surface/30">
+          <div className="flex gap-3 p-5 border-t border-border/50">
             <button
               onClick={() => setParsedPreview(null)}
-              className="px-6 py-3 border-2 border-border rounded-2xl font-semibold text-foreground hover:bg-white hover:border-accent/30 transition-all duration-300"
+              className="px-5 py-2.5 border border-border rounded-xl font-medium text-foreground hover:border-accent/40 transition-all"
             >
               {locale === "zh" ? "← 重新编辑" : "← Re-edit"}
             </button>
             <button
               onClick={onSave}
               disabled={selectedCount === 0}
-              className="group relative flex-1 py-3 bg-gradient-to-r from-accent to-accent-light text-white rounded-2xl font-semibold
-                hover:shadow-glow disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 overflow-hidden"
+              className="flex-1 py-2.5 bg-accent text-white rounded-xl font-semibold
+                hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-              <span className="relative">
-                {locale === "zh" ? `保存 ${selectedCount} 道题目` : `Save ${selectedCount} questions`}
-              </span>
+              {locale === "zh" ? `保存 ${selectedCount} 道题目` : `Save ${selectedCount} questions`}
             </button>
           </div>
         )}

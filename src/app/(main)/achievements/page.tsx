@@ -26,13 +26,9 @@ function AchievementCard({
 }) {
   return (
     <div
-      className={`
-        relative p-5 rounded-2xl border transition-all duration-300
-        ${unlocked
-          ? "bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200"
-          : "bg-white border-gray-100 opacity-75"
-        }
-      `}
+      className={`relative p-5 rounded-xl border transition-all duration-200 ${
+        unlocked ? "bg-amber-50/60 border-amber-200/70" : "bg-white border-border/50 opacity-60"
+      }`}
     >
       {/* 解锁标记 */}
       {unlocked && (
@@ -58,25 +54,22 @@ function AchievementCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 mb-1">{achievement.title}</h3>
-          <p className="text-sm text-gray-500 mb-3">{achievement.description}</p>
+          <h3 className="font-semibold text-foreground mb-1">{achievement.title}</h3>
+          <p className="text-sm text-foreground-muted mb-3">{achievement.description}</p>
 
           {/* 进度条 */}
           {progress && (
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-gray-500">
+                <span className="text-foreground-muted">
                   {unlocked ? "已完成" : "进行中"}
                 </span>
-                <span className="text-gray-700">
+                <span className="text-foreground-muted tabular-nums">
                   {progress.current} / {progress.target}
                 </span>
-              </div>              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              </div>              <div className="h-1.5 bg-border/50 rounded-full overflow-hidden">
                 <div
-                  className={`
-                    h-full rounded-full transition-all duration-500
-                    ${unlocked ? "bg-amber-500" : "bg-gray-300"}
-                  `}
+                  className={`h-full rounded-full transition-all duration-500 ${unlocked ? "bg-amber-500" : "bg-border"}`}
                   style={{ width: `${progress.percentage}%` }}
                 />
               </div>
@@ -112,22 +105,13 @@ function CategoryTab({
   return (
     <button
       onClick={onClick}
-      className={`
-        flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all
-        ${isActive
-          ? "bg-primary text-white ring-2 ring-offset-2 ring-offset-surface ring-primary"
-          : "bg-white text-text-secondary hover:text-primary hover:bg-white/80"
-        }
-      `}
+      className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium text-sm transition-all ${
+        isActive ? "bg-accent text-white" : "bg-white border border-border text-foreground-muted hover:text-foreground hover:border-accent/30"
+      }`}
     >
       <span>{category.icon}</span>
       <span>{category.name}</span>
-      <span
-        className={`
-          ml-1 px-2 py-0.5 rounded-full text-xs
-          ${isActive ? "bg-white/20" : "bg-surface"}
-        `}
-      >
+      <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${isActive ? "bg-white/20" : "bg-surface"}`}>
         {unlockedCount}/{totalCount}
       </span>
     </button>
@@ -201,20 +185,20 @@ export default function AchievementsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface py-12">
-      <div className="max-w-5xl mx-auto px-6">
+    <div className="min-h-screen bg-background py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         {/* 头部 */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-semibold text-primary mb-2">
+        <div className="mb-6">
+          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight mb-1">
             成就中心
           </h1>
-          <p className="text-text-secondary">
+          <p className="text-foreground-muted text-sm">
             完成练习，解锁成就，记录你的成长之路
           </p>
         </div>
 
         {/* 总体进度 */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 text-white mb-8">
+        <div className="bg-amber-500 rounded-xl p-5 text-white mb-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/80 text-sm mb-1">成就收集进度</p>
@@ -241,7 +225,7 @@ export default function AchievementsPage() {
         </div>
 
         {/* 分类统计 */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {achievementCategories.map((cat) => {
             const catStats = stats.byCategory[cat.key] || { total: 0, unlocked: 0 };
             return (
@@ -258,23 +242,18 @@ export default function AchievementsPage() {
         </div>
 
         {/* 分类筛选 */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           <button
             onClick={() => setActiveCategory("ALL")}
-            className={`
-              flex items-center gap-2 px-4 py-3 rounded-xl font-medium text-sm transition-all
-              ${activeCategory === "ALL"
-                ? "bg-primary text-white ring-2 ring-offset-2 ring-offset-surface ring-primary"
-                : "bg-white text-text-secondary hover:text-primary hover:bg-white/80"
-              }
-            `}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium text-sm transition-all ${
+              activeCategory === "ALL"
+                ? "bg-accent text-white"
+                : "bg-white border border-border text-foreground-muted hover:text-foreground hover:border-accent/30"
+            }`}
           >
             <span>🌟</span>
             <span>全部</span>
-            <span className={`
-              ml-1 px-2 py-0.5 rounded-full text-xs
-              ${activeCategory === "ALL" ? "bg-white/20" : "bg-surface"}
-            `}>
+            <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${activeCategory === "ALL" ? "bg-white/20" : "bg-surface"}`}>
               {stats.unlockedCount}/{stats.total}
             </span>
           </button>
