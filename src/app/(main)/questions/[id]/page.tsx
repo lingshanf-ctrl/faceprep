@@ -298,8 +298,8 @@ export default function QuestionDetailPage() {
               onClick={handleToggleFavorite}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                 favorited
-                  ? "bg-foreground text-white"
-                  : "text-foreground-muted hover:text-foreground border border-border hover:border-foreground-muted"
+                  ? "bg-accent text-white border border-accent"
+                  : "text-foreground-muted hover:text-accent border border-border hover:border-accent/40"
               }`}
             >
               <svg className="w-3.5 h-3.5" fill={favorited ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
@@ -427,7 +427,7 @@ export default function QuestionDetailPage() {
                           <p className="text-[10px] font-semibold text-foreground-muted uppercase tracking-widest mb-1.5">
                             {locale === "zh" ? "备考提示" : "Tips"}
                           </p>
-                          <p className="text-sm text-foreground-muted leading-relaxed">{question.tips}</p>
+                          <p className="text-sm text-foreground leading-relaxed">{question.tips}</p>
                         </div>
                       )}
                       {question.framework && (
@@ -435,7 +435,7 @@ export default function QuestionDetailPage() {
                           <p className="text-[10px] font-semibold text-foreground-muted uppercase tracking-widest mb-1.5">
                             {locale === "zh" ? "答题框架" : "Framework"}
                           </p>
-                          <pre className="text-sm text-foreground-muted whitespace-pre-wrap font-sans leading-relaxed">{question.framework}</pre>
+                          <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">{question.framework}</pre>
                         </div>
                       )}
                     </div>

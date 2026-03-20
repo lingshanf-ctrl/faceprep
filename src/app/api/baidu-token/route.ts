@@ -5,9 +5,10 @@ export const runtime = 'edge';
 export const preferredRegion = ['hkg1', 'sin1', 'kix1', 'icn1'];
 
 // 百度语音识别配置
-// 需要在环境变量中配置 BAIDU_API_KEY 和 BAIDU_SECRET_KEY
+// 需要在环境变量中配置 BAIDU_API_KEY、BAIDU_SECRET_KEY 和 BAIDU_APP_ID
 const BAIDU_API_KEY = process.env.BAIDU_API_KEY || "";
 const BAIDU_SECRET_KEY = process.env.BAIDU_SECRET_KEY || "";
+const BAIDU_APP_ID = process.env.BAIDU_APP_ID || "";
 
 interface BaiduTokenResponse {
   access_token: string;
@@ -57,6 +58,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       accessToken: data.access_token,
       expiresIn: data.expires_in,
+      appId: BAIDU_APP_ID,
+      appKey: BAIDU_API_KEY,
     });
   } catch (error) {
     console.error("Baidu token error:", error);

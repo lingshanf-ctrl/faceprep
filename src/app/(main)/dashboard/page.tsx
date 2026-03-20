@@ -4,52 +4,18 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  TrendingUp,
-  Calendar,
-  Target,
-  Clock,
-  Flame,
   ArrowRight,
-  Zap,
-  BookOpen,
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  Clock,
   ChevronRight,
-  Award,
-  BarChart3,
-  Sparkles,
-  Brain,
-  Trophy,
-  Play,
 } from "lucide-react";
 import { getStats, getPracticeRecords, getStreak, PracticeRecord } from "@/lib/practice-store";
 import { useLanguage } from "@/components/language-provider";
 import { ScoreBadge } from "@/components/ui/score-badge";
-import { QuestionTypeBadge } from "@/components/ui/type-badge";
 import { questions } from "@/data/questions";
 import { getTypeConfig } from "@/lib/design-tokens";
-
-// Animation variants
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.1,
-      duration: 0.5,
-      ease: [0.16, 1, 0.3, 1] as const,
-    },
-  }),
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
 
 // Types
 interface DashboardStats {
@@ -59,6 +25,10 @@ interface DashboardStats {
   totalTime: number;
   weakestType: string;
   bestType: string;
+  typeAverages: Record<string, number>;
+  typeCounts: Record<string, number>;
+  scoreTrend: number;
+  untouchedTypes: string[];
 }
 
 // 本地备用推荐逻辑（API 失败时使用）
@@ -67,7 +37,6 @@ function getLocalRecommendations(locale: "zh" | "en", count: number = 3, records
   const recs: Array<{ id: string; title: string; type: string; reason: string }> = [];
   const usedIds = new Set<string>();
 
-  // 计算薄弱类型（使用 Map 优化查找）
   const questionTypeMap = new Map(questions.map(q => [q.id, q.type]));
   const typeScores: Record<string, number[]> = {};
 
@@ -89,7 +58,6 @@ function getLocalRecommendations(locale: "zh" | "en", count: number = 3, records
     }
   });
 
-  // 1. 优先推荐薄弱题型
   if (weakestType) {
     const typeQuestions = questions.filter((q) => q.type === weakestType && !usedIds.has(q.id));
     const shuffled = [...typeQuestions].sort(() => 0.5 - Math.random());
@@ -100,13 +68,12 @@ function getLocalRecommendations(locale: "zh" | "en", count: number = 3, records
         id: q.id,
         title: q.title,
         type: q.type,
-        reason: locale === "zh" ? `🔍 薄弱项：${typeConfig.label}` : `Weak: ${typeConfig.label}`,
+        reason: locale === "zh" ? `薄弱项：${typeConfig.label}` : `Weak: ${typeConfig.label}`,
       });
       usedIds.add(q.id);
     });
   }
 
-  // 2. 补充高频题目
   if (recs.length < count) {
     const remaining = questions.filter((q) => !usedIds.has(q.id) && q.frequency >= 2);
     const shuffled = [...remaining].sort(() => 0.5 - Math.random());
@@ -116,13 +83,12 @@ function getLocalRecommendations(locale: "zh" | "en", count: number = 3, records
         id: q.id,
         title: q.title,
         type: q.type,
-        reason: locale === "zh" ? "📌 高频题目" : "High-frequency",
+        reason: locale === "zh" ? "高频题目" : "High-frequency",
       });
       usedIds.add(q.id);
     });
   }
 
-  // 3. 随机补充
   if (recs.length < count) {
     const finalRemaining = questions.filter((q) => !usedIds.has(q.id));
     const finalShuffled = [...finalRemaining].sort(() => 0.5 - Math.random());
@@ -132,222 +98,12 @@ function getLocalRecommendations(locale: "zh" | "en", count: number = 3, records
         id: q.id,
         title: q.title,
         type: q.type,
-        reason: locale === "zh" ? "💡 推荐练习" : "Recommended",
+        reason: locale === "zh" ? "推荐练习" : "Recommended",
       });
     });
   }
 
   return recs;
-}
-
-// Stat Card Component - Enhanced with gradient hover effect
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  trend,
-  color,
-  index,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  trend?: string;
-  color: "accent" | "success" | "warning" | "error";
-  index: number;
-}) {
-  const colorClasses = {
-    accent: "from-accent/20 to-accent/5 text-accent border-accent/20",
-    success: "from-success/20 to-success/5 text-success border-success/20",
-    warning: "from-warning/20 to-warning/5 text-warning border-warning/20",
-    error: "from-error/20 to-error/5 text-error border-error/20",
-  };
-
-  return (
-    <motion.div
-      custom={index}
-      variants={fadeUp}
-      initial="hidden"
-      animate="visible"
-      className="group relative overflow-hidden rounded-2xl bg-white border border-border p-5 transition-all duration-300 hover:shadow-soft-lg hover:border-accent/30 hover:-translate-y-1"
-    >
-      {/* Gradient background on hover */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${colorClasses[color]} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-
-      <div className="relative z-10 flex items-start justify-between">
-        <div>
-          <p className="text-sm text-foreground-muted mb-1">{label}</p>
-          <p className="text-2xl font-display font-bold text-foreground group-hover:scale-105 transition-transform origin-left">{value}</p>
-          {trend && (
-            <p className="text-xs text-success mt-1 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              {trend}
-            </p>
-          )}
-        </div>
-        <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} flex items-center justify-center border`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// Circular Progress Component
-function CircularProgress({
-  value,
-  label,
-  color = "accent",
-  size = 70,
-}: {
-  value: number;
-  label: string;
-  color?: "accent" | "success" | "warning" | "error";
-  size?: number;
-}) {
-  const colorClasses = {
-    accent: "text-accent",
-    success: "text-success",
-    warning: "text-warning",
-    error: "text-error",
-  };
-
-  const strokeWidth = 5;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (value / 100) * circumference;
-
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg className="transform -rotate-90" width={size} height={size}>
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={strokeWidth}
-            className="text-border"
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            className={`${colorClasses[color]} transition-all duration-1000`}
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-lg font-bold text-foreground">{Math.round(value)}</span>
-        </div>
-      </div>
-      <span className="text-sm font-medium text-foreground-muted mt-2">{label}</span>
-    </div>
-  );
-}
-
-// Recommendation Card - Enhanced design
-function RecommendationCard({
-  question,
-  reason,
-  locale,
-  index,
-}: {
-  question: { id: string; title: string; type: string };
-  reason: string;
-  locale: "zh" | "en";
-  index: number;
-}) {
-  return (
-    <motion.div
-      custom={index}
-      variants={fadeUp}
-      initial="hidden"
-      animate="visible"
-    >
-      <Link
-        href={`/questions/${question.id}`}
-        className="group block h-full"
-      >
-        <div className="h-full bg-white rounded-2xl border border-border p-5 transition-all duration-300 hover:shadow-soft-lg hover:border-accent/30 hover:-translate-y-1 relative overflow-hidden">
-          {/* Hover gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-          <div className="relative z-10">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform border border-accent/20">
-                <Sparkles className="h-5 w-5 text-accent" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <QuestionTypeBadge
-                  type={question.type}
-                  locale={locale}
-                  showIcon={false}
-                  className="mb-1"
-                />
-                <p className="text-xs text-foreground-muted truncate">{reason}</p>
-              </div>
-            </div>
-            <h4 className="font-medium text-foreground line-clamp-2 group-hover:text-accent transition-colors">
-              {question.title}
-            </h4>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
-  );
-}
-
-// Recent Practice Item
-function RecentPracticeItem({
-  record,
-  locale,
-  index,
-}: {
-  record: PracticeRecord;
-  locale: "zh" | "en";
-  index: number;
-}) {
-  const question = questions.find((q) => q.id === record.questionId);
-  if (!question) return null;
-
-  const date = new Date(record.createdAt);
-  const dateStr = locale === "zh"
-    ? `${date.getMonth() + 1}月${date.getDate()}日`
-    : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-  return (
-    <motion.div
-      custom={index}
-      variants={fadeUp}
-      initial="hidden"
-      animate="visible"
-    >
-      <Link
-        href={`/practice/review/${record.id}`}
-        className="group flex items-center gap-4 p-4 rounded-xl bg-white border border-border hover:border-accent/30 hover:shadow-soft-sm transition-all"
-      >
-        <ScoreBadge score={record.score} size="md" />
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-foreground truncate group-hover:text-accent transition-colors">
-            {question.title}
-          </h4>
-          <p className="text-xs text-foreground-muted flex items-center gap-2 mt-1">
-            <span>{dateStr}</span>
-            <span>·</span>
-            <span>{Math.round((record.duration || 0) / 60)}分钟</span>
-          </p>
-        </div>
-        <ChevronRight className="h-5 w-5 text-foreground-muted group-hover:text-accent transition-colors" />
-      </Link>
-    </motion.div>
-  );
 }
 
 export default function DashboardPage() {
@@ -359,8 +115,12 @@ export default function DashboardPage() {
   const [recommendations, setRecommendations] = useState<
     Array<{ id: string; title: string; type: string; reason: string }>
   >([]);
+  const [blindspots, setBlindspots] = useState<{
+    dimensionScores?: { content: number; structure: number; expression: number; highlights: number };
+    topWeakPoints?: string[];
+    suggestions?: string[];
+  } | null>(null);
 
-  // 数据加载（仅在组件挂载时执行一次）
   useEffect(() => {
     setMounted(true);
 
@@ -368,14 +128,27 @@ export default function DashboardPage() {
       const [statsData, streakData, recordsData] = await Promise.all([
         getStats(),
         getStreak(),
-        getPracticeRecords({ limit: 5 }), // 从API获取最近5条记录
+        getPracticeRecords({ limit: 20 }),
       ]);
 
       setRawStats(statsData);
       setStreak(streakData);
       setRecords(recordsData);
 
-      // 从 API 获取推荐题目
+      try {
+        const bsRes = await fetch("/api/stats/blindspots");
+        if (bsRes.ok) {
+          const bsData = await bsRes.json();
+          if (bsData.hasData) {
+            setBlindspots({
+              dimensionScores: bsData.dimensionScores,
+              topWeakPoints: bsData.topWeakPoints?.filter(Boolean).slice(0, 3),
+              suggestions: bsData.suggestions?.slice(0, 2),
+            });
+          }
+        }
+      } catch { /* 降级到客户端计算 */ }
+
       try {
         const recsRes = await fetch("/api/questions/recommendations?count=3");
         if (recsRes.ok) {
@@ -401,44 +174,51 @@ export default function DashboardPage() {
     }
 
     loadData();
-  }, []); // 移除 locale 依赖，只在挂载时加载
+  }, []);
 
-  // 使用 useMemo 缓存统计数据计算
   const stats = useMemo<DashboardStats | null>(() => {
     if (!rawStats) return null;
 
-    // 缓存题目 ID 到类型的映射，避免重复查找
     const questionTypeMap = new Map(questions.map(q => [q.id, q.type]));
+    const allTypes = Array.from(new Set(questions.map(q => q.type)));
 
-    const typeScores: Record<string, number[]> = {};
+    const typeScoresMap: Record<string, number[]> = {};
     let totalTime = 0;
 
-    // 单次遍历完成所有计算
     for (const r of records) {
       totalTime += r.duration || 0;
       const type = questionTypeMap.get(r.questionId);
       if (type) {
-        if (!typeScores[type]) typeScores[type] = [];
-        typeScores[type].push(r.score);
+        if (!typeScoresMap[type]) typeScoresMap[type] = [];
+        typeScoresMap[type].push(r.score);
       }
     }
 
+    const typeAverages: Record<string, number> = {};
+    const typeCounts: Record<string, number> = {};
     let weakestType = "";
     let bestType = "";
     let lowestAvg = 100;
     let highestAvg = 0;
 
-    Object.entries(typeScores).forEach(([type, scores]) => {
+    Object.entries(typeScoresMap).forEach(([type, scores]) => {
       const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      if (avg < lowestAvg) {
-        lowestAvg = avg;
-        weakestType = type;
-      }
-      if (avg > highestAvg) {
-        highestAvg = avg;
-        bestType = type;
-      }
+      typeAverages[type] = Math.round(avg);
+      typeCounts[type] = scores.length;
+      if (avg < lowestAvg) { lowestAvg = avg; weakestType = type; }
+      if (avg > highestAvg) { highestAvg = avg; bestType = type; }
     });
+
+    const sorted = [...records].sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    const recent5 = sorted.slice(0, 5);
+    const prev5 = sorted.slice(5, 10);
+    const recentAvg = recent5.length ? recent5.reduce((s, r) => s + r.score, 0) / recent5.length : 0;
+    const prevAvg = prev5.length ? prev5.reduce((s, r) => s + r.score, 0) / prev5.length : recentAvg;
+    const scoreTrend = Math.round(recentAvg - prevAvg);
+
+    const untouchedTypes = allTypes.filter(t => !typeScoresMap[t]);
 
     return {
       totalPractices: rawStats.totalPractices,
@@ -447,336 +227,381 @@ export default function DashboardPage() {
       totalTime,
       weakestType,
       bestType,
+      typeAverages,
+      typeCounts,
+      scoreTrend,
+      untouchedTypes,
     };
   }, [rawStats, streak, records]);
 
-  // 缓存最近记录
   const recentRecords = useMemo(() => records.slice(0, 5), [records]);
 
   if (!mounted || !stats) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="h-12 w-12 rounded-xl bg-accent/20" />
-          <div className="h-4 w-32 bg-surface rounded" />
-        </div>
+        <div className="w-5 h-5 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     );
   }
 
   const isNewUser = stats.totalPractices === 0;
 
+  const today = new Date();
+  const todayStr = locale === "zh"
+    ? `${today.getMonth() + 1}月${today.getDate()}日`
+    : today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background Effects - Like Practice Page */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Top gradient orb */}
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-accent/10 rounded-full blur-[120px]" />
-        {/* Secondary orb */}
-        <div className="absolute top-40 -right-40 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px]" />
-        {/* Bottom left orb */}
-        <div className="absolute bottom-0 -left-40 w-[400px] h-[400px] bg-success/5 rounded-full blur-[80px]" />
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-10 md:py-14 space-y-8">
 
-      <div className="relative z-10">
-        {/* Hero Section - Like Landing Page */}
-        <section className="relative pt-8 pb-6 md:pt-12 md:pb-8">
-          <div className="max-w-5xl mx-auto px-4 md:px-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              {locale === "zh" ? "欢迎回来" : "Welcome back"}
+            </h1>
+            <p className="text-sm text-foreground-muted mt-1.5 flex items-center gap-1.5">
+              <span>{locale === "zh" ? `连续 ${stats.streakDays} 天` : `${stats.streakDays}-day streak`}</span>
+              <span className="text-border">·</span>
+              <span>{locale === "zh" ? `共 ${stats.totalPractices} 次练习` : `${stats.totalPractices} practices`}</span>
+              <span className="text-border">·</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {todayStr}
+              </span>
+            </p>
+          </div>
+          <Link
+            href="/practice"
+            className="inline-flex items-center gap-2 h-10 px-5 bg-accent text-white rounded-full text-sm font-medium hover:bg-accent-dark transition-colors self-start sm:self-auto"
+          >
+            {locale === "zh" ? "开始练习" : "Start Practice"}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </motion.div>
+
+        {/* KPI Row */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="bg-white border border-border/50 rounded-2xl divide-x divide-border/50 grid grid-cols-2 lg:grid-cols-4"
+        >
+          {/* 练习次数 */}
+          <div className="px-6 py-5">
+            <p className="text-3xl font-bold tabular-nums text-foreground">
+              {stats.totalPractices}
+            </p>
+            <p className="text-xs text-foreground-muted mt-1">
+              {locale === "zh" ? "练习次数" : "Practices"}
+            </p>
+          </div>
+
+          {/* 平均得分 */}
+          <div className="px-6 py-5">
+            <p className="text-3xl font-bold tabular-nums text-foreground">
+              {Math.round(stats.averageScore)}
+            </p>
+            <p className="text-xs text-foreground-muted mt-1">
+              {locale === "zh" ? "平均得分" : "Avg Score"}
+            </p>
+            {stats.totalPractices >= 10 && stats.scoreTrend !== 0 && (
+              <p className={`text-xs mt-1 flex items-center gap-0.5 ${stats.scoreTrend > 0 ? "text-success" : "text-error"}`}>
+                {stats.scoreTrend > 0
+                  ? <TrendingUp className="h-3 w-3" />
+                  : <TrendingDown className="h-3 w-3" />}
+                {stats.scoreTrend > 0 ? "+" : ""}{stats.scoreTrend}{locale === "zh" ? " 分" : " pts"}
+              </p>
+            )}
+          </div>
+
+          {/* 连续天数 */}
+          <div className="px-6 py-5">
+            <p className="text-3xl font-bold tabular-nums text-foreground">
+              {stats.streakDays}
+            </p>
+            <p className="text-xs text-foreground-muted mt-1">
+              {locale === "zh" ? "连续天数" : "Streak (days)"}
+            </p>
+          </div>
+
+          {/* 练习时长 */}
+          <div className="px-6 py-5">
+            <p className="text-3xl font-bold tabular-nums text-foreground">
+              {Math.round(stats.totalTime / 60)}
+            </p>
+            <p className="text-xs text-foreground-muted mt-1 flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {locale === "zh" ? "练习时长（分钟）" : "Minutes practiced"}
+            </p>
+          </div>
+        </motion.div>
+
+        {/* 2-col grid */}
+        <div className="grid lg:grid-cols-3 gap-6">
+
+          {/* Left: Blind spot + Recommendations */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Card A: Blind Spot Analysis */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-col md:flex-row md:items-center md:justify-between gap-6"
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="bg-white border border-border/50 rounded-2xl overflow-hidden"
             >
-              {/* Left: Welcome Message */}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent-light flex items-center justify-center">
-                    <Trophy className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-accent">
-                    {locale === "zh" ? "继续加油" : "Keep it up"}
+              {/* Card header */}
+              <div className="px-6 py-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {locale === "zh" ? "个人盲点分析" : "Blind Spot Analysis"}
+                </h2>
+                {!isNewUser && (
+                  <span className="text-xs text-foreground-muted">
+                    {locale === "zh" ? `基于 ${stats.totalPractices} 次练习` : `Based on ${stats.totalPractices} practices`}
                   </span>
-                </div>
-                <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground tracking-tight mb-2">
-                  {locale === "zh" ? "欢迎回来" : "Welcome back"}
-                </h1>
-                <p className="text-foreground-muted text-base md:text-lg">
-                  {locale === "zh"
-                    ? `今天是你第 ${stats.streakDays} 天练习，保持这个节奏！`
-                    : `Day ${stats.streakDays} of your streak. Keep going!`}
-                </p>
+                )}
               </div>
 
-              {/* Right: Quick Actions */}
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/practice"
-                  className="group relative inline-flex items-center justify-center gap-2 h-12 px-6 bg-gradient-to-r from-accent to-accent-light text-white rounded-full font-medium shadow-glow hover:shadow-glow-lg transition-all hover:scale-105 overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                  <Play className="h-4 w-4 relative z-10 fill-current" />
-                  <span className="relative z-10">{locale === "zh" ? "开始练习" : "Start Practice"}</span>
-                </Link>
-                <Link
-                  href="/history"
-                  className="inline-flex items-center justify-center gap-2 h-12 px-5 bg-white text-foreground border border-border rounded-full font-medium hover:border-accent/30 hover:shadow-soft-md transition-all"
-                >
-                  <Calendar className="h-4 w-4" />
-                  {locale === "zh" ? "查看记录" : "History"}
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Stats Section */}
-        <section className="py-4 md:py-6">
-          <div className="max-w-5xl mx-auto px-4 md:px-6">
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-            >
-              <StatCard
-                icon={BookOpen}
-                label={locale === "zh" ? "练习次数" : "Practices"}
-                value={String(stats.totalPractices)}
-                color="accent"
-                index={0}
-              />
-              <StatCard
-                icon={Target}
-                label={locale === "zh" ? "平均分" : "Avg Score"}
-                value={`${Math.round(stats.averageScore)}`}
-                trend={stats.averageScore > 70 ? "+5%" : undefined}
-                color="success"
-                index={1}
-              />
-              <StatCard
-                icon={Flame}
-                label={locale === "zh" ? "连续天数" : "Streak"}
-                value={`${stats.streakDays}天`}
-                color="warning"
-                index={2}
-              />
-              <StatCard
-                icon={Clock}
-                label={locale === "zh" ? "练习时长" : "Time"}
-                value={`${Math.round(stats.totalTime / 60)}h`}
-                color="accent"
-                index={3}
-              />
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Main Content */}
-        <section className="py-6 md:py-8">
-          <div className="max-w-5xl mx-auto px-4 md:px-6">
-            <div className="grid lg:grid-cols-3 gap-6">
-              {/* Left Column - Skill Analysis */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="lg:col-span-2 space-y-6"
-              >
-                {/* Skill Analysis Card */}
-                <div className="bg-white rounded-2xl border border-border p-6 relative overflow-hidden">
-                  {/* Subtle gradient background */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-accent/5 to-transparent rounded-full blur-3xl" />
-
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center border border-accent/20">
-                        <Brain className="h-6 w-6 text-accent" />
-                      </div>
-                      <div>
-                        <h2 className="font-display text-xl font-semibold text-foreground">
-                          {locale === "zh" ? "能力分析" : "Skill Analysis"}
-                        </h2>
-                        <p className="text-sm text-foreground-muted">
-                          {locale === "zh" ? "基于你的练习数据" : "Based on your practice data"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {isNewUser ? (
-                      <div className="text-center py-10">
-                        <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mx-auto mb-4 border border-accent/20">
-                          <Calendar className="h-10 w-10 text-accent" />
-                        </div>
-                        <h3 className="font-medium text-foreground mb-2 text-lg">
-                          {locale === "zh" ? "开始你的第一次练习" : "Start your first practice"}
-                        </h3>
-                        <p className="text-sm text-foreground-muted mb-5 max-w-sm mx-auto">
-                          {locale === "zh"
-                            ? "完成3次练习后，我们将为你生成详细的能力分析报告"
-                            : "Complete 3 practices to unlock detailed skill analysis"}
-                        </p>
-                        <Link
-                          href="/practice"
-                          className="inline-flex items-center gap-2 h-11 px-6 bg-accent text-white rounded-full text-sm font-medium hover:bg-accent-dark transition-colors shadow-glow hover:shadow-glow-lg"
-                        >
-                          {locale === "zh" ? "开始练习" : "Start Practice"}
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 py-4">
-                        <CircularProgress
-                          value={stats.averageScore}
-                          label={locale === "zh" ? "综合" : "Overall"}
-                          color={stats.averageScore >= 80 ? "success" : stats.averageScore >= 60 ? "warning" : "error"}
-                          size={75}
-                        />
-                        <CircularProgress
-                          value={Math.min(100, stats.totalPractices * 10)}
-                          label={locale === "zh" ? "练习量" : "Volume"}
-                          color="accent"
-                          size={75}
-                        />
-                        <CircularProgress
-                          value={stats.weakestType ? 60 : 100}
-                          label={locale === "zh" ? "薄弱项" : "Weakness"}
-                          color="warning"
-                          size={75}
-                        />
-                        <CircularProgress
-                          value={stats.bestType ? 85 : 70}
-                          label={locale === "zh" ? "优势" : "Strength"}
-                          color="success"
-                          size={75}
-                        />
-                      </div>
-                    )}
-
-                    {/* Type Breakdown */}
-                    {!isNewUser && stats.weakestType && (
-                      <div className="mt-6 pt-6 border-t border-border">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="text-sm text-foreground-muted">
-                            {locale === "zh" ? "需要加强:" : "Needs work:"}
-                          </span>
-                          <QuestionTypeBadge type={stats.weakestType} locale={locale} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              {isNewUser ? (
+                <div className="px-6 py-12 text-center border-t border-border/50">
+                  <p className="text-foreground-muted text-sm mb-4">
+                    {locale === "zh" ? "完成 3 次练习后生成盲点分析" : "Complete 3 practices to unlock analysis"}
+                  </p>
+                  <Link
+                    href="/practice"
+                    className="inline-flex items-center gap-2 h-9 px-5 bg-accent text-white rounded-full text-sm font-medium hover:bg-accent-dark transition-colors"
+                  >
+                    {locale === "zh" ? "开始练习" : "Start Practice"}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
+              ) : (
+                <div className="divide-y divide-border/50">
 
-                {/* Recommendations */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-accent" />
-                      <h2 className="font-display text-lg font-semibold text-foreground">
-                        {locale === "zh" ? "为你推荐" : "Recommended"}
-                      </h2>
-                    </div>
-                    <Link
-                      href="/questions"
-                      className="text-sm text-accent hover:underline flex items-center gap-1"
-                    >
-                      {locale === "zh" ? "查看全部" : "View all"}
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {recommendations.map((rec, index) => (
-                      <RecommendationCard
-                        key={rec.id}
-                        question={rec}
-                        reason={rec.reason}
-                        locale={locale}
-                        index={index}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Right Column - Recent Activity */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="space-y-6"
-              >
-                {/* Recent Practice */}
-                <div className="bg-white rounded-2xl border border-border p-6">
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center border border-accent/20">
-                        <Clock className="h-5 w-5 text-accent" />
-                      </div>
-                      <h2 className="font-display text-lg font-semibold text-foreground">
-                        {locale === "zh" ? "最近练习" : "Recent"}
-                      </h2>
-                    </div>
-                    <Link
-                      href="/history"
-                      className="text-sm text-accent hover:underline"
-                    >
-                      {locale === "zh" ? "全部" : "All"}
-                    </Link>
-                  </div>
-
-                  {recentRecords.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="h-16 w-16 rounded-2xl bg-surface flex items-center justify-center mx-auto mb-3">
-                        <Award className="h-8 w-8 text-foreground-muted" />
-                      </div>
-                      <p className="text-sm text-foreground-muted">
-                        {locale === "zh" ? "还没有练习记录" : "No practice records yet"}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {recentRecords.map((record, index) => (
-                        <RecentPracticeItem
-                          key={record.id}
-                          record={record}
-                          locale={locale}
-                          index={index}
-                        />
-                      ))}
+                  {/* Block 1: Type score bars */}
+                  {Object.keys(stats.typeAverages).length > 0 && (
+                    <div className="px-6 py-4 space-y-3">
+                      {Object.entries(stats.typeAverages)
+                        .sort(([, a], [, b]) => a - b)
+                        .map(([type, avg]) => {
+                          const cfg = getTypeConfig(type, locale);
+                          const isWeakest = type === stats.weakestType;
+                          const isBest = type === stats.bestType;
+                          const barColor = avg >= 80 ? "bg-success" : avg >= 65 ? "bg-accent" : "bg-warning";
+                          return (
+                            <div key={type} className="flex items-center gap-3">
+                              <span className="text-xs text-foreground-muted w-12 shrink-0 text-right">
+                                {cfg.label}
+                              </span>
+                              <div className="flex-1 h-1.5 bg-surface rounded-full overflow-hidden">
+                                <motion.div
+                                  className={`h-full ${barColor} rounded-full`}
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${avg}%` }}
+                                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                                />
+                              </div>
+                              <span className="text-xs font-semibold tabular-nums w-7 shrink-0 text-right text-foreground">
+                                {avg}
+                              </span>
+                              {isWeakest && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-warning/10 text-warning rounded-full shrink-0 leading-none">
+                                  {locale === "zh" ? "薄弱" : "Weak"}
+                                </span>
+                              )}
+                              {isBest && !isWeakest && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-success/10 text-success rounded-full shrink-0 leading-none">
+                                  {locale === "zh" ? "优势" : "Best"}
+                                </span>
+                              )}
+                              {!isWeakest && !isBest && (
+                                <span className="w-10 shrink-0" />
+                              )}
+                            </div>
+                          );
+                        })}
                     </div>
                   )}
-                </div>
 
-                {/* CTA Card */}
-                <div className="relative overflow-hidden rounded-2xl">
-                  {/* Gradient background */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-accent via-accent to-accent-dark" />
-                  {/* Decorative orbs */}
-                  <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-xl" />
+                  {/* Block 2: Top weak points */}
+                  {blindspots?.topWeakPoints && blindspots.topWeakPoints.length > 0 && (
+                    <div className="px-6 py-4">
+                      <p className="text-xs font-medium text-foreground-muted mb-3">
+                        {locale === "zh" ? "高频失分点" : "Common Weak Points"}
+                      </p>
+                      <ul className="space-y-2">
+                        {blindspots.topWeakPoints.map((point, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                            <span className="w-1 h-1 rounded-full bg-warning mt-2 shrink-0" />
+                            <span className="leading-snug">{point}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                  <div className="relative z-10 p-6 text-white">
-                    <h3 className="font-display text-lg font-semibold mb-2">
-                      {locale === "zh" ? "准备开始？" : "Ready to practice?"}
-                    </h3>
-                    <p className="text-white/70 text-sm mb-4">
-                      {locale === "zh"
-                        ? "每天练习15分钟，持续进步"
-                        : "Practice 15 minutes daily for steady progress"}
-                    </p>
-                    <Link
-                      href="/practice"
-                      className="group inline-flex items-center gap-2 h-10 px-5 bg-white text-accent rounded-full text-sm font-medium hover:bg-white/90 transition-colors"
-                    >
-                      {locale === "zh" ? "开始练习" : "Start Now"}
-                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
+                  {/* Block 3: Summary footer */}
+                  <div className="px-6 py-3 bg-surface/40 flex flex-wrap items-center gap-x-4 gap-y-1">
+                    {stats.weakestType && (
+                      <span className="text-xs text-foreground-muted">
+                        <span className="text-warning font-medium">
+                          {getTypeConfig(stats.weakestType, locale).label}
+                        </span>
+                        {locale === "zh"
+                          ? ` 低于均值 ${Math.round(stats.averageScore) - stats.typeAverages[stats.weakestType]} 分`
+                          : ` is ${Math.round(stats.averageScore) - stats.typeAverages[stats.weakestType]} pts below avg`}
+                      </span>
+                    )}
+                    {stats.totalPractices >= 10 && stats.scoreTrend !== 0 && (
+                      <span className={`text-xs flex items-center gap-0.5 ${stats.scoreTrend > 0 ? "text-success" : "text-error"}`}>
+                        {stats.scoreTrend > 0
+                          ? <TrendingUp className="h-3 w-3" />
+                          : <TrendingDown className="h-3 w-3" />}
+                        {locale === "zh"
+                          ? `近期趋势 ${stats.scoreTrend > 0 ? "+" : ""}${stats.scoreTrend} 分`
+                          : `Trend ${stats.scoreTrend > 0 ? "+" : ""}${stats.scoreTrend} pts`}
+                      </span>
+                    )}
+                    {stats.untouchedTypes.length > 0 && (
+                      <span className="text-xs text-foreground-muted">
+                        {locale === "zh"
+                          ? `未练习题型：${stats.untouchedTypes.map(t => getTypeConfig(t, locale).label).join("、")}`
+                          : `Untouched: ${stats.untouchedTypes.map(t => getTypeConfig(t, "en").label).join(", ")}`}
+                      </span>
+                    )}
+                    {!stats.weakestType && stats.untouchedTypes.length === 0 && (
+                      <span className="text-xs text-success">
+                        {locale === "zh" ? "各题型均有覆盖，继续保持" : "All types covered — keep it up"}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </motion.div>
-            </div>
+              )}
+            </motion.div>
+
+            {/* Card B: Today's Recommendations */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
+              className="bg-white border border-border/50 rounded-2xl overflow-hidden"
+            >
+              <div className="px-6 py-4 flex items-center justify-between border-b border-border/50">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {locale === "zh" ? "今日推荐" : "Recommended"}
+                </h2>
+                <Link
+                  href="/questions"
+                  className="text-xs text-foreground-muted hover:text-accent transition-colors flex items-center gap-0.5"
+                >
+                  {locale === "zh" ? "全部题库" : "All questions"}
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              <div className="divide-y divide-border/50">
+                {recommendations.map((rec) => {
+                  const cfg = getTypeConfig(rec.type, locale);
+                  return (
+                    <Link
+                      key={rec.id}
+                      href={`/questions/${rec.id}`}
+                      className="flex items-center gap-3 px-6 py-3.5 hover:bg-surface/50 transition-colors group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-none ${cfg.bg} ${cfg.color}`}>
+                            {cfg.label}
+                          </span>
+                          <span className="text-xs text-foreground-muted truncate">{rec.reason}</span>
+                        </div>
+                        <p className="text-sm font-medium text-foreground line-clamp-1">
+                          {rec.title}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-3.5 w-3.5 text-foreground-muted shrink-0 group-hover:text-accent transition-colors" />
+                    </Link>
+                  );
+                })}
+                {recommendations.length === 0 && (
+                  <div className="px-6 py-8 text-center">
+                    <p className="text-sm text-foreground-muted">
+                      {locale === "zh" ? "加载中..." : "Loading..."}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </div>
-        </section>
+
+          {/* Right: Recent Practices */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+          >
+            <div className="bg-white border border-border/50 rounded-2xl overflow-hidden">
+              <div className="px-6 py-4 flex items-center justify-between border-b border-border/50">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {locale === "zh" ? "最近练习" : "Recent"}
+                </h2>
+                <Link
+                  href="/history"
+                  className="text-xs text-foreground-muted hover:text-accent transition-colors flex items-center gap-0.5"
+                >
+                  {locale === "zh" ? "全部" : "All"}
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
+              {recentRecords.length === 0 ? (
+                <div className="px-6 py-10 text-center">
+                  <p className="text-sm text-foreground-muted mb-4">
+                    {locale === "zh" ? "还没有练习记录" : "No records yet"}
+                  </p>
+                  <Link
+                    href="/practice"
+                    className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
+                  >
+                    {locale === "zh" ? "去练习" : "Start practicing"}
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {recentRecords.map((record) => {
+                    const question = questions.find((q) => q.id === record.questionId);
+                    if (!question) return null;
+
+                    const date = new Date(record.createdAt);
+                    const dateStr = locale === "zh"
+                      ? `${date.getMonth() + 1}/${date.getDate()}`
+                      : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+                    return (
+                      <Link
+                        key={record.id}
+                        href={`/practice/review/${record.id}`}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-surface/50 transition-colors group"
+                      >
+                        <ScoreBadge score={record.score} size="sm" />
+                        <p className="flex-1 text-sm text-foreground line-clamp-1 min-w-0">
+                          {question.title}
+                        </p>
+                        <span className="text-xs text-foreground-muted shrink-0">{dateStr}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
