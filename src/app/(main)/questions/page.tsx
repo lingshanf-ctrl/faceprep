@@ -639,12 +639,12 @@ function QuestionCard({
               <QuestionTypeBadge
                 type={question.type}
                 locale={locale as "zh" | "en"}
-                showIcon={true}
+                showIcon={false}
               />
               <CategoryBadge
                 category={question.category}
                 locale={locale as "zh" | "en"}
-                showIcon={true}
+                showIcon={false}
               />
               <DifficultyBadge
                 difficulty={question.difficulty}
