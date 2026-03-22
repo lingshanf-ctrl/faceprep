@@ -279,7 +279,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/practice"
-            className="inline-flex items-center gap-2 h-10 px-5 bg-accent text-white rounded-full text-sm font-medium hover:bg-accent-dark transition-colors self-start sm:self-auto"
+            className="inline-flex items-center gap-2 h-10 px-5 text-white rounded-xl text-sm font-medium transition-all duration-300 bg-primary-gradient shadow-glow hover:shadow-glow-lg self-start sm:self-auto"
           >
             {locale === "zh" ? "开始练习" : "Start Practice"}
             <ArrowRight className="h-3.5 w-3.5" />
@@ -291,24 +291,24 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="bg-white border border-border/50 rounded-2xl divide-x divide-border/50 grid grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
         >
           {/* 练习次数 */}
-          <div className="px-6 py-5">
-            <p className="text-3xl font-bold tabular-nums text-foreground">
+          <div className="bg-surface-elevated rounded-2xl px-6 py-6 shadow-subtle">
+            <p className="text-4xl font-display font-extrabold tabular-nums text-foreground">
               {stats.totalPractices}
             </p>
-            <p className="text-xs text-foreground-muted mt-1">
+            <p className="text-[10px] font-body font-bold uppercase tracking-widest text-foreground-subtle mt-1">
               {locale === "zh" ? "练习次数" : "Practices"}
             </p>
           </div>
 
           {/* 平均得分 */}
-          <div className="px-6 py-5">
-            <p className="text-3xl font-bold tabular-nums text-foreground">
+          <div className="bg-surface-elevated rounded-2xl px-6 py-6 shadow-subtle">
+            <p className="text-4xl font-display font-extrabold tabular-nums text-foreground">
               {Math.round(stats.averageScore)}
             </p>
-            <p className="text-xs text-foreground-muted mt-1">
+            <p className="text-[10px] font-body font-bold uppercase tracking-widest text-foreground-subtle mt-1">
               {locale === "zh" ? "平均得分" : "Avg Score"}
             </p>
             {stats.totalPractices >= 10 && stats.scoreTrend !== 0 && (
@@ -322,21 +322,21 @@ export default function DashboardPage() {
           </div>
 
           {/* 连续天数 */}
-          <div className="px-6 py-5">
-            <p className="text-3xl font-bold tabular-nums text-foreground">
+          <div className="rounded-2xl px-6 py-6 bg-primary-gradient shadow-glow">
+            <p className="text-4xl font-display font-extrabold tabular-nums text-white">
               {stats.streakDays}
             </p>
-            <p className="text-xs text-foreground-muted mt-1">
+            <p className="text-[10px] font-body font-bold uppercase tracking-widest text-white/70 mt-1">
               {locale === "zh" ? "连续天数" : "Streak (days)"}
             </p>
           </div>
 
           {/* 练习时长 */}
-          <div className="px-6 py-5">
-            <p className="text-3xl font-bold tabular-nums text-foreground">
+          <div className="bg-surface-elevated rounded-2xl px-6 py-6 shadow-subtle">
+            <p className="text-4xl font-display font-extrabold tabular-nums text-foreground">
               {Math.round(stats.totalTime / 60)}
             </p>
-            <p className="text-xs text-foreground-muted mt-1 flex items-center gap-1">
+            <p className="text-[10px] font-body font-bold uppercase tracking-widest text-foreground-subtle mt-1 flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {locale === "zh" ? "练习时长（分钟）" : "Minutes practiced"}
             </p>
@@ -354,7 +354,7 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              className="bg-white border border-border/50 rounded-2xl overflow-hidden"
+              className="bg-surface-elevated rounded-2xl overflow-hidden shadow-subtle"
             >
               {/* Card header */}
               <div className="px-6 py-4 flex items-center justify-between">
@@ -375,14 +375,14 @@ export default function DashboardPage() {
                   </p>
                   <Link
                     href="/practice"
-                    className="inline-flex items-center gap-2 h-9 px-5 bg-accent text-white rounded-full text-sm font-medium hover:bg-accent-dark transition-colors"
+                    className="inline-flex items-center gap-2 h-9 px-5 text-white rounded-xl text-sm font-medium transition-all duration-300 bg-primary-gradient shadow-glow"
                   >
                     {locale === "zh" ? "开始练习" : "Start Practice"}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
               ) : (
-                <div className="divide-y divide-border/50">
+                <div className="divide-y divide-border/10">
 
                   {/* Block 1: Type score bars */}
                   {Object.keys(stats.typeAverages).length > 0 && (
@@ -490,9 +490,9 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="bg-white border border-border/50 rounded-2xl overflow-hidden"
+              className="bg-surface-elevated rounded-2xl overflow-hidden shadow-subtle"
             >
-              <div className="px-6 py-4 flex items-center justify-between border-b border-border/50">
+              <div className="px-6 py-4 flex items-center justify-between border-b border-border/10">
                 <h2 className="text-sm font-semibold text-foreground">
                   {locale === "zh" ? "今日推荐" : "Recommended"}
                 </h2>
@@ -504,7 +504,7 @@ export default function DashboardPage() {
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
-              <div className="divide-y divide-border/50">
+              <div className="divide-y divide-border/10">
                 {recommendations.map((rec) => {
                   const cfg = getTypeConfig(rec.type, locale);
                   return (
@@ -545,8 +545,8 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.25 }}
           >
-            <div className="bg-white border border-border/50 rounded-2xl overflow-hidden">
-              <div className="px-6 py-4 flex items-center justify-between border-b border-border/50">
+            <div className="bg-surface-elevated rounded-2xl overflow-hidden shadow-subtle">
+              <div className="px-6 py-4 flex items-center justify-between border-b border-border/10">
                 <h2 className="text-sm font-semibold text-foreground">
                   {locale === "zh" ? "最近练习" : "Recent"}
                 </h2>
@@ -573,7 +573,7 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                <div className="divide-y divide-border/50">
+                <div className="divide-y divide-border/10">
                   {recentRecords.map((record) => {
                     const title = record.questionTitle ||
                       questions.find((q) => q.id === record.questionId)?.title ||

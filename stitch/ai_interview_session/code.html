@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FacePrep AI - Immersive Interview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#636262",
+              "on-error": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-secondary": "#ffffff",
+              "inverse-surface": "#313030",
+              "tertiary": "#555555",
+              "surface-dim": "#dcd9d9",
+              "on-primary-container": "#eeefff",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f6f3f2",
+              "on-error-container": "#93000a",
+              "on-background": "#1c1b1b",
+              "tertiary-fixed-dim": "#c7c6c6",
+              "secondary": "#5f5e5e",
+              "on-surface": "#1c1b1b",
+              "on-secondary-fixed-variant": "#474746",
+              "primary-fixed": "#dbe1ff",
+              "secondary-fixed": "#e5e2e1",
+              "on-primary-fixed": "#00174b",
+              "primary-fixed-dim": "#b4c5ff",
+              "surface-bright": "#fcf9f8",
+              "secondary-container": "#e2dfde",
+              "on-tertiary-fixed-variant": "#464747",
+              "on-tertiary-fixed": "#1b1c1c",
+              "surface": "#fcf9f8",
+              "surface-container-high": "#eae7e7",
+              "outline": "#737686",
+              "surface-tint": "#0053db",
+              "primary-container": "#2563eb",
+              "secondary-fixed-dim": "#c8c6c5",
+              "tertiary-fixed": "#e4e2e2",
+              "primary": "#004ac6",
+              "surface-container-highest": "#e5e2e1",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#434655",
+              "surface-variant": "#e5e2e1",
+              "on-tertiary-container": "#f2f0ef",
+              "on-primary-fixed-variant": "#003ea8",
+              "inverse-on-surface": "#f3f0ef",
+              "error-container": "#ffdad6",
+              "tertiary-container": "#6d6d6d",
+              "surface-container": "#f0eded",
+              "outline-variant": "#c3c6d7",
+              "inverse-primary": "#b4c5ff",
+              "on-secondary-fixed": "#1c1b1b",
+              "error": "#ba1a1a",
+              "background": "#fcf9f8"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .waveform-bar {
+        animation: pulse-height 1.5s ease-in-out infinite;
+      }
+      @keyframes pulse-height {
+        0%, 100% { height: 8px; }
+        50% { height: 32px; }
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Bar - Contextually Minimal for Immersion -->
+<nav class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-6 bg-surface/80 backdrop-blur-md">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary flex items-center justify-center rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-on-primary" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<span class="font-headline font-bold text-xl tracking-tighter text-on-surface">FacePrep AI</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-full">
+<span class="w-2 h-2 bg-error rounded-full animate-pulse"></span>
+<span class="text-xs font-label font-semibold text-secondary uppercase tracking-widest">Live Session: 12:45</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">volume_up</span>
+</button>
+<button class="px-6 py-2 bg-surface-container-high text-on-surface font-label font-bold rounded-lg hover:bg-surface-container-highest transition-all active:scale-95">
+                    Exit Interview
+                </button>
+</div>
+</div>
+</nav>
+<!-- Main Content Stage -->
+<main class="min-h-screen pt-28 pb-12 px-8 max-w-[1600px] mx-auto grid grid-cols-12 gap-8">
+<!-- Center Stage: The AI Presence -->
+<section class="col-span-12 lg:col-span-9 flex flex-col gap-8">
+<!-- AI Video Feed / Avatar Container -->
+<div class="relative w-full aspect-video bg-on-background rounded-xl overflow-hidden shadow-2xl group">
+<img alt="Professional AI Interviewer Mentor Avatar" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-700" data-alt="A professional AI interviewer looking directly at the camera with a friendly neutral expression" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0BAuzGsCfZnmQnJKqVy8KaNq8onXUnXTLBnCCjVP_-91O4BFtVizlDDRum6mmyQNyn76aO3tWUsN0F_NQ2l2JjGIe_6C3KytIIH3-MLxRpHRnIGkbwTY3fmR5xL2_jX0E8c3LLgXK8j9R1VLjxGHuyxISTmLzbpjI6ZohBjG2DxNnjFZb4JvlFHGPXgPPq-l9Pybh8rtuALc1kexyoD7trvMlK5C1Dgy6Nzeg0hSBrOkmhsnTHEFFqLEiGXql9lmQ8Gvy77GgPg9F"/>
+<!-- Overlay: Interviewer Identity -->
+<div class="absolute bottom-6 left-6 flex flex-col gap-1 pointer-events-none">
+<span class="text-white/60 text-xs font-label uppercase tracking-widest">AI Mentor</span>
+<h2 class="text-white font-headline font-bold text-2xl tracking-tight">Dr. Elena Vance</h2>
+</div>
+<!-- Subtle AI Scanning Glow -->
+<div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-on-background/40 to-transparent"></div>
+</div>
+<!-- Active Question Card -->
+<div class="bg-surface-container-low p-10 rounded-xl flex flex-col gap-6 shadow-sm border-l-4 border-primary">
+<div class="flex items-center gap-2">
+<span class="text-primary font-headline font-extrabold text-lg">04</span>
+<span class="h-px w-8 bg-outline-variant"></span>
+<span class="text-on-surface-variant font-label text-xs uppercase tracking-widest font-semibold">Leadership &amp; Strategy</span>
+</div>
+<h1 class="text-on-surface font-headline font-bold text-3xl md:text-4xl leading-tight tracking-tight">
+                    "Describe a time when you had to manage a conflict within your team. What was your approach and the ultimate result?"
+                </h1>
+</div>
+<!-- Interaction & Recording Area -->
+<div class="mt-auto bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/10 shadow-sm flex flex-col items-center gap-8">
+<!-- Waveform Visualization -->
+<div class="flex items-center justify-center gap-1.5 h-16 w-full max-w-2xl">
+<div class="waveform-bar w-1.5 bg-primary-container rounded-full" style="animation-delay: 0.1s; height: 12px;"></div>
+<div class="waveform-bar w-1.5 bg-primary rounded-full" style="animation-delay: 0.2s; height: 24px;"></div>
+<div class="waveform-bar w-1.5 bg-primary-container rounded-full" style="animation-delay: 0.3s; height: 38px;"></div>
+<div class="waveform-bar w-1.5 bg-primary rounded-full" style="animation-delay: 0.4s; height: 20px;"></div>
+<div class="waveform-bar w-1.5 bg-primary-container rounded-full" style="animation-delay: 0.5s; height: 44px;"></div>
+<div class="waveform-bar w-1.5 bg-primary rounded-full" style="animation-delay: 0.6s; height: 30px;"></div>
+<div class="waveform-bar w-1.5 bg-primary-container rounded-full" style="animation-delay: 0.7s; height: 18px;"></div>
+<div class="waveform-bar w-1.5 bg-primary rounded-full" style="animation-delay: 0.8s; height: 35px;"></div>
+<div class="waveform-bar w-1.5 bg-primary-container rounded-full" style="animation-delay: 0.9s; height: 48px;"></div>
+<div class="waveform-bar w-1.5 bg-primary rounded-full" style="animation-delay: 1.0s; height: 22px;"></div>
+<div class="waveform-bar w-1.5 bg-primary-container rounded-full" style="animation-delay: 1.1s; height: 14px;"></div>
+<div class="waveform-bar w-1.5 bg-primary rounded-full" style="animation-delay: 1.2s; height: 32px;"></div>
+</div>
+<!-- Primary Action -->
+<div class="flex items-center gap-6">
+<button class="group flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-xl font-headline font-bold text-lg shadow-xl hover:shadow-primary/20 transition-all active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">stop_circle</span>
+                        Stop Recording
+                    </button>
+<button class="p-4 bg-surface-container-high text-on-surface rounded-xl hover:bg-surface-container-highest transition-colors active:scale-95">
+<span class="material-symbols-outlined">pause</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Side Panel: Upcoming Logic -->
+<aside class="hidden lg:flex lg:col-span-3 flex-col gap-6">
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col gap-6 h-full border border-outline-variant/10">
+<div class="flex flex-col gap-1">
+<h3 class="font-headline font-bold text-on-surface">Interview Roadmap</h3>
+<p class="text-xs text-on-surface-variant font-label uppercase tracking-wider">Session Progress: 4 of 8</p>
+</div>
+<div class="flex-1 space-y-4">
+<!-- Past Question -->
+<div class="flex items-start gap-4 opacity-50">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="flex flex-col">
+<span class="text-[10px] font-label font-bold text-secondary uppercase tracking-widest">Completed</span>
+<p class="text-sm font-medium leading-snug">Introduction &amp; Background</p>
+</div>
+</div>
+<!-- Active Question -->
+<div class="flex items-start gap-4 p-4 bg-surface-container-lowest rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-primary text-sm">radio_button_checked</span>
+<div class="flex flex-col">
+<span class="text-[10px] font-label font-bold text-primary uppercase tracking-widest">Current</span>
+<p class="text-sm font-bold leading-snug">Conflict Resolution</p>
+</div>
+</div>
+<!-- Upcoming Questions -->
+<div class="flex items-start gap-4 pl-1">
+<span class="w-1.5 h-1.5 mt-2 rounded-full bg-outline-variant"></span>
+<div class="flex flex-col">
+<span class="text-[10px] font-label font-bold text-on-secondary-container uppercase tracking-widest">Upcoming</span>
+<p class="text-sm font-medium text-secondary leading-snug">Technical Problem Solving</p>
+</div>
+</div>
+<div class="flex items-start gap-4 pl-1">
+<span class="w-1.5 h-1.5 mt-2 rounded-full bg-outline-variant"></span>
+<div class="flex flex-col">
+<span class="text-[10px] font-label font-bold text-on-secondary-container uppercase tracking-widest">Upcoming</span>
+<p class="text-sm font-medium text-secondary leading-snug">Future Career Goals</p>
+</div>
+</div>
+<div class="flex items-start gap-4 pl-1">
+<span class="w-1.5 h-1.5 mt-2 rounded-full bg-outline-variant"></span>
+<div class="flex flex-col">
+<span class="text-[10px] font-label font-bold text-on-secondary-container uppercase tracking-widest">Upcoming</span>
+<p class="text-sm font-medium text-secondary leading-snug">Culture Fit Questions</p>
+</div>
+</div>
+</div>
+<!-- Session Meta -->
+<div class="mt-auto pt-6 border-t border-outline-variant/20">
+<div class="flex justify-between items-center mb-4">
+<span class="text-xs font-label text-on-surface-variant font-medium">Confidence Score</span>
+<span class="text-xs font-label font-bold text-primary">82%</span>
+</div>
+<div class="w-full h-1.5 bg-outline-variant/30 rounded-full overflow-hidden">
+<div class="w-[82%] h-full bg-primary"></div>
+</div>
+<p class="mt-3 text-[10px] leading-relaxed text-on-secondary-container italic">
+                        Real-time AI analysis indicates strong eye contact and measured pacing.
+                    </p>
+</div>
+</div>
+</aside>
+</main>
+<!-- Contextual Controls Overlay (Bottom Right) -->
+<div class="fixed bottom-8 right-8 flex flex-col gap-3">
+<button class="flex items-center justify-center w-14 h-14 bg-surface-container-lowest text-on-surface shadow-xl rounded-full hover:bg-primary hover:text-on-primary transition-all duration-300">
+<span class="material-symbols-outlined">help_outline</span>
+</button>
+<button class="flex items-center justify-center w-14 h-14 bg-surface-container-lowest text-on-surface shadow-xl rounded-full hover:bg-primary hover:text-on-primary transition-all duration-300">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</body></html>

@@ -235,28 +235,34 @@ async function evaluateInBackground(
       console.error(`[Evaluate] Phase-2 attempt ${retries} failed for ${practiceId}:`, error);
 
       if (retries >= MAX_RETRIES) {
-        // AI 全部失败：规则引擎结果保留，清除 aiUpgrading 标记
-        // 付费用户不扣费（AI 未成功）
+        // AI 全部失败：尝试清除 aiUpgrading 标记，若无规则引擎结果则标记为 FAILED 防止永久卡死
         try {
           const current = await db.practice.findUnique({
             where: { id: practiceId },
-            select: { feedback: true },
+            select: { feedback: true, evaluationStatus: true },
           });
           if (current?.feedback) {
             const parsed = JSON.parse(current.feedback);
-            if (parsed.aiUpgrading) {
-              parsed.aiUpgrading = false;
-              parsed.aiUpgradeFailed = true;
-              await db.practice.update({
-                where: { id: practiceId },
-                data: { feedback: JSON.stringify(parsed) },
-              });
-            }
+            const updated = { ...parsed, aiUpgrading: false, aiUpgradeFailed: true };
+            await db.practice.update({
+              where: { id: practiceId },
+              data: { feedback: JSON.stringify(updated) },
+            });
+          } else {
+            // Phase 1 也失败了，没有任何反馈 — 标记为 FAILED 而非永久 PROCESSING
+            await db.practice.update({
+              where: { id: practiceId },
+              data: {
+                evaluationStatus: EvaluationStatus.FAILED,
+                evaluationError: "AI evaluation failed after all retries",
+                evaluationCompletedAt: new Date(),
+              },
+            });
           }
         } catch {
-          // 忽略清理失败
+          // 清理失败时最坏情况是状态停留在 PROCESSING，5分钟后会被重试检测到
         }
-        console.error(`[Evaluate] Phase-2 all retries exhausted for ${practiceId}, keeping rule-engine result`);
+        console.error(`[Evaluate] Phase-2 all retries exhausted for ${practiceId}`);
         return;
       }
 

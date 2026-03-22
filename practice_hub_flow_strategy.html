@@ -1,0 +1,40 @@
+# Practice Hub & User Flow Strategy: FacePrep Pro
+
+## 1. The Practice Hub (The "Entry" Screen)
+This screen serves as the launchpad for all practice activities. Instead of just a dashboard widget, it's a dedicated space where users choose their "Mode of Growth."
+
+### Layout & Sections:
+- **Hero / Mode Selection:** Four distinct, high-end cards representing the core practice modes:
+    1. **Random Practice (Quick Start):** "Ready for a challenge?" - AI selects a question based on user profile.
+    2. **Mock Interview (Simulation):** "The Real Deal" - Full-proctored, multi-question session with video/audio.
+    3. **AI Custom (JD & Resume):** "Targeted Prep" - User uploads/pastes JD and Resume; AI generates specific questions.
+    4. **Bookmarked Questions (Review):** "Master Your Weaknesses" - Quick access to saved/favorited questions.
+- **Recent Activity:** A subtle list of "Last Practiced" questions for continuity.
+- **Progress Tracking:** Mini-visualizations of "Strength by Category" (e.g., Technical, Behavioral, System Design).
+
+---
+
+## 2. Subsequent Paths (The "Doing" & "Result" Flow)
+
+### Path A: Random & Bookmarked (Single Question Flow)
+1. **Selection:** User clicks card -> AI reveals question.
+2. **Interface:** {{DATA:SCREEN:SCREEN_6}} (Focused Interview UI).
+3. **Feedback:** {{DATA:SCREEN:SCREEN_13}} (AI Feedback Report).
+
+### Path B: Mock Interview (Multi-Question Flow)
+1. **Setup:** User selects role/duration -> AI prepares set.
+2. **Interface:** Sequential version of {{DATA:SCREEN:SCREEN_6}} (Question 1 of 5, etc.).
+3. **Feedback:** A "Master Report" aggregating scores from all questions, plus a "Overall Readiness" score.
+
+### Path C: AI Custom (The "Generator" Flow)
+1. **Input:** Modal/New Screen where user uploads PDF or pastes text for Resume & Job Description.
+2. **Generation:** Loading state with "AI is analyzing your target role..."
+3. **Confirmation:** AI presents 5-10 tailored questions. User can "Start All" or pick one.
+4. **Interface & Feedback:** Standard flow follows.
+
+---
+
+## 3. Visual Language
+- **Clarity & Trust:** Continued use of Plus Jakarta Sans, generous whitespace, and the #2563EB primary blue.
+- **Cognitive Load Management:** Use of "Glassmorphism" for cards and subtle tonal shifts to separate different practice modes.
+- **Urgency vs. Calm:** Blue CTAs for action, but soft slate backgrounds to keep the user focused and calm.

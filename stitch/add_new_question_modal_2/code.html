@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add New Question - FacePrep Pro</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-lowest": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-tint": "#0053db",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "surface": "#fcf9f8",
+                        "on-error-container": "#93000a",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "tertiary-fixed-dim": "#c7c6c6",
+                        "primary-fixed": "#dbe1ff",
+                        "primary": "#004ac6",
+                        "on-surface-variant": "#434655",
+                        "surface-container": "#f0eded",
+                        "secondary": "#5f5e5e",
+                        "surface-bright": "#fcf9f8",
+                        "on-tertiary-container": "#f2f0ef",
+                        "inverse-surface": "#313030",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#e4e2e2",
+                        "surface-container-high": "#eae7e7",
+                        "on-secondary-container": "#636262",
+                        "surface-container-highest": "#e5e2e1",
+                        "tertiary": "#555555",
+                        "on-tertiary-fixed-variant": "#464747",
+                        "background": "#fcf9f8",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#6d6d6d",
+                        "on-primary-container": "#eeefff",
+                        "inverse-on-surface": "#f3f0ef",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2563eb",
+                        "secondary-fixed": "#e5e2e1",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e5e2e1",
+                        "surface-dim": "#dcd9d9",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#f6f3f2",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "inverse-primary": "#b4c5ff",
+                        "on-surface": "#1c1b1b",
+                        "on-background": "#1c1b1b",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "secondary-container": "#e2dfde",
+                        "on-secondary-fixed-variant": "#474746",
+                        "outline-variant": "#c3c6d7"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface overflow-hidden">
+<!-- Background Layer (The Question Bank) -->
+<div class="fixed inset-0 w-full h-full flex overflow-hidden">
+<!-- SideNavBar Anchor -->
+<aside class="h-screen w-64 flex flex-col h-full py-6 bg-[#fcf9f8] dark:bg-slate-950 sticky top-0 border-r border-outline-variant/10">
+<div class="px-6 mb-10 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div>
+<h2 class="text-lg font-bold text-[#1c1b1b] dark:text-slate-100 leading-none">The Mentor</h2>
+<span class="text-[10px] uppercase tracking-widest text-secondary font-bold">Interview Ready</span>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="text-[#1c1b1b]/70 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-[#f6f3f2] dark:hover:bg-slate-900 rounded-lg mx-2 transition-all duration-300 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm">Overview</span>
+</div>
+<div class="bg-[#2563EB] text-white rounded-lg mx-2 px-4 py-3 flex items-center gap-3 transition-all duration-300 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm">Practice</span>
+</div>
+<div class="text-[#1c1b1b]/70 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-[#f6f3f2] dark:hover:bg-slate-900 rounded-lg mx-2 transition-all duration-300 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined" data-icon="library_books">library_books</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm">Library</span>
+</div>
+<div class="text-[#1c1b1b]/70 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-[#f6f3f2] dark:hover:bg-slate-900 rounded-lg mx-2 transition-all duration-300 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm">Stats</span>
+</div>
+<div class="text-[#1c1b1b]/70 dark:text-slate-400 px-4 py-3 flex items-center gap-3 hover:bg-[#f6f3f2] dark:hover:bg-slate-900 rounded-lg mx-2 transition-all duration-300 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Plus_Jakarta_Sans'] text-sm">Settings</span>
+</div>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full bg-primary py-3 rounded-lg text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>New Question</span>
+</button>
+</div>
+</aside>
+<!-- Main Content (Mockup for background context) -->
+<main class="flex-1 overflow-y-auto bg-surface">
+<!-- TopNavBar Anchor -->
+<header class="flex justify-between items-center px-8 py-4 w-full bg-[#fcf9f8]/80 backdrop-blur-xl sticky top-0 z-10">
+<div class="flex items-center gap-8">
+<span class="text-xl font-extrabold text-[#1c1b1b] tracking-[-0.02em] font-headline">FacePrep Pro</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-[#1c1b1b]/60 font-medium hover:text-[#2563EB] transition-colors" href="#">Dashboard</a>
+<a class="text-[#2563EB] font-bold border-b-2 border-[#2563EB] pb-1" href="#">Question Bank</a>
+<a class="text-[#1c1b1b]/60 font-medium hover:text-[#2563EB] transition-colors" href="#">Mock Interviews</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="Professional portrait of the user" class="w-full h-full object-cover" data-alt="Close up professional portrait of a male user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgs0x0lGd_CaDfJJ_uZ5LCSPRGgykx9R65lxLU6ULVFmwXJ-iKV7Zz0yBP7Mc74FCFOFSe73BF_H7QeZVlzT358w4E3HOC5m1hrgRkYhu4LowzjEkZnXHfBiquu34Bj4kHVS_Xl5fdpziI_i3iLm4gXtnvLwcJ_WDMrdKb8aLfRfwEcQXDeSmtjwz_HLOiWvenzyUCCQlFufuLWviU8OjfyeYHWe1Vw-vdAg7VmF-UMsNO6P9GmyowOR7O6Sj3tCInC4QOpsQlwTCn"/>
+</div>
+</div>
+</header>
+<div class="p-8 max-w-6xl mx-auto space-y-8 opacity-40">
+<!-- Bento Content Mockup -->
+<div class="grid grid-cols-12 gap-6">
+<div class="col-span-8 bg-surface-container-low p-6 rounded-xl min-h-[400px]">
+<div class="h-8 w-48 bg-surface-container-highest rounded mb-4"></div>
+<div class="space-y-4">
+<div class="h-16 w-full bg-surface-container-lowest rounded-lg"></div>
+<div class="h-16 w-full bg-surface-container-lowest rounded-lg"></div>
+<div class="h-16 w-full bg-surface-container-lowest rounded-lg"></div>
+</div>
+</div>
+<div class="col-span-4 bg-surface-container-low p-6 rounded-xl">
+<div class="h-8 w-32 bg-surface-container-highest rounded mb-6"></div>
+<div class="aspect-square bg-surface-container-lowest rounded-full mx-auto w-3/4 flex items-center justify-center">
+<div class="text-center">
+<span class="block text-4xl font-bold text-primary">84%</span>
+<span class="text-xs text-secondary font-medium uppercase">Mastery</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Modal Overlay -->
+<div class="fixed inset-0 bg-on-surface/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+<!-- Modal Content -->
+<div class="bg-surface-container-lowest w-full max-w-xl rounded-xl shadow-[0_20px_40px_rgba(28,27,27,0.1)] overflow-hidden">
+<!-- Modal Header -->
+<div class="px-8 pt-8 pb-4">
+<div class="flex justify-between items-start">
+<div>
+<h2 class="text-2xl font-extrabold text-on-surface tracking-tight font-headline">Add New Question</h2>
+<p class="text-on-surface-variant text-sm mt-1">Personalize your library with targeted practice questions.</p>
+</div>
+<button class="p-1 hover:bg-surface-container-low rounded-lg transition-colors text-outline">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<!-- Modal Body -->
+<div class="px-8 py-4 space-y-8">
+<!-- Question Field -->
+<div class="space-y-2">
+<label class="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">edit_note</span>
+                        The Question
+                    </label>
+<div class="relative group">
+<textarea class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-t-lg px-4 py-3 text-on-surface placeholder:text-on-surface-variant/40 transition-all resize-none" placeholder="e.g., How do you handle conflict in a team?" rows="4"></textarea>
+<div class="absolute bottom-0 left-0 w-full h-[2px] bg-outline-variant/15"></div>
+</div>
+</div>
+<!-- Category & Difficulty Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Category Selection -->
+<div class="space-y-3">
+<label class="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">sell</span>
+                            Category
+                        </label>
+<div class="relative">
+<select class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-t-lg px-4 py-3 appearance-none cursor-pointer text-sm font-medium">
+<option>Behavioral</option>
+<option>Technical</option>
+<option>Product</option>
+<option>Leadership</option>
+<option>System Design</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-secondary">expand_more</span>
+<div class="absolute bottom-0 left-0 w-full h-[2px] bg-outline-variant/15"></div>
+</div>
+</div>
+<!-- Difficulty Selection -->
+<div class="space-y-3">
+<label class="text-xs font-bold uppercase tracking-wider text-secondary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">signal_cellular_alt</span>
+                            Difficulty
+                        </label>
+<div class="flex bg-surface-container-low p-1 rounded-lg">
+<button class="flex-1 py-2 text-xs font-bold rounded-md bg-surface-container-lowest shadow-sm text-primary transition-all">Low</button>
+<button class="flex-1 py-2 text-xs font-bold text-secondary hover:text-on-surface transition-all">Medium</button>
+<button class="flex-1 py-2 text-xs font-bold text-secondary hover:text-on-surface transition-all">High</button>
+</div>
+</div>
+</div>
+<!-- Tips / AI Helper (Subtle) -->
+<div class="bg-primary/5 rounded-xl p-4 flex gap-4 items-start border border-primary/10">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<p class="text-[13px] leading-relaxed text-on-surface-variant">
+<strong class="text-on-surface">Pro Tip:</strong> Specific questions lead to better AI feedback. Try to include a context or scenario in your prompt.
+                    </p>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="px-8 py-6 bg-surface-container-low flex items-center justify-end gap-4">
+<button class="px-6 py-2.5 text-sm font-bold text-secondary hover:text-on-surface transition-colors">
+                    Cancel
+                </button>
+<button class="px-8 py-2.5 bg-gradient-to-r from-primary to-primary-container text-white text-sm font-bold rounded-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                    Add to Library
+                </button>
+</div>
+</div>
+</div>
+</body></html>

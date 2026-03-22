@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
             data: { userId: user.id },
           });
 
-          console.log(`[Register Data Migration] Migrated ${updatedPractices.count} practices and ${updatedSessions.count} sessions from ${anonId} to ${user.id}`);
+          console.log(`[Register Data Migration] Migrated ${updatedPractices.count} practices and ${updatedSessions.count} sessions`);
         }
       } catch (migrationError) {
         console.error("[Register Data Migration Error]", migrationError);
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
     });
     await setSessionCookie(token);
 
-    console.log(`[Register Success] ${email} from ${ip}`);
+    console.log(`[Register Success] user=${user.id}`);
 
     return NextResponse.json(
       {

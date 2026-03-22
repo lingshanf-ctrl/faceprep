@@ -52,7 +52,7 @@ function RegisterPageContent() {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Brand */}
-      <div className="hidden lg:flex lg:w-1/2 bg-accent relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary-gradient">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.1)_0%,transparent_50%)]" />
         <div className="relative z-10 flex flex-col justify-between p-12 text-white">
           <Link href="/" className="flex items-center gap-3">
@@ -80,7 +80,7 @@ function RegisterPageContent() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <Link href="/" className="flex lg:hidden items-center justify-center gap-3 mb-12">
-            <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary-gradient shadow-glow">
               <span className="text-white font-display font-bold">{t.appShortName}</span>
             </div>
             <span className="font-display text-xl font-semibold text-foreground">{t.appName}</span>
@@ -106,7 +106,7 @@ function RegisterPageContent() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={locale === "zh" ? "请输入您的姓名" : "Enter your name"}
-                className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="input-stitch w-full"
               />
             </div>
 
@@ -121,7 +121,7 @@ function RegisterPageContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={locale === "zh" ? "请输入邮箱" : "Enter your email"}
                 required
-                className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="input-stitch w-full"
               />
             </div>
 
@@ -136,7 +136,7 @@ function RegisterPageContent() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={locale === "zh" ? "请输入密码（至少6位）" : "Enter password (min 6 chars)"}
                 required
-                className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="input-stitch w-full"
               />
             </div>
 
@@ -151,7 +151,7 @@ function RegisterPageContent() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={locale === "zh" ? "请再次输入密码" : "Confirm your password"}
                 required
-                className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                className="input-stitch w-full"
               />
             </div>
 
@@ -164,7 +164,7 @@ function RegisterPageContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-accent text-white rounded-full font-medium hover:bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-4 text-white rounded-xl font-medium transition-all duration-300 bg-primary-gradient shadow-glow hover:shadow-glow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">

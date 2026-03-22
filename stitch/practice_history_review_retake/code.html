@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Practice History | FacePrep Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-surface": "#313030",
+                        "on-primary-fixed": "#00174b",
+                        "surface-tint": "#0053db",
+                        "surface-bright": "#fcf9f8",
+                        "on-primary-container": "#eeefff",
+                        "surface-variant": "#e5e2e1",
+                        "on-background": "#1c1b1b",
+                        "tertiary": "#555555",
+                        "on-secondary-fixed-variant": "#474746",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "tertiary-fixed": "#e4e2e2",
+                        "surface-container-high": "#eae7e7",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#6d6d6d",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-surface": "#1c1b1b",
+                        "surface-container-low": "#f6f3f2",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#dcd9d9",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#b4c5ff",
+                        "primary-container": "#2563eb",
+                        "on-error-container": "#93000a",
+                        "outline": "#737686",
+                        "on-tertiary-container": "#f2f0ef",
+                        "surface-container": "#f0eded",
+                        "background": "#fcf9f8",
+                        "inverse-on-surface": "#f3f0ef",
+                        "surface": "#fcf9f8",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "on-surface-variant": "#434655",
+                        "primary": "#004ac6",
+                        "secondary-container": "#e2dfde",
+                        "secondary": "#5f5e5e",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#e5e2e1",
+                        "tertiary-fixed-dim": "#c7c6c6",
+                        "outline-variant": "#c3c6d7",
+                        "on-tertiary-fixed-variant": "#464747",
+                        "on-secondary-container": "#636262",
+                        "on-secondary-fixed": "#1c1b1b"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- TopNavBar - Rendered as per JSON -->
+<nav class="bg-[#fcf9f8] dark:bg-slate-950/80 backdrop-blur-xl docked full-width top-0 z-50 no-border tonal-shift bg-[#f6f3f2] dark:bg-slate-900 sticky">
+<div class="flex justify-between items-center w-full px-8 py-3 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-[#2563EB] dark:text-blue-400">FacePrep Pro</span>
+<div class="hidden md:flex items-center space-gap-6 gap-6">
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#2563EB] font-['Plus_Jakarta_Sans'] tracking-tight" href="#">Question Bank</a>
+<a class="text-[#2563EB] dark:text-blue-400 font-semibold border-b-2 border-[#2563EB] pb-1 font-['Plus_Jakarta_Sans'] tracking-tight" href="#">Practice History</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#2563EB] font-['Plus_Jakarta_Sans'] tracking-tight" href="#">Mock Interviews</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#2563EB] font-['Plus_Jakarta_Sans'] tracking-tight" href="#">Analytics</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-600 hover:bg-slate-100/50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-600 hover:bg-slate-100/50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/20">
+<img alt="User profile avatar" data-alt="Close up professional headshot of a person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZxzmJzRP8b5PnCzmeFg-f2-EmZ1vt32oTl4DLqcLqLiAZ9agy6uZYka2fdHQ7AZsFgQEg-vUbqs7aWTxy1IdAZOig_XqnhrHuviPgo8WUo0zUiqUd4R3Hl07AuCLNORlVOW_Ez7QxXY4GM5J-qpzxZDIbsgp7Gbv9vy58WM64EYAu_wb9A0O1xmNNzmBZz1tbWiaB-FFflvPZOlMi39VI2ThmGNVTtbwVzKgbhjpcW5rjHPudHAFM4oqNO_ZpItSUq7jI3u6Ro3tz"/>
+</div>
+</div>
+</div>
+</nav>
+<div class="flex-1 flex max-w-screen-2xl mx-auto w-full">
+<!-- SideNavBar - Rendered as per JSON -->
+<aside class="hidden lg:flex flex-col w-64 bg-[#f6f3f2] dark:bg-slate-900 h-[calc(100vh-64px)] p-4 space-y-2 sticky top-16">
+<div class="mb-8 px-2">
+<h2 class="text-lg font-black text-[#1c1b1b] dark:text-slate-100">FacePrep Pro</h2>
+<p class="text-xs text-slate-500">The Articulated Mentor</p>
+</div>
+<nav class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="database">database</span>
+<span class="font-['Inter'] text-sm">Questions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-[#ffffff] dark:bg-slate-800 text-[#2563EB] dark:text-blue-400 rounded-lg shadow-sm font-bold" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-['Inter'] text-sm">History</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="Interpreter_mode">interpreter_mode</span>
+<span class="font-['Inter'] text-sm">Mock Tests</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 rounded-lg hover:translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-['Inter'] text-sm">Resources</span>
+</a>
+</nav>
+<div class="mt-auto space-y-4">
+<div class="p-4 bg-primary rounded-xl text-on-primary shadow-lg shadow-primary/20">
+<p class="text-xs font-semibold mb-2 opacity-90">Ready for feedback?</p>
+<button class="w-full bg-white text-primary py-2 rounded-lg text-sm font-bold hover:scale-105 transition-transform">Start Mock Interview</button>
+</div>
+<div class="pt-4 border-t border-outline-variant/20">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-['Inter'] text-sm">Help Center</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-error transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-['Inter'] text-sm">Sign Out</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 p-8 md:p-12 overflow-y-auto">
+<header class="mb-12 max-w-4xl">
+<div class="flex items-center gap-2 text-primary font-semibold mb-2">
+<span class="h-1 w-8 bg-primary rounded-full"></span>
+<span class="text-xs uppercase tracking-widest font-label">Session Archives</span>
+</div>
+<h1 class="text-4xl md:text-5xl font-extrabold tracking-tighter text-on-surface mb-4">Practice History</h1>
+<p class="text-secondary max-w-xl text-lg leading-relaxed">Review your journey through the "Articulated Mentor" curriculum. Analyze past scores and refine your articulation.</p>
+</header>
+<!-- Timeline/List Section -->
+<div class="space-y-16 relative">
+<!-- Vertical Progress Line (Asymmetric) -->
+<div class="absolute left-6 top-4 bottom-4 w-px bg-outline-variant/30 hidden md:block"></div>
+<!-- Session Group: Today -->
+<section class="relative">
+<div class="hidden md:flex absolute -left-12 top-0 h-12 w-12 bg-surface border-4 border-surface items-center justify-center z-10">
+<div class="h-3 w-3 rounded-full bg-primary ring-4 ring-primary-fixed"></div>
+</div>
+<h3 class="text-sm font-bold text-outline uppercase tracking-widest mb-8 md:pl-4">Today</h3>
+<div class="grid gap-6">
+<!-- Entry 1: Mock Interview (Bento-style card) -->
+<div class="bg-surface-container-low rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-8 border-l-4 border-primary transition-all hover:bg-surface-container-lowest hover:shadow-2xl hover:shadow-primary/5 group">
+<div class="flex-shrink-0 bg-primary-container/10 p-4 rounded-xl text-primary">
+<span class="material-symbols-outlined text-4xl" data-icon="groups">groups</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-3 mb-2">
+<h4 class="text-xl font-bold text-on-surface truncate">Product Manager Mock #1</h4>
+<span class="px-2 py-0.5 rounded-full bg-primary-container/20 text-primary text-[10px] font-bold uppercase tracking-wider">Mock Interview</span>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg" data-icon="edit">edit</span>
+</button>
+</div>
+<div class="flex items-center gap-4 text-sm text-secondary">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="calendar_today">calendar_today</span> Oct 24, 2024</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="quiz">quiz</span> 5 questions</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2 text-right">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface-variant">Overall Score</span>
+<span class="text-2xl font-black text-primary">88%</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Completed
+                                </div>
+</div>
+<div class="flex flex-row md:flex-col gap-2 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-outline-variant/30 md:pl-8">
+<button class="flex-1 bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-bold hover:scale-[1.02] active:scale-95 transition-all">Practice Again</button>
+</div>
+</div>
+<!-- Entry 2: Random Practice -->
+<div class="bg-surface-container-low rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-8 transition-all hover:bg-surface-container-lowest hover:shadow-2xl hover:shadow-on-surface/5">
+<div class="flex-shrink-0 bg-secondary-container/30 p-4 rounded-xl text-secondary">
+<span class="material-symbols-outlined text-4xl" data-icon="person">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-3 mb-2">
+<h4 class="text-xl font-bold text-on-surface truncate">Tell me about a time you failed</h4>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container/50 text-secondary text-[10px] font-bold uppercase tracking-wider">Random Practice</span>
+</div>
+<div class="flex items-center gap-4 text-sm text-secondary">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="calendar_today">calendar_today</span> Oct 24, 2024</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="history">history</span> 12 min ago</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2 text-right">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface-variant">AI Score</span>
+<span class="text-2xl font-black text-secondary">72%</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                    In Progress
+                                </div>
+</div>
+<div class="w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-outline-variant/30 md:pl-8">
+<button class="w-full border-2 border-primary text-primary px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-primary/5 transition-colors">Resume</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Session Group: Yesterday -->
+<section class="relative">
+<div class="hidden md:flex absolute -left-12 top-0 h-12 w-12 bg-surface border-4 border-surface items-center justify-center z-10">
+<div class="h-2 w-2 rounded-full bg-outline-variant"></div>
+</div>
+<h3 class="text-sm font-bold text-outline uppercase tracking-widest mb-8 md:pl-4">Yesterday</h3>
+<div class="grid gap-6">
+<!-- Entry 3: Mock Interview -->
+<div class="bg-surface-container-low rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-8 transition-all hover:bg-surface-container-lowest hover:shadow-2xl hover:shadow-primary/5 opacity-80 hover:opacity-100">
+<div class="flex-shrink-0 bg-primary-container/10 p-4 rounded-xl text-primary">
+<span class="material-symbols-outlined text-4xl" data-icon="groups">groups</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-3 mb-2">
+<h4 class="text-xl font-bold text-on-surface truncate">Senior Engineering Lead Mock #4</h4>
+<span class="px-2 py-0.5 rounded-full bg-primary-container/20 text-primary text-[10px] font-bold uppercase tracking-wider">Mock Interview</span>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg" data-icon="edit">edit</span>
+</button>
+</div>
+<div class="flex items-center gap-4 text-sm text-secondary">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="calendar_today">calendar_today</span> Oct 23, 2024</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="quiz">quiz</span> 8 questions</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2 text-right">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface-variant">Overall Score</span>
+<span class="text-2xl font-black text-primary">94%</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Completed
+                                </div>
+</div>
+<div class="flex flex-row md:flex-col gap-2 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-outline-variant/30 md:pl-8">
+<button class="flex-1 bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-bold hover:scale-[1.02] active:scale-95 transition-all">Practice Again</button>
+</div>
+</div>
+<!-- Entry 4: Random Practice -->
+<div class="bg-surface-container-low rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-8 transition-all hover:bg-surface-container-lowest hover:shadow-2xl hover:shadow-on-surface/5 opacity-80 hover:opacity-100">
+<div class="flex-shrink-0 bg-secondary-container/30 p-4 rounded-xl text-secondary">
+<span class="material-symbols-outlined text-4xl" data-icon="person">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex flex-wrap items-center gap-3 mb-2">
+<h4 class="text-xl font-bold text-on-surface truncate">Explain Dependency Injection simply</h4>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container/50 text-secondary text-[10px] font-bold uppercase tracking-wider">Random Practice</span>
+</div>
+<div class="flex items-center gap-4 text-sm text-secondary">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-base" data-icon="calendar_today">calendar_today</span> Oct 23, 2024</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2 text-right">
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-on-surface-variant">AI Score</span>
+<span class="text-2xl font-black text-secondary">81%</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Completed
+                                </div>
+</div>
+<div class="w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-outline-variant/30 md:pl-8">
+<button class="w-full border border-outline text-secondary px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-surface-container-high transition-colors">View Details</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Empty State / Load More (Asymmetric design) -->
+<div class="mt-24 mb-12 flex flex-col md:flex-row items-center gap-12 bg-surface-container-high/30 rounded-3xl p-12 overflow-hidden relative">
+<div class="flex-1 z-10">
+<h2 class="text-3xl font-black tracking-tight mb-4">Consistency is Key</h2>
+<p class="text-secondary max-w-sm mb-8">You've completed 14 sessions this month. Candidates who practice 3x a week are 60% more likely to land the offer.</p>
+<button class="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold flex items-center gap-2 group">
+                        Load More History
+                        <span class="material-symbols-outlined transition-transform group-hover:translate-y-1" data-icon="expand_more">expand_more</span>
+</button>
+</div>
+<div class="hidden md:block absolute -right-12 -bottom-12 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="relative w-full md:w-1/3 aspect-video md:aspect-square bg-surface-container rounded-2xl flex items-center justify-center p-4">
+<img alt="Progress graph abstract" class="rounded-xl object-cover w-full h-full opacity-60 grayscale" data-alt="Abstract minimalist line graph showing upward growth trend" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnMfVG4MSriD7n_JRb8tWwwGRx01HeSb6HNb8OTMKc7ZR-qw6VLgEPow8gA7IEfawIeayHplOTR77-igTKP4JB8-f_Jpck0mMiCS_BIrymkBs3pIM1JxhV4TCgtxiaBndZtrUGwcYymYK1ji3IGUZMVT-nDVrPeiwT2OVP3rnVQtfbvz_8Qa78cEfb9l0x-k4zyBCpi4Q0NK1T2lublCmNW4IjNlpOJ_ZWoleDDhiGnhI01q_KBUigS3AXlBXjyiSjM40o-EVcK4Oy"/>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer - Rendered as per JSON -->
+<footer class="bg-[#fcf9f8] dark:bg-slate-950 w-full py-8 mt-auto border-t border-[#eae7e7]/30 dark:border-slate-800/50">
+<div class="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<span class="text-xs font-['Inter'] tracking-wide text-slate-400">© 2024 FacePrep Pro. Precision Interview Prep.</span>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="text-xs font-['Inter'] text-slate-400 hover:text-[#2563EB] transition-colors" href="#">Terms of Service</a>
+<a class="text-xs font-['Inter'] text-slate-400 hover:text-[#2563EB] transition-colors" href="#">Privacy Policy</a>
+<a class="text-xs font-['Inter'] text-slate-400 hover:text-[#2563EB] transition-colors" href="#">Cookie Settings</a>
+<a class="text-xs font-['Inter'] text-slate-400 hover:text-[#2563EB] transition-colors" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

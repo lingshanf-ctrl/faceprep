@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { MembershipType } from "@prisma/client";
+import { getSession } from "@/lib/session";
 
 // 简单的速率限制（内存存储，重启后清空）
 // 生产环境建议使用 Redis
@@ -59,6 +60,12 @@ function checkRateLimit(
 
 export async function POST(req: NextRequest) {
   try {
+    // 0. 需要登录，并且只能为自己领取
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "请先登录账户" }, { status: 401 });
+    }
+
     // 清理过期记录
     cleanupRateLimits();
 
@@ -74,6 +81,14 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    // 确保只能为自己的账号领取
+    if (normalizedEmail !== session.email.toLowerCase()) {
+      return NextResponse.json(
+        { error: "只能为当前登录账户领取体验卡" },
+        { status: 403 }
+      );
+    }
 
     // 2. IP 速率限制
     const clientIp =
@@ -102,15 +117,12 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      // 为了安全，不暴露用户是否存在
-      // 但体验卡需要先有账户，所以提示用户注册
       return NextResponse.json(
         {
-          error:
-            "该邮箱未注册，请先注册账户",
+          error: "邮箱或账户信息有误，请确认后重试",
           needRegister: true,
         },
-        { status: 404 }
+        { status: 400 }
       );
     }
 
@@ -152,32 +164,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 7. 创建领取记录（先创建，防止并发重复领取）
+    // 7+8. 原子操作：同时创建领取记录和发放体验卡，确保两者同时成功或同时失败
     const userAgent = req.headers.get("user-agent") || "";
 
-    await db.trialClaim.create({
-      data: {
-        userId: user.id,
-        email: normalizedEmail,
-        credits: 3,
-        claimedIp: clientIp,
-        userAgent: userAgent.slice(0, 200), // 限制长度
-        source: "direct_link",
-      },
-    });
-
-    // 8. 发放体验卡（3次次卡）
-    await db.membershipOrder.create({
-      data: {
-        userId: user.id,
-        type: MembershipType.CREDIT,
-        status: "ACTIVE",
-        totalCredits: 3,
-        usedCredits: 0,
-        note: "体验卡领取",
-        createdBy: "trial_claim",
-      },
-    });
+    await db.$transaction([
+      db.trialClaim.create({
+        data: {
+          userId: user.id,
+          email: normalizedEmail,
+          credits: 3,
+          claimedIp: clientIp,
+          userAgent: userAgent.slice(0, 200),
+          source: "direct_link",
+        },
+      }),
+      db.membershipOrder.create({
+        data: {
+          userId: user.id,
+          type: MembershipType.CREDIT,
+          status: "ACTIVE",
+          totalCredits: 3,
+          usedCredits: 0,
+          note: "体验卡领取",
+          createdBy: "trial_claim",
+        },
+      }),
+    ]);
 
     // 9. 返回成功
     return NextResponse.json({
@@ -203,32 +215,21 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// 获取领取状态（可选）
+// 获取领取状态（需要登录，只能查自己）
 export async function GET(req: NextRequest) {
   try {
-    const email = req.nextUrl.searchParams.get("email");
-
-    if (!email) {
-      return NextResponse.json(
-        { error: "缺少邮箱参数" },
-        { status: 400 }
-      );
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "请先登录账户" }, { status: 401 });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-
     const user = await db.user.findUnique({
-      where: { email: normalizedEmail },
-      include: {
-        trialClaims: true,
-      },
+      where: { id: session.id },
+      include: { trialClaims: true },
     });
 
     if (!user) {
-      return NextResponse.json({
-        canClaim: false,
-        reason: "user_not_found",
-      });
+      return NextResponse.json({ canClaim: false });
     }
 
     const hasClaimed = user.trialClaims.length > 0;

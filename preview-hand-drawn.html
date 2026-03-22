@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FacePrep - AI 面试教练</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { font-family: 'Noto Sans SC', sans-serif; }
+        .hand-font { font-family: 'Patrick Hand', cursive; }
+        
+        body {
+            background-color: #FDF8F3;
+            background-image: 
+                radial-gradient(#E8D5C4 1px, transparent 1px),
+                radial-gradient(#E8D5C4 1px, transparent 1px);
+            background-position: 0 0, 20px 20px;
+            background-size: 40px 40px;
+        }
+        
+        .paper-card {
+            background: #FFFBF7;
+            border: 2px solid #2D2A26;
+            border-radius: 24px;
+            box-shadow: 4px 4px 0 #2D2A26;
+            transition: all 0.2s ease;
+        }
+        
+        .paper-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #2D2A26;
+        }
+        
+        .hand-drawn-border {
+            border: 3px solid #2D2A26;
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+        }
+        
+        .wavy-underline {
+            text-decoration: underline;
+            text-decoration-style: wavy;
+            text-decoration-color: #D97706;
+            text-underline-offset: 6px;
+        }
+        
+        .doodle-circle {
+            position: absolute;
+            border: 3px solid #2D2A26;
+            border-radius: 50%;
+        }
+        
+        .doodle-arrow {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #FDE68A 0%, #FDE68A 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 40%;
+            background-position: 0 88%;
+        }
+        
+        .tape {
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transform: rotate(-2deg);
+        }
+        
+        .blob {
+            position: absolute;
+            filter: url(#roughPaper);
+            opacity: 0.6;
+        }
+        
+        .btn-primary {
+            background: #D97706;
+            color: white;
+            border: 2px solid #2D2A26;
+            border-radius: 50px;
+            box-shadow: 3px 3px 0 #2D2A26;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0 #2D2A26;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #2D2A26;
+            border: 2px solid #2D2A26;
+            border-radius: 50px;
+            box-shadow: 3px 3px 0 #2D2A26;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0 #2D2A26;
+        }
+        
+        .section-number {
+            font-family: 'Patrick Hand', cursive;
+            font-size: 4rem;
+            color: #D97706;
+            opacity: 0.3;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body class="text-stone-800 antialiased overflow-x-hidden">
+    <!-- SVG Filter for rough edges -->
+    <svg style="position: absolute; width: 0; height: 0;">
+        <filter id="roughPaper">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3"/>
+        </filter>
+    </svg>
+    
+    <!-- Decorative Blobs -->
+    <div class="blob w-64 h-64 rounded-full bg-orange-200 top-20 -left-20 -z-10"></div>
+    <div class="blob w-48 h-48 rounded-full bg-amber-200 top-1/3 right-0 -z-10"></div>
+    <div class="blob w-56 h-56 rounded-full bg-yellow-200 bottom-1/4 -left-10 -z-10"></div>
+
+    <!-- Nav -->
+    <nav class="relative z-50 py-4">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="paper-card px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-orange-500 border-2 border-stone-800 flex items-center justify-center hand-font text-xl text-white">
+                        FP
+                    </div>
+                    <span class="text-xl font-bold text-stone-800">FacePrep</span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <a href="#" class="text-stone-600 hover:text-stone-800 transition-colors hidden sm:block">题库</a>
+                    <a href="#" class="text-stone-600 hover:text-stone-800 transition-colors hidden sm:block">功能</a>
+                    <a href="#" class="text-stone-600 hover:text-stone-800 transition-colors hidden sm:block">定价</a>
+                    <button class="btn-secondary px-5 py-2 text-sm font-medium">登录</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="relative pt-16 pb-20">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Left -->
+                <div class="space-y-6">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border-2 border-stone-800 shadow-[2px_2px_0_#2D2A26]">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span class="text-sm text-stone-600">AI 面试教练 · 国内可用</span>
+                    </div>
+                    
+                    <h1 class="text-5xl lg:text-6xl font-bold text-stone-800 leading-tight">
+                        让面试<br>
+                        <span class="highlight">成为优势</span>
+                    </h1>
+                    
+                    <p class="text-lg text-stone-600 leading-relaxed max-w-md hand-font text-xl">
+                        150+ 真实面试题库 · AI 多维度评估 · 精准盲点定位
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-4">
+                        <button class="btn-primary px-8 py-3 text-base font-semibold">
+                            免费开始练习 ✨
+                        </button>
+                        <button class="btn-secondary px-8 py-3 text-base font-medium">
+                            浏览题库 📚
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 pt-4">
+                        <div class="flex -space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white flex items-center justify-center text-xs text-white hand-font">L</div>
+                            <div class="w-8 h-8 rounded-full bg-green-400 border-2 border-white flex items-center justify-center text-xs text-white hand-font">W</div>
+                            <div class="w-8 h-8 rounded-full bg-pink-400 border-2 border-white flex items-center justify-center text-xs text-white hand-font">Z</div>
+                        </div>
+                        <span class="text-sm text-stone-500"><span class="font-semibold text-stone-800">2,000+</span> 求职者正在使用 💪</span>
+                    </div>
+                </div>
+                
+                <!-- Right - Product Preview -->
+                <div class="relative">
+                    <!-- Decorative doodles -->
+                    <div class="doodle-circle w-20 h-20 -top-4 -right-4 border-orange-400"></div>
+                    <div class="absolute -bottom-6 -left-6 text-4xl hand-font text-orange-400 rotate-12">★</div>
+                    
+                    <div class="paper-card p-6 relative">
+                        <!-- Tape effect -->
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-24 h-6 tape"></div>
+                        
+                        <!-- Title bar -->
+                        <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-dashed border-stone-300">
+                            <div class="flex gap-2">
+                                <div class="w-4 h-4 rounded-full border-2 border-stone-800"></div>
+                                <div class="w-4 h-4 rounded-full border-2 border-stone-800"></div>
+                                <div class="w-4 h-4 rounded-full border-2 border-stone-800"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Question -->
+                        <div class="mb-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs font-bold text-stone-500 hand-font text-lg">项目经历</span>
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-700">中等</span>
+                            </div>
+                            <p class="text-sm text-stone-800 font-medium border-l-4 border-orange-400 pl-3">
+                                "介绍一个你负责过的最有挑战的项目，你是如何解决核心问题的？"
+                            </p>
+                        </div>
+                        
+                        <!-- Answer area -->
+                        <div class="bg-stone-50 rounded-2xl p-4 mb-4 border-2 border-dashed border-stone-300">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-full bg-orange-100 border-2 border-stone-800 flex items-center justify-center">
+                                    <i data-lucide="mic" class="w-5 h-5 text-orange-600"></i>
+                                </div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-2 bg-stone-200 rounded-full w-full"></div>
+                                    <div class="h-2 bg-stone-200 rounded-full w-4/5"></div>
+                                    <div class="h-2 bg-stone-200 rounded-full w-3/5"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Feedback -->
+                        <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-4 border-2 border-orange-200">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="sparkles" class="w-5 h-5 text-orange-500"></i>
+                                    <span class="text-sm font-bold text-orange-600 hand-font text-lg">AI 评估 ✨</span>
+                                </div>
+                                <div class="text-3xl font-bold text-stone-800 hand-font">
+                                    84<span class="text-lg text-stone-400">/100</span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-stone-600 w-14 hand-font">内容完整</span>
+                                    <div class="flex-1 h-3 bg-white rounded-full border-2 border-stone-200 overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full" style="width: 85%"></div>
+                                    </div>
+                                    <span class="text-xs text-stone-600 w-6 hand-font">85</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-stone-600 w-14 hand-font">结构清晰</span>
+                                    <div class="flex-1 h-3 bg-white rounded-full border-2 border-stone-200 overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full" style="width: 78%"></div>
+                                    </div>
+                                    <span class="text-xs text-stone-600 w-6 hand-font">78</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-stone-600 w-14 hand-font">表达流畅</span>
+                                    <div class="flex-1 h-3 bg-white rounded-full border-2 border-stone-200 overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-green-400 to-emerald-400 rounded-full" style="width: 92%"></div>
+                                    </div>
+                                    <span class="text-xs text-stone-600 w-6 hand-font">92</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="py-16">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="paper-card p-8">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-stone-800 hand-font mb-2">150+</div>
+                        <div class="text-sm text-stone-600">精选面试题 📋</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-stone-800 hand-font mb-2">5</div>
+                        <div class="text-sm text-stone-600">评估维度 📊</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-stone-800 hand-font mb-2">11</div>
+                        <div class="text-sm text-stone-600">职能方向 🎯</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-stone-800 hand-font mb-2">∞</div>
+                        <div class="text-sm text-stone-600">免费练习 🎉</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-20">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <p class="text-sm text-stone-500 mb-3 hand-font text-xl">✨ 核心功能 ✨</p>
+                <h2 class="text-4xl font-bold text-stone-800">
+                    系统化提升面试能力
+                </h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="paper-card p-6">
+                    <div class="w-14 h-14 rounded-full bg-blue-100 border-2 border-stone-800 flex items-center justify-center mb-4">
+                        <i data-lucide="book-open" class="w-7 h-7 text-blue-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">智能题库 📚</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        覆盖自我介绍、项目复盘、技术深挖、行为面试，按职能方向精选分类。
+                    </p>
+                </div>
+                
+                <div class="paper-card p-6">
+                    <div class="w-14 h-14 rounded-full bg-purple-100 border-2 border-stone-800 flex items-center justify-center mb-4">
+                        <i data-lucide="zap" class="w-7 h-7 text-purple-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">AI 即时反馈 ⚡</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        每次作答获得量化得分、优点分析、改进建议和 AI 参考答案。
+                    </p>
+                </div>
+                
+                <div class="paper-card p-6">
+                    <div class="w-14 h-14 rounded-full bg-green-100 border-2 border-stone-800 flex items-center justify-center mb-4">
+                        <i data-lucide="target" class="w-7 h-7 text-green-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-2">盲点定位 🎯</h3>
+                    <p class="text-stone-600 text-sm leading-relaxed">
+                        多维度追踪得分趋势，精准识别短板，针对性强化训练。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section class="py-20">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <p class="text-sm text-stone-500 mb-3 hand-font text-xl">📝 使用流程 📝</p>
+                <h2 class="text-4xl font-bold text-stone-800">
+                    三步，系统性备战
+                </h2>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="paper-card p-6 flex items-start gap-4">
+                    <div class="section-number">01</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-stone-800 mb-1">选题 🎯</h3>
+                        <p class="text-stone-600">按职能方向或难度筛选，也可直接用 AI 推荐，快速定位适合你当前阶段的练习题目。</p>
+                    </div>
+                </div>
+                
+                <div class="paper-card p-6 flex items-start gap-4">
+                    <div class="section-number">02</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-stone-800 mb-1">作答 💬</h3>
+                        <p class="text-stone-600">文字或语音作答，模拟真实面试节奏，支持反复练习，找到最自然的表达方式。</p>
+                    </div>
+                </div>
+                
+                <div class="paper-card p-6 flex items-start gap-4">
+                    <div class="section-number">03</div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-stone-800 mb-1">复盘 📈</h3>
+                        <p class="text-stone-600">获取多维度 AI 分析报告，精准定位改进点，形成有效的练习闭环，持续进步。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="py-20">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="text-center mb-12">
+                <p class="text-sm text-stone-500 mb-3 hand-font text-xl">💰 定价方案 💰</p>
+                <h2 class="text-4xl font-bold text-stone-800">
+                    选择适合你的方案
+                </h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="paper-card p-6">
+                    <div class="text-sm text-stone-500 mb-1 hand-font">免费版</div>
+                    <div class="text-4xl font-bold text-stone-800 mb-4 hand-font">¥0</div>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            基础题库访问
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            简单 AI 反馈
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            关键词覆盖检查
+                        </li>
+                    </ul>
+                    <button class="w-full btn-secondary py-2.5 font-medium">
+                        开始使用 🚀
+                    </button>
+                </div>
+                
+                <div class="paper-card p-6 bg-gradient-to-br from-orange-50 to-amber-50">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="text-sm text-stone-500 hand-font">次卡</div>
+                        <div class="text-xs px-2 py-1 rounded-full bg-orange-500 text-white hand-font">推荐 ⭐</div>
+                    </div>
+                    <div class="text-4xl font-bold text-stone-800 mb-4 hand-font">¥29<span class="text-lg text-stone-500">/10次</span></div>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            完整题库访问
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            深度 AI 评估
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            历史记录保存
+                        </li>
+                    </ul>
+                    <button class="w-full btn-primary py-2.5 font-medium">
+                        购买次卡 🎁
+                    </button>
+                </div>
+                
+                <div class="paper-card p-6">
+                    <div class="text-sm text-stone-500 mb-1 hand-font">月卡</div>
+                    <div class="text-4xl font-bold text-stone-800 mb-4 hand-font">¥99<span class="text-lg text-stone-500">/月</span></div>
+                    <ul class="space-y-2 mb-6">
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            无限次完整评估
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            模拟面试功能
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            专属客服支持
+                        </li>
+                    </ul>
+                    <button class="w-full btn-secondary py-2.5 font-medium">
+                        订阅月卡 💎
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20">
+        <div class="max-w-3xl mx-auto px-6">
+            <div class="paper-card p-10 text-center bg-gradient-to-br from-orange-100 to-amber-100">
+                <div class="doodle-circle w-16 h-16 top-4 right-4 border-orange-300"></div>
+                <h2 class="text-3xl font-bold text-stone-800 mb-4">
+                    准备好拿下<br>
+                    <span class="highlight">下一个 offer</span> 了吗？🎯
+                </h2>
+                <p class="text-stone-600 mb-6">
+                    加入 2,000+ 正在系统备战的求职者 💪
+                </p>
+                <button class="btn-primary px-10 py-3 text-lg font-semibold">
+                    免费开始练习 ✨
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-orange-500 border-2 border-stone-800 flex items-center justify-center hand-font text-white">
+                        FP
+                    </div>
+                    <span class="font-bold text-stone-800">FacePrep</span>
+                </div>
+                <div class="text-sm text-stone-500 hand-font">© 2025 FacePrep. Made with ❤️</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

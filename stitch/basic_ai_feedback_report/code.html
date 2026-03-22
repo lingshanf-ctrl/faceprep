@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FacePrep - Basic AI Feedback Report</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#004ac6",
+                "secondary": "#5f5e5e",
+                "primary-container": "#2563eb",
+                "on-primary-fixed-variant": "#003ea8",
+                "outline-variant": "#c3c6d7",
+                "on-secondary-container": "#636262",
+                "on-secondary": "#ffffff",
+                "on-primary-fixed": "#00174b",
+                "secondary-fixed-dim": "#c8c6c5",
+                "secondary-fixed": "#e5e2e1",
+                "primary-fixed": "#dbe1ff",
+                "on-error": "#ffffff",
+                "surface-container-low": "#f6f3f2",
+                "on-tertiary-fixed-variant": "#464747",
+                "tertiary-fixed-dim": "#c7c6c6",
+                "surface-tint": "#0053db",
+                "surface-dim": "#dcd9d9",
+                "on-surface-variant": "#434655",
+                "on-primary-container": "#eeefff",
+                "tertiary-fixed": "#e4e2e2",
+                "error-container": "#ffdad6",
+                "outline": "#737686",
+                "surface-container-lowest": "#ffffff",
+                "error": "#ba1a1a",
+                "tertiary": "#555555",
+                "surface-container-high": "#eae7e7",
+                "inverse-on-surface": "#f3f0ef",
+                "surface-variant": "#e5e2e1",
+                "surface-bright": "#fcf9f8",
+                "background": "#fcf9f8",
+                "on-tertiary-container": "#f2f0ef",
+                "on-secondary-fixed-variant": "#474746",
+                "on-background": "#1c1b1b",
+                "inverse-surface": "#313030",
+                "primary-fixed-dim": "#b4c5ff",
+                "secondary-container": "#e2dfde",
+                "on-tertiary-fixed": "#1b1c1c",
+                "on-secondary-fixed": "#1c1b1b",
+                "inverse-primary": "#b4c5ff",
+                "tertiary-container": "#6d6d6d",
+                "surface-container-highest": "#e5e2e1",
+                "surface-container": "#f0eded",
+                "surface": "#fcf9f8",
+                "on-surface": "#1c1b1b",
+                "on-tertiary": "#ffffff",
+                "on-primary": "#ffffff",
+                "on-error-container": "#93000a"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fcf9f8;
+            color: #1c1b1b;
+        }
+        .font-headline {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<nav class="bg-[#fcf9f8] dark:bg-[#1c1b1b] sticky top-0 z-50">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-[#1c1b1b] dark:text-[#fcf9f8] font-['Plus_Jakarta_Sans'] tracking-tight">FacePrep</span>
+<div class="hidden md:flex gap-6">
+<a class="text-[#1c1b1b]/60 dark:text-[#fcf9f8]/60 hover:text-[#2563EB] transition-colors font-['Plus_Jakarta_Sans'] tracking-tight font-bold" href="#">Interviews</a>
+<a class="text-[#2563EB] dark:text-[#3b82f6] border-b-2 border-[#2563EB] pb-1 font-['Plus_Jakarta_Sans'] tracking-tight font-bold" href="#">Reports</a>
+<a class="text-[#1c1b1b]/60 dark:text-[#fcf9f8]/60 hover:text-[#2563EB] transition-colors font-['Plus_Jakarta_Sans'] tracking-tight font-bold" href="#">Library</a>
+<a class="text-[#1c1b1b]/60 dark:text-[#fcf9f8]/60 hover:text-[#2563EB] transition-colors font-['Plus_Jakarta_Sans'] tracking-tight font-bold" href="#">Settings</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-[#f6f3f2] p-2 rounded-full transition-all">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-[#f6f3f2] p-2 rounded-full transition-all">account_circle</button>
+<button class="hidden md:block bg-primary-container text-on-primary-container px-5 py-2 rounded-lg font-semibold scale-95 active:opacity-80 transition-transform">New Session</button>
+</div>
+</div>
+<div class="bg-[#f6f3f2] dark:bg-[#2a2827] h-[1px] w-full"></div>
+</nav>
+<main class="max-w-5xl mx-auto px-6 py-12">
+<!-- Header -->
+<header class="mb-16">
+<h1 class="font-headline text-4xl font-extrabold tracking-tight text-on-surface mb-2">Basic AI Feedback Report</h1>
+<p class="text-on-surface-variant font-body">Session: Product Management Interview • Oct 24, 2024</p>
+</header>
+<!-- Summary Section: Asymmetric Layout -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-16 items-center">
+<div class="md:col-span-4 flex flex-col items-center justify-center p-10 bg-surface-container-low rounded-xl">
+<span class="text-label-md text-primary font-bold uppercase tracking-widest mb-2">Overall Score</span>
+<div class="relative flex items-center justify-center">
+<svg class="w-40 h-40 transform -rotate-90">
+<circle class="text-outline-variant/20" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary" cx="80" cy="80" fill="transparent" r="70" stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="123" stroke-width="8"></circle>
+</svg>
+<span class="absolute text-5xl font-extrabold font-headline">72</span>
+</div>
+<span class="mt-4 text-on-surface-variant font-medium">Out of 100</span>
+</div>
+<div class="md:col-span-8 px-4">
+<h2 class="font-headline text-2xl font-bold mb-4">Performance Summary</h2>
+<p class="text-lg text-on-surface-variant leading-relaxed">
+                    You demonstrated a solid understanding of the core product principles. Your communication was direct, though there were moments where the structure could be more refined. Focus on clarifying your "Why" during technical explanations to move into the higher scoring bracket.
+                </p>
+</div>
+</section>
+<!-- Core Metrics: Bento Grid Inspired -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+<div class="p-8 bg-surface-container-low rounded-xl flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="verified">verified</span>
+<span class="font-headline font-bold">Accuracy</span>
+</div>
+<div class="h-1.5 w-full bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[85%]"></div>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">85% Match to Ideal Answer</span>
+</div>
+<div class="p-8 bg-surface-container-low rounded-xl flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="campaign">campaign</span>
+<span class="font-headline font-bold">Delivery</span>
+</div>
+<div class="h-1.5 w-full bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%]"></div>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">65% Fluency &amp; Pace</span>
+</div>
+<div class="p-8 bg-surface-container-low rounded-xl flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="mood">mood</span>
+<span class="font-headline font-bold">Tone</span>
+</div>
+<div class="h-1.5 w-full bg-outline-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[78%]"></div>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">78% Professional Confidence</span>
+</div>
+</section>
+<!-- Strengths & Improvements: Clean Columns -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+<div>
+<h3 class="font-headline text-xl font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="thumb_up">thumb_up</span>
+                    Key Strengths
+                </h3>
+<ul class="space-y-4">
+<li class="p-4 bg-surface-container-lowest rounded-lg border-l-4 border-primary shadow-sm">
+<p class="font-semibold mb-1">Clear Technical Definitions</p>
+<p class="text-sm text-on-surface-variant">You accurately defined product lifecycles and stakeholder roles without hesitation.</p>
+</li>
+<li class="p-4 bg-surface-container-lowest rounded-lg border-l-4 border-primary shadow-sm">
+<p class="font-semibold mb-1">Authenticity</p>
+<p class="text-sm text-on-surface-variant">Your tone felt natural and engaged throughout the 15-minute session.</p>
+</li>
+</ul>
+</div>
+<div>
+<h3 class="font-headline text-xl font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-error" data-icon="trending_up">trending_up</span>
+                    Room for Improvement
+                </h3>
+<ul class="space-y-4">
+<li class="p-4 bg-surface-container-lowest rounded-lg border-l-4 border-error/30 shadow-sm">
+<p class="font-semibold mb-1">Conciseness</p>
+<p class="text-sm text-on-surface-variant">Try to reduce the use of filler words like "basically" and "actually" during transitions.</p>
+</li>
+<li class="p-4 bg-surface-container-lowest rounded-lg border-l-4 border-error/30 shadow-sm">
+<p class="font-semibold mb-1">Structured Storytelling</p>
+<p class="text-sm text-on-surface-variant">Your examples lacked a clear concluding result or 'impact' statement.</p>
+</li>
+</ul>
+</div>
+</section>
+<!-- Upgrade Prompt: Pro Comparison -->
+<section class="relative p-1 rounded-2xl bg-gradient-to-r from-primary to-primary-container overflow-hidden mb-16">
+<div class="bg-surface-container-lowest p-8 md:p-12 rounded-[0.9rem] flex flex-col md:flex-row items-center justify-between gap-8">
+<div class="max-w-xl">
+<span class="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-4 uppercase tracking-tighter">Limited View</span>
+<h3 class="font-headline text-2xl font-extrabold mb-4">Want to see how your body language matches your words?</h3>
+<p class="text-on-surface-variant mb-0">The Basic report only scratches the surface. Upgrade to Pro for eye-tracking analysis, STAR method scoring, and word-by-word transcript feedback.</p>
+</div>
+<button class="whitespace-nowrap bg-primary text-on-primary px-8 py-4 rounded-xl font-bold hover:scale-105 transition-transform flex items-center gap-2 shadow-lg shadow-primary/20">
+                    Unlock Deep-Dive Analysis
+                    <span class="material-symbols-outlined text-sm" data-icon="bolt" data-weight="fill" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+</div>
+</section>
+<!-- CTAs -->
+<footer class="flex flex-col md:flex-row items-center justify-center gap-4 border-t border-outline-variant/10 pt-12">
+<button class="w-full md:w-auto px-10 py-4 bg-surface-container-highest text-on-surface font-bold rounded-xl hover:bg-surface-dim transition-colors">
+                Share Report
+            </button>
+<button class="w-full md:w-auto px-10 py-4 bg-primary text-on-primary font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+                Practice Again
+            </button>
+</footer>
+</main>
+<!-- Footer Component -->
+<footer class="bg-[#f6f3f2] dark:bg-[#151414] full-width bottom-0 mt-20">
+<div class="w-full py-12 px-8 flex flex-col md:flex-row justify-between items-center gap-6 max-w-7xl mx-auto">
+<div class="flex flex-col gap-2">
+<span class="text-lg font-semibold text-[#1c1b1b] dark:text-[#fcf9f8] font-['Plus_Jakarta_Sans']">FacePrep AI</span>
+<p class="font-['Inter'] text-sm tracking-normal text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50">© 2024 FacePrep AI. Professional Interview Mentorship.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50 hover:text-[#2563EB] dark:hover:text-[#3b82f6] transition-colors font-['Inter'] text-sm tracking-normal" href="#">Privacy Policy</a>
+<a class="text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50 hover:text-[#2563EB] dark:hover:text-[#3b82f6] transition-colors font-['Inter'] text-sm tracking-normal" href="#">Terms of Service</a>
+<a class="text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50 hover:text-[#2563EB] dark:hover:text-[#3b82f6] transition-colors font-['Inter'] text-sm tracking-normal" href="#">Help Center</a>
+<a class="text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50 hover:text-[#2563EB] dark:hover:text-[#3b82f6] transition-colors font-['Inter'] text-sm tracking-normal" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

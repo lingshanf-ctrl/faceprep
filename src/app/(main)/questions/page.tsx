@@ -333,8 +333,8 @@ function QuestionsContent() {
                 onClick={() => setSourceFilter(tab.value as typeof sourceFilter)}
                 className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
                   isActive
-                    ? "bg-accent text-white shadow-md shadow-accent/20"
-                    : "bg-white border border-border text-foreground-muted hover:text-foreground hover:border-accent/40 hover:bg-accent/5"
+                    ? "bg-primary-gradient text-white shadow-glow"
+                    : "bg-surface-elevated text-foreground-muted hover:text-foreground shadow-subtle"
                 }`}
               >
                 <span className={isActive ? "text-white/90" : "text-foreground-muted group-hover:text-accent"}>{tab.icon}</span>
@@ -352,8 +352,7 @@ function QuestionsContent() {
           {sourceFilter === "custom" && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="ml-auto flex items-center gap-1.5 px-3.5 py-2.5 bg-accent text-white text-sm font-semibold rounded-xl
-                hover:bg-accent/90 transition-all duration-200 shadow-sm"
+              className="ml-auto flex items-center gap-1.5 px-3.5 py-2.5 text-white text-sm font-semibold rounded-xl transition-all duration-200 bg-primary-gradient shadow-glow hover:shadow-glow-lg"
             >
               <Plus className="w-4 h-4" />
               <span>{locale === "zh" ? "添加题目" : "Add"}</span>
@@ -366,14 +365,14 @@ function QuestionsContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className="mb-5 bg-white border border-border/50 rounded-xl overflow-hidden"
+          className="mb-5 bg-surface-elevated rounded-xl overflow-hidden shadow-subtle"
         >
           {/* Row 1: Category tabs + Search */}
-          <div className="flex items-center gap-2 border-b border-border/60 pr-3">
+          <div className="flex items-center gap-2 pr-3" style={{ borderBottom: "1px solid rgba(195,198,215,0.25)" }}>
             {/* Category scroll */}
             <div className="relative flex-1 min-w-0">
-              <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent pointer-events-none z-10" />
-              <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent pointer-events-none z-10" />
+              <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-surface-elevated to-transparent pointer-events-none z-10" />
+              <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-surface-elevated to-transparent pointer-events-none z-10" />
               <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide px-3 py-2">
                 {CATEGORY_TABS.map((tab) => {
                   const isActive = categoryFilter === tab.value;
@@ -498,8 +497,7 @@ function QuestionsContent() {
             {selectedQuestions.size > 0 && (
               <button
                 onClick={startCustomInterview}
-                className="flex items-center gap-2 px-5 py-2 bg-accent text-white text-sm font-semibold rounded-full
-                  hover:bg-accent-dark transition-colors"
+                className="flex items-center gap-2 px-5 py-2 text-white text-sm font-semibold rounded-xl transition-all duration-200 bg-primary-gradient shadow-glow hover:shadow-glow-lg"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>{locale === "zh" ? `开始面试 (${selectedQuestions.size})` : `Start (${selectedQuestions.size})`}</span>
@@ -601,10 +599,10 @@ function QuestionCard({
 
   return (
     <div
-      className={`group relative bg-white rounded-xl border transition-all duration-200 overflow-hidden
+      className={`group relative bg-surface-elevated rounded-xl overflow-hidden transition-all duration-200
         ${isCustom && isSelected
-          ? "border-accent"
-          : "border-border/50 hover:border-accent/40"
+          ? "shadow-glow ring-1 ring-accent/30"
+          : "shadow-subtle hover:shadow-soft"
         }`}
     >
       {/* Official Question left accent */}
@@ -704,7 +702,7 @@ function QuestionCard({
             <div className="flex items-center gap-1">
               <Link
                 href={`/questions/${question.id}`}
-                className="group/btn flex items-center gap-1 px-3 sm:px-4 py-2 text-sm font-medium text-accent hover:bg-accent/10 rounded-full transition-all duration-300 hover:shadow-soft-sm"
+                className="group/btn flex items-center gap-1 px-3 sm:px-4 py-2 text-sm font-medium text-accent hover:bg-accent/8 rounded-xl transition-all duration-300"
               >
                 <span className="hidden sm:inline">{locale === "zh" ? "练习" : "Practice"}</span>
                 <span className="sm:hidden">{locale === "zh" ? "去练" : "Go"}</span>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FacePrep - AI 面试教练</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans SC', 'sans-serif'],
+                    },
+                    colors: {
+                        // 方案2: 森林绿成长感
+                        forest: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                            950: '#052e16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'Inter', 'Noto Sans SC', sans-serif; }
+        .subtle-shadow {
+            box-shadow: 0 0 0 1px rgba(5, 46, 22, 0.08), 0 1px 2px 0 rgba(5, 46, 22, 0.04);
+        }
+        .card-hover {
+            transition: all 0.2s ease;
+        }
+        .card-hover:hover {
+            box-shadow: 0 0 0 1px rgba(5, 46, 22, 0.12), 0 4px 12px -2px rgba(5, 46, 22, 0.08);
+        }
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-forest-50 text-forest-950 antialiased">
+    <!-- Nav -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-forest-50/80 backdrop-blur-md border-b border-forest-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex h-16 items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="h-8 w-8 rounded-lg bg-forest-600 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">FP</span>
+                    </div>
+                    <span class="font-semibold text-forest-950">FacePrep</span>
+                </div>
+                <div class="flex items-center gap-8">
+                    <a href="#" class="text-sm text-forest-600/70 hover:text-forest-900 transition-colors hidden sm:block">题库</a>
+                    <a href="#" class="text-sm text-forest-600/70 hover:text-forest-900 transition-colors hidden sm:block">功能</a>
+                    <a href="#" class="text-sm text-forest-600/70 hover:text-forest-900 transition-colors hidden sm:block">定价</a>
+                    <button class="text-sm font-medium text-forest-600 hover:text-forest-900 transition-colors">登录</button>
+                    <button class="px-4 py-2 rounded-lg bg-forest-600 text-sm font-medium text-white hover:bg-forest-700 transition-colors">
+                        开始使用
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="pt-32 pb-20 lg:pt-40 lg:pb-28">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <!-- Left -->
+                <div class="space-y-8">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-forest-200 text-xs text-forest-600">
+                        <span class="w-1.5 h-1.5 rounded-full bg-forest-500"></span>
+                        AI 面试教练 · 国内可用
+                    </div>
+                    
+                    <h1 class="text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.1] text-forest-950">
+                        让面试<br>成为优势
+                    </h1>
+                    
+                    <p class="text-lg text-forest-600/70 leading-relaxed max-w-md">
+                        150+ 真实面试题库，AI 多维度评估，精准盲点定位。系统性提升面试表达能力。
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        <button class="px-6 py-3 rounded-lg bg-forest-600 text-white text-sm font-medium hover:bg-forest-700 transition-colors">
+                            免费开始练习
+                        </button>
+                        <button class="px-6 py-3 rounded-lg border border-forest-200 text-forest-600 text-sm font-medium hover:border-forest-300 hover:bg-white transition-colors">
+                            浏览题库
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-6 text-sm text-forest-400">
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="check" class="w-4 h-4 text-forest-600"></i>
+                            免费开始
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="check" class="w-4 h-4 text-forest-600"></i>
+                            无需注册
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="check" class="w-4 h-4 text-forest-600"></i>
+                            国内直连
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right - Product Preview -->
+                <div class="relative">
+                    <div class="bg-white rounded-2xl subtle-shadow overflow-hidden">
+                        <div class="flex items-center gap-2 px-4 py-3 border-b border-forest-100">
+                            <div class="w-3 h-3 rounded-full bg-forest-200"></div>
+                            <div class="w-3 h-3 rounded-full bg-forest-200"></div>
+                            <div class="w-3 h-3 rounded-full bg-forest-200"></div>
+                            <div class="ml-auto text-xs text-forest-400">FacePrep</div>
+                        </div>
+                        
+                        <div class="p-5">
+                            <div class="mb-4">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-xs font-medium text-forest-500">项目经历</span>
+                                    <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">中等</span>
+                                </div>
+                                <p class="text-sm text-forest-900 font-medium">"介绍一个你负责过的最有挑战的项目..."</p>
+                            </div>
+                            
+                            <div class="bg-forest-50 rounded-xl p-4 mb-4 border border-forest-100">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-forest-200 flex items-center justify-center flex-shrink-0">
+                                        <i data-lucide="mic" class="w-4 h-4 text-forest-600"></i>
+                                    </div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-2 bg-forest-200 rounded-full w-full"></div>
+                                        <div class="h-2 bg-forest-200 rounded-full w-4/5"></div>
+                                        <div class="h-2 bg-forest-200 rounded-full w-3/5"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-forest-50 rounded-xl p-4 border border-forest-100">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-2">
+                                        <i data-lucide="sparkles" class="w-4 h-4 text-forest-600"></i>
+                                        <span class="text-xs font-medium text-forest-600">AI 评估</span>
+                                    </div>
+                                    <div class="text-2xl font-semibold text-forest-950">
+                                        84<span class="text-sm text-forest-400 font-normal">/100</span>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs text-forest-500 w-16">内容完整</span>
+                                        <div class="flex-1 h-1.5 bg-forest-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-forest-600 rounded-full" style="width: 85%"></div>
+                                        </div>
+                                        <span class="text-xs text-forest-500 w-8 text-right">85</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs text-forest-500 w-16">结构清晰</span>
+                                        <div class="flex-1 h-1.5 bg-forest-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-forest-600 rounded-full" style="width: 78%"></div>
+                                        </div>
+                                        <span class="text-xs text-forest-500 w-8 text-right">78</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs text-forest-500 w-16">表达流畅</span>
+                                        <div class="flex-1 h-1.5 bg-forest-200 rounded-full overflow-hidden">
+                                            <div class="h-full bg-forest-600 rounded-full" style="width: 92%"></div>
+                                        </div>
+                                        <span class="text-xs text-forest-500 w-8 text-right">92</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="py-12 border-y border-forest-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="text-center reveal">
+                    <div class="text-4xl font-semibold text-forest-950 mb-1">150+</div>
+                    <div class="text-sm text-forest-500">精选面试题</div>
+                </div>
+                <div class="text-center reveal" style="transition-delay: 0.1s">
+                    <div class="text-4xl font-semibold text-forest-950 mb-1">5</div>
+                    <div class="text-sm text-forest-500">评估维度</div>
+                </div>
+                <div class="text-center reveal" style="transition-delay: 0.2s">
+                    <div class="text-4xl font-semibold text-forest-950 mb-1">11</div>
+                    <div class="text-sm text-forest-500">职能方向</div>
+                </div>
+                <div class="text-center reveal" style="transition-delay: 0.3s">
+                    <div class="text-4xl font-semibold text-forest-950 mb-1">∞</div>
+                    <div class="text-sm text-forest-500">免费练习</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-24">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <p class="text-sm text-forest-500 mb-3">核心功能</p>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-forest-950">系统化提升面试表达能力</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-2xl p-8 subtle-shadow card-hover reveal">
+                    <div class="w-12 h-12 rounded-xl bg-forest-100 flex items-center justify-center mb-6">
+                        <i data-lucide="book-open" class="w-6 h-6 text-forest-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-forest-950 mb-2">智能题库系统</h3>
+                    <p class="text-sm text-forest-600/70 leading-relaxed">覆盖自我介绍、项目复盘、技术深挖、行为面试。</p>
+                </div>
+                
+                <div class="bg-white rounded-2xl p-8 subtle-shadow card-hover reveal" style="transition-delay: 0.1s">
+                    <div class="w-12 h-12 rounded-xl bg-forest-100 flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-6 h-6 text-forest-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-forest-950 mb-2">AI 即时反馈</h3>
+                    <p class="text-sm text-forest-600/70 leading-relaxed">每次作答获得量化得分、优点分析、改进建议。</p>
+                </div>
+                
+                <div class="bg-white rounded-2xl p-8 subtle-shadow card-hover reveal" style="transition-delay: 0.2s">
+                    <div class="w-12 h-12 rounded-xl bg-forest-100 flex items-center justify-center mb-6">
+                        <i data-lucide="target" class="w-6 h-6 text-forest-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-forest-950 mb-2">盲点定位</h3>
+                    <p class="text-sm text-forest-600/70 leading-relaxed">多维度追踪得分趋势，精准识别短板。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="py-24 bg-white">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <p class="text-sm text-forest-500 mb-3">定价方案</p>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-forest-950">选择适合你的方案</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-forest-50 rounded-2xl p-8 border border-forest-100 reveal">
+                    <div class="text-sm text-forest-500 mb-1">免费版</div>
+                    <div class="text-4xl font-semibold text-forest-950 mb-6">¥0</div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2 text-sm text-forest-700">
+                            <i data-lucide="check" class="w-4 h-4 text-forest-600"></i>
+                            基础题库访问
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-forest-700">
+                            <i data-lucide="check" class="w-4 h-4 text-forest-600"></i>
+                            简单 AI 反馈
+                        </li>
+                    </ul>
+                    <button class="w-full py-2.5 rounded-lg border border-forest-200 text-sm font-medium text-forest-600 hover:border-forest-300 transition-colors">
+                        开始使用
+                    </button>
+                </div>
+                
+                <div class="bg-forest-600 rounded-2xl p-8 reveal" style="transition-delay: 0.1s">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="text-sm text-forest-200">次卡</div>
+                        <div class="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white">推荐</div>
+                    </div>
+                    <div class="text-4xl font-semibold text-white mb-6">¥29<span class="text-lg text-forest-300 font-normal">/10次</span></div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2 text-sm text-forest-100">
+                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                            完整题库访问
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-forest-100">
+                            <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                            深度 AI 评估
+                        </li>
+                    </ul>
+                    <button class="w-full py-2.5 rounded-lg bg-white text-sm font-medium text-forest-600 hover:bg-forest-50 transition-colors">
+                        购买次卡
+                    </button>
+                </div>
+                
+                <div class="bg-forest-50 rounded-2xl p-8 border border-forest-100 reveal" style="transition-delay: 0.2s">
+                    <div class="text-sm text-forest-500 mb-1">月卡</div>
+                    <div class="text-4xl font-semibold text-forest-950 mb-6">¥99<span class="text-lg text-forest-400 font-normal">/月</span></div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-2 text-sm text-forest-700">
+                            <i data-lucide="check" class="w-4 h-4 text-forest-600"></i>
+                            无限次完整评估
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-forest-700">
+                            <i data-lucide="check" class="w-4 h-4 text-forest-600"></i>
+                            模拟面试功能
+                        </li>
+                    </ul>
+                    <button class="w-full py-2.5 rounded-lg border border-forest-200 text-sm font-medium text-forest-600 hover:border-forest-300 transition-colors">
+                        订阅月卡
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-forest-100">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="h-8 w-8 rounded-lg bg-forest-600 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">FP</span>
+                    </div>
+                    <span class="font-semibold text-forest-950">FacePrep</span>
+                </div>
+                <div class="text-sm text-forest-400">© 2025 FacePrep. 保留所有权利。</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

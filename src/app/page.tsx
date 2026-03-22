@@ -30,12 +30,13 @@ export default function Home() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border/50"
+        className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-[20px]"
+        style={{ boxShadow: "0 1px 0 rgba(195,198,215,0.25)" }}
       >
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex h-16 items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded bg-accent flex items-center justify-center">
+              <div className="h-7 w-7 rounded-lg bg-primary-gradient flex items-center justify-center">
                 <span className="text-white text-xs font-bold font-display tracking-tight">FP</span>
               </div>
               <span className="font-display font-semibold text-foreground tracking-tight">FacePrep</span>
@@ -55,7 +56,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/practice"
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-accent px-5 text-sm font-semibold text-white hover:bg-accent-dark transition-colors"
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl px-5 text-sm font-semibold text-white transition-all duration-300 bg-primary-gradient shadow-glow hover:shadow-glow-lg"
               >
                 开始使用 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -126,14 +127,14 @@ export default function Home() {
               >
                 <Link
                   href="/practice"
-                  className="inline-flex h-12 items-center gap-2 rounded-full bg-accent px-7 text-sm font-semibold text-white hover:bg-accent-dark transition-colors"
+                  className="inline-flex h-12 items-center gap-2 rounded-xl px-7 text-sm font-semibold text-white transition-all duration-300 bg-primary-gradient shadow-glow hover:shadow-glow-lg"
                 >
                   免费开始练习
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/questions"
-                  className="inline-flex h-12 items-center gap-2 rounded-full bg-white border border-border px-7 text-sm font-medium text-foreground hover:border-border-hover transition-colors"
+                  className="inline-flex h-12 items-center gap-2 rounded-xl bg-surface-elevated px-7 text-sm font-medium text-foreground shadow-subtle hover:shadow-soft transition-all duration-300"
                 >
                   浏览题库
                 </Link>
@@ -160,7 +161,7 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.25 }}
               className="hidden lg:block"
             >
-              <div className="bg-white rounded-2xl border border-border shadow-soft-xl overflow-hidden">
+              <div className="bg-surface-elevated rounded-2xl shadow-soft-xl overflow-hidden">
                 {/* Title bar */}
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface/60">
                   <div className="h-2.5 w-2.5 rounded-full bg-error/70" />
@@ -285,7 +286,7 @@ export default function Home() {
           </motion.div>
 
           {/* gap-px panel grid — editorial feel */}
-          <div className="grid md:grid-cols-3 gap-px bg-border/40 rounded-2xl overflow-hidden border border-border/40">
+          <div className="grid md:grid-cols-3 gap-4">
             {[
               {
                 num: "01",
@@ -312,7 +313,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.4 }}
-                className="bg-white p-8 md:p-10 group"
+                className="bg-surface-elevated rounded-2xl p-8 md:p-10 shadow-subtle group"
               >
                 {/* Ghost number */}
                 <div className="tabular-nums font-display text-6xl font-bold text-border/80 mb-6 leading-none select-none">
@@ -352,7 +353,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="border border-border/50 rounded-2xl overflow-hidden bg-white"
+            className="rounded-2xl overflow-hidden bg-surface-elevated shadow-subtle"
           >
             {[
               {
@@ -374,7 +375,7 @@ export default function Home() {
               <div
                 key={step}
                 className={`flex items-start gap-8 px-8 md:px-12 py-8${
-                  i < 2 ? " border-b border-border/50" : ""
+                  i < 2 ? " border-b border-border/10" : ""
                 }`}
               >
                 <div className="tabular-nums font-display text-4xl font-bold text-accent/20 leading-none pt-0.5 w-14 shrink-0">
@@ -403,7 +404,7 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="rounded-2xl bg-accent px-10 py-16 md:py-24 text-center"
+            className="rounded-[2rem] px-10 py-16 md:py-24 text-center bg-primary-gradient" style={{ boxShadow: "0 20px 60px rgba(0,74,198,0.25)" }}
           >
             <div className="text-xs font-semibold uppercase tracking-[0.15em] text-white/40 mb-6">
               开始行动
@@ -420,7 +421,7 @@ export default function Home() {
             </p>
             <Link
               href="/practice"
-              className="inline-flex h-12 items-center gap-2.5 rounded-full bg-white px-8 text-sm font-semibold text-accent hover:bg-white/90 transition-colors"
+              className="inline-flex h-12 items-center gap-2.5 rounded-xl bg-surface-elevated px-8 text-sm font-semibold text-accent hover:bg-white transition-all duration-300 shadow-soft"
             >
               免费开始练习
               <ArrowRight className="h-4 w-4" />
@@ -430,11 +431,11 @@ export default function Home() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────── */}
-      <footer className="py-10 border-t border-border">
+      <footer className="py-10 bg-surface" style={{ borderTop: "1px solid rgba(195,198,215,0.2)" }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2.5">
-              <div className="h-7 w-7 rounded bg-accent flex items-center justify-center">
+              <div className="h-7 w-7 rounded-lg bg-primary-gradient flex items-center justify-center">
                 <span className="text-white text-xs font-bold font-display">FP</span>
               </div>
               <span className="font-display font-semibold text-foreground">FacePrep</span>

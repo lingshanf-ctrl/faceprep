@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FacePrep AI | Master Your Next Interview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "on-secondary-container": "#636262",
+                "on-error": "#ffffff",
+                "on-primary": "#ffffff",
+                "on-secondary": "#ffffff",
+                "inverse-surface": "#313030",
+                "tertiary": "#555555",
+                "surface-dim": "#dcd9d9",
+                "on-primary-container": "#eeefff",
+                "surface-container-lowest": "#ffffff",
+                "surface-container-low": "#f6f3f2",
+                "on-error-container": "#93000a",
+                "on-background": "#1c1b1b",
+                "tertiary-fixed-dim": "#c7c6c6",
+                "secondary": "#5f5e5e",
+                "on-surface": "#1c1b1b",
+                "on-secondary-fixed-variant": "#474746",
+                "primary-fixed": "#dbe1ff",
+                "secondary-fixed": "#e5e2e1",
+                "on-primary-fixed": "#00174b",
+                "primary-fixed-dim": "#b4c5ff",
+                "surface-bright": "#fcf9f8",
+                "secondary-container": "#e2dfde",
+                "on-tertiary-fixed-variant": "#464747",
+                "on-tertiary-fixed": "#1b1c1c",
+                "surface": "#fcf9f8",
+                "surface-container-high": "#eae7e7",
+                "outline": "#737686",
+                "surface-tint": "#0053db",
+                "primary-container": "#2563eb",
+                "secondary-fixed-dim": "#c8c6c5",
+                "tertiary-fixed": "#e4e2e2",
+                "primary": "#004ac6",
+                "surface-container-highest": "#e5e2e1",
+                "on-tertiary": "#ffffff",
+                "on-surface-variant": "#434655",
+                "surface-variant": "#e5e2e1",
+                "on-tertiary-container": "#f2f0ef",
+                "on-primary-fixed-variant": "#003ea8",
+                "inverse-on-surface": "#f3f0ef",
+                "error-container": "#ffdad6",
+                "tertiary-container": "#6d6d6d",
+                "surface-container": "#f0eded",
+                "outline-variant": "#c3c6d7",
+                "inverse-primary": "#b4c5ff",
+                "on-secondary-fixed": "#1c1b1b",
+                "error": "#ba1a1a",
+                "background": "#fcf9f8"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+      </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation -->
+<nav class="bg-[#fcf9f8] dark:bg-[#1c1b1b] backdrop-blur-md bg-opacity-80 docked full-width top-0 z-50 tonal-shift bg-[#f6f3f2] dark:bg-[#2a2928] flat no shadows">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-12">
+<span class="text-2xl font-bold tracking-tighter text-[#1c1b1b] dark:text-[#fcf9f8] font-headline">FacePrep</span>
+<div class="hidden md:flex items-center gap-8 font-['Plus_Jakarta_Sans'] tracking-tight font-semibold">
+<a class="text-[#57534e] dark:text-[#a8a29e] hover:text-[#2563EB] transition-colors duration-200" href="#">Dashboard</a>
+<a class="text-[#57534e] dark:text-[#a8a29e] hover:text-[#2563EB] transition-colors duration-200" href="#">Question Bank</a>
+<a class="text-[#57534e] dark:text-[#a8a29e] hover:text-[#2563EB] transition-colors duration-200" href="#">Mock Interviews</a>
+<a class="text-[#57534e] dark:text-[#a8a29e] hover:text-[#2563EB] transition-colors duration-200" href="#">Analytics</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center gap-4 text-[#57534e]">
+<span class="material-symbols-outlined cursor-pointer hover:text-[#2563EB]">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-[#2563EB]">settings</span>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg font-semibold hover:opacity-90 transition-all active:scale-95">Start Practice</button>
+</div>
+</div>
+</nav>
+<main>
+<!-- Hero Section -->
+<section class="relative pt-32 pb-24 overflow-hidden">
+<div class="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
+<div class="z-10">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-label text-xs font-bold mb-6">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+                        TRUSTED BY 50,000+ CANDIDATES
+                    </div>
+<h1 class="font-headline text-5xl lg:text-7xl font-extrabold tracking-tighter leading-[1.1] mb-8 text-on-surface">
+                        Master Your Next <span class="text-primary italic">Interview</span> with AI.
+                    </h1>
+<p class="text-on-surface-variant text-lg lg:text-xl leading-relaxed mb-10 max-w-xl">
+                        FacePrep provides a high-fidelity mock interview environment with real-time feedback from our advanced AI mentor.
+                    </p>
+<div class="flex flex-col sm:flex-row gap-4">
+<button class="hero-gradient text-on-primary px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
+                            Start Practice for Free
+                        </button>
+<button class="bg-surface-container-high text-on-surface px-8 py-4 rounded-xl font-bold text-lg hover:bg-surface-container-highest transition-all">
+                            Watch Demo
+                        </button>
+</div>
+</div>
+<!-- AI Interface Visualization -->
+<div class="relative">
+<div class="absolute -inset-4 bg-primary/5 blur-3xl rounded-full"></div>
+<div class="relative glass-card rounded-2xl p-6 shadow-2xl border border-outline-variant/20">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-error"></div>
+<span class="font-mono text-sm font-bold text-on-surface-variant">00:14:52</span>
+</div>
+<div class="px-3 py-1 bg-surface-container-high rounded-md text-xs font-bold">SENIOR ENGINEER ROLE</div>
+</div>
+<div class="aspect-video bg-inverse-surface rounded-xl mb-6 relative overflow-hidden group">
+<img class="w-full h-full object-cover opacity-80" data-alt="Candidate practicing mock interview on camera" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwXZin6g-dNgWkIhb2faAJj5n0ZRngrvfK4O4AbhcwJq1rI2x2gYqVIQsoy8N1562z8qKFd9VaowdUPKSewVds1E3IZl8QOjcxjehi9nUCTeqjNu9dYE3qkJPaBoSmr-gBDBA4XRvm1RGbuO2JR_tdlk1TqO7KShl9aZ-1NaNA5LDImuhVrsBSDAj3-tJOaqN_HUculVJCQYTfPr31B7vCWH8GCcjRCR_ME2itZPraXny82sqwPf-hroDmX-GokuE21d_B00162JT2"/>
+<div class="absolute inset-0 bg-gradient-to-t from-on-surface/60 to-transparent"></div>
+<div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+<div class="text-on-primary">
+<p class="text-xs font-bold opacity-80">CURRENT QUESTION</p>
+<p class="font-semibold">"Tell me about a time you handled a difficult stakeholder."</p>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/10 shadow-sm">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="text-xs font-bold text-primary uppercase tracking-widest">AI Feedback</span>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">Great structure using the STAR method. Consider adding more quantitative results to your 'Action' phase to increase impact.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Social Proof Section -->
+<section class="py-16 bg-surface-container-low border-y border-outline-variant/10">
+<div class="max-w-7xl mx-auto px-8">
+<p class="text-center font-label text-xs font-bold text-on-secondary-container tracking-[0.2em] mb-12 uppercase">Our Alumni Work At</p>
+<div class="flex flex-wrap justify-center items-center gap-12 lg:gap-24 opacity-40 grayscale">
+<img class="h-6" data-alt="Google logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0b5bXOAY6HXxNjEbVGTAhxqyClScl5Ay7sYidUz2GFgUlbyO4h6qgB6RJT-13VwBYZinIHhRarAHcX4kMu9RakxGc1WabPffe7k2wNmAQ2_fmCfs-XTEyX96ea5hiL6gz6LEULEpOc4yv6ARYO1QkaaXnN9yZ1dEhchtxqBY02SUak3Ua7cfbZpctQxfmuUfiOOyd03fiHmDFqcSR_paBLYgLVSGgH7iz89BgdEPiO2WOIGiO0NoJKDmTDHc0Qe9LLK3kWgRgQuzS"/>
+<img class="h-6" data-alt="Meta logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMlrxD2DRyFnkdAzKAtrV7oMPvy_DsXu767LLJTsfazexibHjR26Trp1p7J7J6CAX4ln9NPoAIR6gDNryturQSSAa12756mgxYsk79ibOCI-MkE6shMVltb1eeFFtrelqSjfOzR520mZcnKAxIoTikkLMOG7U7e5knPM9FzAyuuoquMa2Ighhy5N9tDzYxSlY7KBukIM-tfcCI7YXiBmQ2AXNoJYxp3sZjrFC0zahParByM_ek5_Ed8Y8APy4AIYmNHmADmxgPlRu3"/>
+<img class="h-6" data-alt="Amazon logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeD3kIA8pw_p0tSDsJ0i9Lh0W5FiD_pX9ChJ0hYlOh_84KEEXQvlrTdQpRUytb03e9oMO5VDmzG-Mdg5TJH2crLfjgFhQCP3RRaQ_aCy5WzjmistgZu0NysqoXbxtyDLh4f4kgnwk28L9t_Ph2dn4NNQFMo5-Hfw2Y3AHq0JkuTQ7VNsOGimw4yrQcRBRx6wCiKAyXIv7DrVjj62l5QYC2ATe4XyEjdO1YP2uSwEagcPokQPZMz4uVmIrlsqsqadHQedB492x1YlpO"/>
+<img class="h-6" data-alt="Microsoft logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNE4OrPPT7GF9YEeogz4AAcPOapmtK5KxWraCUAWZjf2kDRjpiKsMyTrsfwMVHBfyqXGzjAJVKY7OGuvKQoOhy6OpeYWYVPnKHMVhCvHGPyy_8c9Kq22Ob7hl5LEJFisqGIZE37XyYWrsQI1w7n9pwEpb6_nk-G51a299p55_rxm424tTF_dC4-XK_Ql87jgmgCy3mhFG2mgWvbNlUwF5eoVNZQ1ZnKVSHODTlSXDQrVS0YUY9HqLI7Pw_q64R1pSzbSUKTxk060nA"/>
+<img class="h-6" data-alt="Apple logo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3wX0WjRbv1x_rkkhrkDFNSZyxsLGkB3tJADEkX0r3sOdrC66fKA61PIwgWo_ypVvb70WY5hC4CM5dND5Qqq6M_BBJRciWk7nhEy77aE7ItaG-qlW_wF_vDwRuVNKGv8j0CuahwKe2C0e-KnMHxq9cU0VtH1xILZFKSCrjZQl0-Z9wKzeENjHfRT9Lm5uB8MSaM2mEYrmQyUJu2VDWxR6kDOUbvhpQztGHez1EbLfIsQLdf4MXYV7z481sJn8t0W-47cLGQfuMAtLu"/>
+</div>
+</div>
+</section>
+<!-- The Three-Step Flow -->
+<section class="py-32 bg-surface">
+<div class="max-auto max-w-7xl px-8">
+<div class="text-center mb-24">
+<h2 class="font-headline text-4xl font-bold tracking-tight mb-4">Your Path to Career Excellence</h2>
+<p class="text-on-surface-variant max-w-2xl mx-auto">Three simple steps to transform your interview performance from nervous to natural.</p>
+</div>
+<div class="grid md:grid-cols-3 gap-16 relative">
+<!-- Step 1 -->
+<div class="relative text-center">
+<div class="w-20 h-20 hero-gradient rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary/20">
+<span class="material-symbols-outlined text-on-primary text-3xl">list_alt</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-4">Choose Question</h3>
+<p class="text-on-surface-variant leading-relaxed px-4">Select from 5,000+ role-specific questions curated by industry experts from top tech companies.</p>
+</div>
+<!-- Step 2 -->
+<div class="relative text-center">
+<div class="w-20 h-20 hero-gradient rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary/20">
+<span class="material-symbols-outlined text-on-primary text-3xl">videocam</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-4">AI Interview</h3>
+<p class="text-on-surface-variant leading-relaxed px-4">Record your response. Our AI tracks your eye contact, filler words, sentiment, and technical accuracy.</p>
+</div>
+<!-- Step 3 -->
+<div class="relative text-center">
+<div class="w-20 h-20 hero-gradient rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary/20">
+<span class="material-symbols-outlined text-on-primary text-3xl">analytics</span>
+</div>
+<h3 class="font-headline text-xl font-bold mb-4">Analysis</h3>
+<p class="text-on-surface-variant leading-relaxed px-4">Get an instant score and personalized improvement tips based on your specific performance metrics.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Bento Grid -->
+<section class="py-32 bg-surface-container-low">
+<div class="max-w-7xl mx-auto px-8">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- Feature 1: Main -->
+<div class="md:col-span-8 bg-surface-container-lowest p-10 rounded-3xl border border-outline-variant/10 shadow-sm overflow-hidden relative group">
+<div class="relative z-10">
+<span class="material-symbols-outlined text-primary mb-6 text-4xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<h3 class="font-headline text-3xl font-bold mb-4">Real-time AI Feedback</h3>
+<p class="text-on-surface-variant max-w-md text-lg leading-relaxed">Our proprietary AI engine analyzes your response while you're speaking, providing instant visual cues for pacing and clarity.</p>
+</div>
+<div class="absolute bottom-0 right-0 w-1/2 translate-y-12 translate-x-12 opacity-20 group-hover:translate-y-8 transition-transform duration-500">
+<div class="w-full aspect-square bg-primary-container rounded-full blur-[100px]"></div>
+</div>
+</div>
+<!-- Feature 2: Side -->
+<div class="md:col-span-4 bg-primary p-10 rounded-3xl text-on-primary flex flex-col justify-between">
+<div>
+<span class="material-symbols-outlined mb-6 text-4xl">database</span>
+<h3 class="font-headline text-2xl font-bold mb-4">Vast Question Bank</h3>
+<p class="opacity-80 leading-relaxed">Updated daily with the latest questions from LeetCode, Glassdoor, and internal company leaks.</p>
+</div>
+<div class="pt-8 border-t border-on-primary/10 mt-8">
+<span class="font-bold text-4xl">5,000+</span>
+<p class="text-xs uppercase tracking-widest opacity-60">Verified Questions</p>
+</div>
+</div>
+<!-- Feature 3: Bottom Left -->
+<div class="md:col-span-5 bg-surface-container-lowest p-10 rounded-3xl border border-outline-variant/10 shadow-sm">
+<span class="material-symbols-outlined text-primary mb-6 text-4xl">dashboard_customize</span>
+<h3 class="font-headline text-2xl font-bold mb-4">Progress Tracking Dashboard</h3>
+<p class="text-on-surface-variant leading-relaxed">Visualize your improvement over time with detailed charts mapping your soft skills and technical proficiency.</p>
+</div>
+<!-- Feature 4: Bottom Right -->
+<div class="md:col-span-7 bg-surface-container-highest p-10 rounded-3xl relative overflow-hidden">
+<div class="flex flex-col md:flex-row gap-8 items-center h-full">
+<div class="flex-1">
+<h3 class="font-headline text-2xl font-bold mb-4">Personal AI Coach</h3>
+<p class="text-on-surface-variant leading-relaxed">Get a dedicated virtual mentor that learns your weaknesses and builds custom practice paths to overcome them.</p>
+</div>
+<div class="w-48 h-48 bg-surface-container-lowest rounded-2xl shadow-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-6xl" style="font-variation-settings: 'FILL' 1;">face_retouching_natural</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA Section -->
+<section class="py-32 bg-surface">
+<div class="max-w-5xl mx-auto px-8">
+<div class="hero-gradient rounded-[3rem] p-12 lg:p-20 text-center relative overflow-hidden shadow-2xl">
+<div class="absolute top-0 left-0 w-full h-full opacity-10">
+<div class="absolute top-10 left-10 w-40 h-40 border-4 border-on-primary rounded-full"></div>
+<div class="absolute bottom-20 right-20 w-80 h-80 border-8 border-on-primary rounded-full"></div>
+</div>
+<h2 class="font-headline text-4xl lg:text-6xl font-extrabold text-on-primary tracking-tighter mb-8 relative z-10">
+                        Ready to Land Your Dream Job?
+                    </h2>
+<p class="text-on-primary-container text-lg lg:text-xl max-w-2xl mx-auto mb-12 relative z-10 opacity-90">
+                        Join thousands of successful candidates who used FacePrep AI to ace their interviews at top-tier tech companies.
+                    </p>
+<button class="bg-surface-container-lowest text-primary px-10 py-5 rounded-2xl font-bold text-xl hover:bg-on-primary transition-all shadow-xl active:scale-95 relative z-10">
+                        Start Your First Mock Now
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#fcf9f8] dark:bg-[#1c1b1b] full-width py-12 tonal-shift-top bg-[#f6f3f2] dark:bg-[#1c1b1b] flat">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 border-t border-[#eae7e7] dark:border-[#2a2928] pt-12 max-w-7xl mx-auto w-full">
+<div class="mb-8 md:mb-0">
+<span class="font-['Plus_Jakarta_Sans'] font-bold text-[#1c1b1b] text-xl">FacePrep AI</span>
+<p class="font-['Inter'] text-xs uppercase tracking-widest text-[#a8a29e] mt-2">© 2024 FacePrep AI. The Articulated Mentor.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8 font-['Inter'] text-xs uppercase tracking-widest">
+<a class="text-[#a8a29e] hover:text-[#2563EB] underline-offset-4 hover:underline transition-all" href="#">Privacy Policy</a>
+<a class="text-[#a8a29e] hover:text-[#2563EB] underline-offset-4 hover:underline transition-all" href="#">Terms of Service</a>
+<a class="text-[#a8a29e] hover:text-[#2563EB] underline-offset-4 hover:underline transition-all" href="#">Cookie Settings</a>
+<a class="text-[#a8a29e] hover:text-[#2563EB] underline-offset-4 hover:underline transition-all" href="#">Contact Support</a>
+</div>
+</div>
+</footer>
+</body></html>

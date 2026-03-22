@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FacePrep - AI 面试教练</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Space Grotesk', 'sans-serif'],
+                        serif: ['Noto Serif SC', 'serif'],
+                    },
+                    colors: {
+                        swiss: {
+                            black: '#000000',
+                            white: '#FFFFFF',
+                            red: '#FF3B30',
+                            gray: '#8E8E93',
+                            light: '#F2F2F7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { 
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .serif { font-family: 'Noto Serif SC', serif; }
+        
+        body {
+            background: #FFFFFF;
+            color: #000000;
+        }
+        
+        /* Swiss Grid Pattern */
+        .grid-bg {
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 80px 80px;
+        }
+        
+        .border-swiss {
+            border: 3px solid #000000;
+        }
+        
+        .border-swiss-thick {
+            border: 4px solid #000000;
+        }
+        
+        .border-swiss-red {
+            border: 3px solid #FF3B30;
+        }
+        
+        /* Typography */
+        .display-xl {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 700;
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            text-transform: uppercase;
+        }
+        
+        .display-lg {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+        }
+        
+        .label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+        
+        /* Geometric Shapes */
+        .geo-square {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #000000;
+        }
+        
+        .geo-rect-red {
+            width: 100%;
+            height: 8px;
+            background: #FF3B30;
+        }
+        
+        .geo-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #000000;
+        }
+        
+        .geo-circle-filled {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #FF3B30;
+        }
+        
+        /* Hover effects */
+        .hover-invert {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-invert:hover {
+            background: #000000;
+            color: #FFFFFF;
+        }
+        
+        .btn-primary {
+            background: #000000;
+            color: #FFFFFF;
+            border: 3px solid #000000;
+            padding: 16px 32px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background: #FF3B30;
+            border-color: #FF3B30;
+        }
+        
+        .btn-secondary {
+            background: #FFFFFF;
+            color: #000000;
+            border: 3px solid #000000;
+            padding: 16px 32px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #000000;
+            color: #FFFFFF;
+        }
+        
+        /* Number display */
+        .big-number {
+            font-size: 5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        /* Step indicator */
+        .step-number {
+            font-size: 6rem;
+            font-weight: 700;
+            color: #FF3B30;
+            line-height: 0.8;
+        }
+        
+        /* Pricing card */
+        .pricing-card {
+            border: 3px solid #000000;
+            transition: all 0.2s ease;
+        }
+        
+        .pricing-card:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 8px 8px 0 #000000;
+        }
+        
+        .pricing-card.featured {
+            background: #000000;
+            color: #FFFFFF;
+        }
+        
+        .pricing-card.featured:hover {
+            box-shadow: 8px 8px 0 #FF3B30;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Grid Background -->
+    <div class="fixed inset-0 grid-bg -z-10"></div>
+
+    <!-- Navigation -->
+    <nav class="border-b-4 border-black">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex h-20 items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-black flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">FP</span>
+                    </div>
+                    <span class="text-2xl font-bold tracking-tight">FACEPREP</span>
+                </div>
+                
+                <!-- Menu -->
+                <div class="hidden md:flex items-center gap-1">
+                    <a href="#" class="px-6 py-2 font-medium hover:bg-black hover:text-white transition-colors">题库</a>
+                    <a href="#" class="px-6 py-2 font-medium hover:bg-black hover:text-white transition-colors">功能</a>
+                    <a href="#" class="px-6 py-2 font-medium hover:bg-black hover:text-white transition-colors">定价</a>
+                </div>
+                
+                <!-- CTA -->
+                <div class="flex items-center gap-4">
+                    <button class="font-medium hover:text-swiss-red transition-colors">登录</button>
+                    <button class="btn-primary text-sm py-3 px-6">开始使用</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="py-20 lg:py-32">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-12 gap-8">
+                <!-- Left Content -->
+                <div class="lg:col-span-7 space-y-8">
+                    <!-- Label -->
+                    <div class="flex items-center gap-4">
+                        <div class="geo-rect-red w-12"></div>
+                        <span class="label">AI 面试教练 · 国内可用</span>
+                    </div>
+                    
+                    <!-- Main Title -->
+                    <h1 class="display-xl">
+                        让面试<br>
+                        <span class="text-swiss-red">成为优势</span>
+                    </h1>
+                    
+                    <!-- Description -->
+                    <p class="serif text-lg text-gray-600 max-w-md leading-relaxed">
+                        150+ 真实面试题库，AI 多维度评估，精准盲点定位。系统性提升面试表达能力。
+                    </p>
+                    
+                    <!-- CTAs -->
+                    <div class="flex flex-wrap gap-4 pt-4">
+                        <button class="btn-primary">
+                            免费开始练习
+                        </button>
+                        <button class="btn-secondary">
+                            浏览题库
+                        </button>
+                    </div>
+                    
+                    <!-- Trust badges -->
+                    <div class="flex items-center gap-8 pt-8 border-t-2 border-black">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">2,000+</div>
+                            <div class="label text-gray-500 mt-1">活跃用户</div>
+                        </div>
+                        <div class="w-px h-12 bg-black"></div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">98%</div>
+                            <div class="label text-gray-500 mt-1">满意度</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Visual -->
+                <div class="lg:col-span-5">
+                    <div class="border-swiss-thick bg-white">
+                        <!-- Header -->
+                        <div class="flex items-center justify-between px-6 py-4 border-b-4 border-black">
+                            <div class="flex gap-2">
+                                <div class="w-4 h-4 border-2 border-black"></div>
+                                <div class="w-4 h-4 bg-black"></div>
+                            </div>
+                            <span class="label">FACEPREP AI</span>
+                        </div>
+                        
+                        <div class="p-6 space-y-6">
+                            <!-- Question -->
+                            <div class="border-l-4 border-swiss-red pl-4">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="label text-gray-500">项目经历</span>
+                                    <span class="px-2 py-0.5 border-2 border-black text-xs font-bold">中等</span>
+                                </div>
+                                <p class="font-medium">"介绍一个你负责过的最有挑战的项目"</p>
+                            </div>
+                            
+                            <!-- Input -->
+                            <div class="border-2 border-black p-4 bg-gray-50">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-black flex items-center justify-center">
+                                        <i data-lucide="mic" class="w-5 h-5 text-white"></i>
+                                    </div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-1 bg-black/20"></div>
+                                        <div class="h-1 bg-black/20 w-4/5"></div>
+                                        <div class="h-1 bg-black/20 w-3/5"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Score -->
+                            <div class="border-2 border-black p-4">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-3 h-3 bg-swiss-red"></div>
+                                        <span class="label">AI 评估</span>
+                                    </div>
+                                    <div class="text-4xl font-bold">84<span class="text-lg text-gray-400">/100</span></div>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-4">
+                                        <span class="label w-20">内容完整</span>
+                                        <div class="flex-1 h-2 bg-gray-200">
+                                            <div class="h-full bg-black" style="width: 85%"></div>
+                                        </div>
+                                        <span class="label">85</span>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <span class="label w-20">结构清晰</span>
+                                        <div class="flex-1 h-2 bg-gray-200">
+                                            <div class="h-full bg-black" style="width: 78%"></div>
+                                        </div>
+                                        <span class="label">78</span>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <span class="label w-20">表达流畅</span>
+                                        <div class="flex-1 h-2 bg-gray-200">
+                                            <div class="h-full bg-swiss-red" style="width: 92%"></div>
+                                        </div>
+                                        <span class="label">92</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="border-y-4 border-black">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-2 lg:grid-cols-4">
+                <div class="p-8 text-center border-r-4 border-black">
+                    <div class="big-number">150+</div>
+                    <div class="label mt-2 text-gray-500">精选面试题</div>
+                </div>
+                <div class="p-8 text-center border-r-4 border-black">
+                    <div class="big-number">5</div>
+                    <div class="label mt-2 text-gray-500">评估维度</div>
+                </div>
+                <div class="p-8 text-center border-r-4 border-black">
+                    <div class="big-number">11</div>
+                    <div class="label mt-2 text-gray-500">职能方向</div>
+                </div>
+                <div class="p-8 text-center">
+                    <div class="big-number text-swiss-red">∞</div>
+                    <div class="label mt-2 text-gray-500">免费练习</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-12 gap-8 mb-16">
+                <div class="lg:col-span-4">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="geo-rect-red w-8"></div>
+                        <span class="label">核心功能</span>
+                    </div>
+                    <h2 class="display-lg">
+                        系统化提升<br>面试能力
+                    </h2>
+                </div>
+                <div class="lg:col-span-8 flex items-end">
+                    <p class="serif text-lg text-gray-600 max-w-xl">
+                        通过科学的训练方法，帮助你系统性提升面试表达能力，从内容到形式全方位优化。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="border-swiss-thick p-8 hover-invert">
+                    <div class="mb-6">
+                        <div class="w-16 h-16 border-4 border-black flex items-center justify-center">
+                            <span class="text-2xl font-bold">01</span>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 uppercase">智能题库</h3>
+                    <p class="serif text-gray-600">覆盖自我介绍、项目复盘、技术深挖、行为面试，按职能方向精选分类。</p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="border-swiss-thick p-8 hover-invert">
+                    <div class="mb-6">
+                        <div class="w-16 h-16 bg-black text-white flex items-center justify-center">
+                            <span class="text-2xl font-bold">02</span>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 uppercase">AI 即时反馈</h3>
+                    <p class="serif text-gray-600">每次作答获得量化得分、优点分析、改进建议和 AI 参考答案。</p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="border-swiss-red p-8 bg-red-50">
+                    <div class="mb-6">
+                        <div class="w-16 h-16 bg-swiss-red text-white flex items-center justify-center">
+                            <span class="text-2xl font-bold">03</span>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 uppercase">盲点定位</h3>
+                    <p class="serif text-gray-700">多维度追踪得分趋势，精准识别短板，针对性强化训练。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section class="py-24 bg-black text-white">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center gap-4 mb-16">
+                <div class="w-16 h-2 bg-swiss-red"></div>
+                <span class="label">使用流程</span>
+            </div>
+            
+            <h2 class="display-lg mb-16">
+                三步，系统性备战
+            </h2>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="border-4 border-white/20 p-8">
+                    <div class="step-number mb-6">01</div>
+                    <h3 class="text-2xl font-bold mb-4 uppercase">选题</h3>
+                    <p class="serif text-gray-400">按职能方向或难度筛选，也可直接用 AI 推荐，快速定位适合你当前阶段的练习题目。</p>
+                </div>
+                
+                <div class="border-4 border-white/20 p-8">
+                    <div class="step-number mb-6">02</div>
+                    <h3 class="text-2xl font-bold mb-4 uppercase">作答</h3>
+                    <p class="serif text-gray-400">文字或语音作答，模拟真实面试节奏，支持反复练习，找到最自然的表达方式。</p>
+                </div>
+                
+                <div class="border-4 border-swiss-red p-8">
+                    <div class="step-number mb-6">03</div>
+                    <h3 class="text-2xl font-bold mb-4 uppercase">复盘</h3>
+                    <p class="serif text-gray-400">获取多维度 AI 分析报告，精准定位改进点，形成有效的练习闭环，持续进步。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="py-24">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <div class="flex items-center justify-center gap-4 mb-6">
+                    <div class="w-12 h-1 bg-black"></div>
+                    <span class="label">定价方案</span>
+                    <div class="w-12 h-1 bg-black"></div>
+                </div>
+                <h2 class="display-lg">选择适合你的方案</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Free -->
+                <div class="pricing-card p-8">
+                    <div class="label text-gray-500 mb-2">免费版</div>
+                    <div class="text-5xl font-bold mb-8">¥0</div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-black"></div>
+                            <span class="serif">基础题库访问</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-black"></div>
+                            <span class="serif">简单 AI 反馈</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-black"></div>
+                            <span class="serif">关键词覆盖检查</span>
+                        </li>
+                    </ul>
+                    
+                    <button class="w-full py-4 border-3 border-black font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors">
+                        开始使用
+                    </button>
+                </div>
+                
+                <!-- Pay as you go -->
+                <div class="pricing-card featured p-8">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="label text-gray-400">次卡</span>
+                        <div class="px-3 py-1 bg-swiss-red text-white text-xs font-bold">推荐</div>
+                    </div>
+                    
+                    <div class="text-5xl font-bold mb-8">¥29<span class="text-xl text-gray-400 font-normal">/10次</span></div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-white"></div>
+                            <span class="serif">完整题库访问</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-white"></div>
+                            <span class="serif">深度 AI 评估</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-white"></div>
+                            <span class="serif">历史记录保存</span>
+                        </li>
+                    </ul>
+                    
+                    <button class="w-full py-4 bg-white text-black font-bold uppercase tracking-wider hover:bg-swiss-red hover:text-white transition-colors">
+                        购买次卡
+                    </button>
+                </div>
+                
+                <!-- Monthly -->
+                <div class="pricing-card p-8">
+                    <div class="label text-gray-500 mb-2">月卡</div>
+                    <div class="text-5xl font-bold mb-8">¥99<span class="text-xl text-gray-400 font-normal">/月</span></div>
+                    
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-black"></div>
+                            <span class="serif">无限次完整评估</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-black"></div>
+                            <span class="serif">模拟面试功能</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-black"></div>
+                            <span class="serif">专属客服支持</span>
+                        </li>
+                    </ul>
+                    
+                    <button class="w-full py-4 border-3 border-black font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors">
+                        订阅月卡
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24 border-y-4 border-black">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <div class="flex items-center justify-center gap-4 mb-8">
+                <div class="w-20 h-1 bg-swiss-red"></div>
+                <div class="w-4 h-4 bg-black rotate-45"></div>
+                <div class="w-20 h-1 bg-swiss-red"></div>
+            </div>
+            
+            <h2 class="display-lg mb-6">
+                准备好拿下<br>
+                <span class="text-swiss-red">下一个 OFFER</span> 了吗？
+            </h2>
+            
+            <p class="serif text-xl text-gray-600 mb-10 max-w-lg mx-auto">
+                加入 2,000+ 正在系统备战的求职者
+            </p>
+            
+            <button class="btn-primary text-lg px-12 py-5">
+                免费开始练习
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-black flex items-center justify-center">
+                        <span class="text-white font-bold">FP</span>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">FACEPREP</span>
+                </div>
+                <div class="label text-gray-400">© 2025 FACEPREP. ALL RIGHTS RESERVED.</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

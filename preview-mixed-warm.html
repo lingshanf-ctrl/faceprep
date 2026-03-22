@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FacePrep - AI 面试教练</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { font-family: 'Inter', 'Noto Sans SC', sans-serif; }
+        
+        /* 温暖奶油色背景 */
+        body {
+            background: #FDFBF7;
+            color: #2D2A26;
+        }
+        
+        /* 有机圆角 - 手绘感 */
+        .organic-card {
+            background: #FFFBF5;
+            border: 1.5px solid #E8DDD0;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(45, 42, 38, 0.04);
+            transition: all 0.25s ease;
+        }
+        
+        .organic-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(45, 42, 38, 0.08);
+            border-color: #D4C4B0;
+        }
+        
+        /* 柔和投影 */
+        .soft-shadow {
+            box-shadow: 0 1px 3px rgba(45, 42, 38, 0.05), 
+                        0 4px 12px rgba(45, 42, 38, 0.03);
+        }
+        
+        /* 手绘风格按钮 */
+        .btn-warm {
+            background: #B45309;
+            color: white;
+            border-radius: 50px;
+            padding: 14px 28px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(180, 83, 9, 0.2);
+        }
+        
+        .btn-warm:hover {
+            background: #92400E;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.3);
+        }
+        
+        .btn-soft {
+            background: white;
+            color: #57534E;
+            border: 1.5px solid #E8DDD0;
+            border-radius: 50px;
+            padding: 14px 28px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-soft:hover {
+            border-color: #D4C4B0;
+            background: #FFFBF5;
+        }
+        
+        /* 装饰性形状 */
+        .blob-shape {
+            position: absolute;
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            opacity: 0.4;
+            filter: blur(40px);
+            z-index: -1;
+        }
+        
+        /* 高亮文字 */
+        .text-highlight {
+            background: linear-gradient(120deg, #FDE68A 0%, #FDE68A 100%);
+            background-repeat: no-repeat;
+            background-size: 100% 35%;
+            background-position: 0 85%;
+            padding: 0 4px;
+        }
+        
+        /* 微妙的颗粒纹理 */
+        .texture-bg {
+            position: relative;
+        }
+        
+        .texture-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.015;
+            pointer-events: none;
+        }
+        
+        /* 滚动动画 */
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* 标签样式 */
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: white;
+            border: 1px solid #E8DDD0;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            color: #78716C;
+        }
+        
+        /* 进度条 */
+        .progress-warm {
+            height: 6px;
+            background: #F5F0E8;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-warm-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #D97706, #B45309);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="antialiased texture-bg">
+    <!-- 背景装饰 -->
+    <div class="blob-shape w-96 h-96 bg-orange-200 top-0 left-1/4"></div>
+    <div class="blob-shape w-80 h-80 bg-amber-200 top-1/3 right-0"></div>
+
+    <!-- Nav -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-[#FDFBF7]/90 backdrop-blur-md border-b border-[#E8DDD0]/50">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex h-18 items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-full bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center shadow-sm">
+                        <span class="text-white text-xs font-bold">FP</span>
+                    </div>
+                    <span class="font-semibold text-xl text-stone-800">FacePrep</span>
+                </div>
+                <div class="flex items-center gap-8">
+                    <a href="#" class="text-sm text-stone-500 hover:text-stone-800 transition-colors hidden sm:block">题库</a>
+                    <a href="#" class="text-sm text-stone-500 hover:text-stone-800 transition-colors hidden sm:block">功能</a>
+                    <a href="#" class="text-sm text-stone-500 hover:text-stone-800 transition-colors hidden sm:block">定价</a>
+                    <button class="text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors">登录</button>
+                    <button class="btn-warm text-sm py-2.5 px-5">开始使用</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="pt-36 pb-24">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <!-- Left -->
+                <div class="space-y-8">
+                    <div class="tag">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        AI 面试教练 · 国内可用
+                    </div>
+                    
+                    <h1 class="text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.1] text-stone-800">
+                        让面试<br>
+                        <span class="text-highlight">成为优势</span>
+                    </h1>
+                    
+                    <p class="text-lg text-stone-500 leading-relaxed max-w-md">
+                        150+ 真实面试题库，AI 多维度评估，精准盲点定位。系统性提升面试表达能力，拿下理想 offer。
+                    </p>
+                    
+                    <div class="flex flex-wrap gap-4">
+                        <button class="btn-warm">
+                            免费开始练习
+                        </button>
+                        <button class="btn-soft">
+                            浏览题库
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-6 pt-4">
+                        <div class="flex -space-x-2">
+                            <div class="w-9 h-9 rounded-full bg-blue-400 border-2 border-white flex items-center justify-center text-xs text-white font-medium">L</div>
+                            <div class="w-9 h-9 rounded-full bg-green-400 border-2 border-white flex items-center justify-center text-xs text-white font-medium">W</div>
+                            <div class="w-9 h-9 rounded-full bg-orange-400 border-2 border-white flex items-center justify-center text-xs text-white font-medium">Z</div>
+                            <div class="w-9 h-9 rounded-full bg-stone-200 border-2 border-white flex items-center justify-center text-xs text-stone-600 font-medium">+2k</div>
+                        </div>
+                        <span class="text-sm text-stone-400"><span class="font-semibold text-stone-700">2,000+</span> 求职者正在使用</span>
+                    </div>
+                </div>
+                
+                <!-- Right - Product Preview -->
+                <div class="relative">
+                    <div class="organic-card p-6">
+                        <!-- Window bar -->
+                        <div class="flex items-center gap-2 mb-5 pb-4 border-b border-[#E8DDD0]">
+                            <div class="flex gap-1.5">
+                                <div class="w-3 h-3 rounded-full bg-red-300"></div>
+                                <div class="w-3 h-3 rounded-full bg-amber-300"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-300"></div>
+                            </div>
+                            <div class="ml-auto text-xs text-stone-400">FacePrep</div>
+                        </div>
+                        
+                        <!-- Question -->
+                        <div class="mb-5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs font-medium text-stone-500">项目经历</span>
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">中等</span>
+                            </div>
+                            <p class="text-sm text-stone-700 font-medium leading-relaxed">
+                                "介绍一个你负责过的最有挑战的项目，你是如何解决核心问题的？"
+                            </p>
+                        </div>
+                        
+                        <!-- Voice input -->
+                        <div class="bg-[#F8F5F0] rounded-2xl p-4 mb-4 border border-[#E8DDD0]">
+                            <div class="flex items-start gap-3">
+                                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+                                    <i data-lucide="mic" class="w-4 h-4 text-white"></i>
+                                </div>
+                                <div class="flex-1 space-y-2 pt-1">
+                                    <div class="h-1.5 bg-[#E8DDD0] rounded-full w-full"></div>
+                                    <div class="h-1.5 bg-[#E8DDD0] rounded-full w-4/5"></div>
+                                    <div class="h-1.5 bg-[#E8DDD0] rounded-full w-3/5"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Feedback -->
+                        <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-100">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-600"></i>
+                                    <span class="text-sm font-medium text-amber-700">AI 评估</span>
+                                </div>
+                                <div class="text-3xl font-bold text-stone-800">
+                                    84<span class="text-base text-stone-400 font-normal">/100</span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs text-stone-500 w-14">内容完整</span>
+                                    <div class="progress-warm flex-1">
+                                        <div class="progress-warm-fill" style="width: 85%"></div>
+                                    </div>
+                                    <span class="text-xs text-stone-500 w-6 text-right">85</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs text-stone-500 w-14">结构清晰</span>
+                                    <div class="progress-warm flex-1">
+                                        <div class="progress-warm-fill" style="width: 78%"></div>
+                                    </div>
+                                    <span class="text-xs text-stone-500 w-6 text-right">78</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs text-stone-500 w-14">表达流畅</span>
+                                    <div class="progress-warm flex-1">
+                                        <div class="progress-warm-fill" style="width: 92%"></div>
+                                    </div>
+                                    <span class="text-xs text-stone-500 w-6 text-right">92</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="py-14">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="organic-card p-8">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="text-center reveal">
+                        <div class="text-4xl font-bold text-stone-800 mb-1">150+</div>
+                        <div class="text-sm text-stone-500">精选面试题</div>
+                    </div>
+                    <div class="text-center reveal" style="transition-delay: 0.1s">
+                        <div class="text-4xl font-bold text-stone-800 mb-1">5</div>
+                        <div class="text-sm text-stone-500">评估维度</div>
+                    </div>
+                    <div class="text-center reveal" style="transition-delay: 0.2s">
+                        <div class="text-4xl font-bold text-stone-800 mb-1">11</div>
+                        <div class="text-sm text-stone-500">职能方向</div>
+                    </div>
+                    <div class="text-center reveal" style="transition-delay: 0.3s">
+                        <div class="text-4xl font-bold text-amber-600 mb-1">∞</div>
+                        <div class="text-sm text-stone-500">免费练习</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-20">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="text-center mb-14 reveal">
+                <div class="tag mb-4">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i>
+                    核心功能
+                </div>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-stone-800">
+                    系统化提升面试表达能力
+                </h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="organic-card p-6 reveal">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mb-5">
+                        <i data-lucide="book-open" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-stone-800 mb-2">智能题库系统</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed">覆盖自我介绍、项目复盘、技术深挖、行为面试，按职能方向精选分类。</p>
+                </div>
+                
+                <div class="organic-card p-6 reveal" style="transition-delay: 0.1s">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center mb-5">
+                        <i data-lucide="zap" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-stone-800 mb-2">AI 即时反馈</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed">每次作答获得量化得分、优点分析、改进建议和 AI 参考答案。</p>
+                </div>
+                
+                <div class="organic-card p-6 reveal" style="transition-delay: 0.2s">
+                    <div class="w-12 h-12 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center mb-5">
+                        <i data-lucide="target" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-stone-800 mb-2">盲点定位</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed">多维度追踪得分趋势，精准识别短板，针对性强化训练。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section class="py-20">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center mb-14 reveal">
+                <div class="tag mb-4">
+                    <i data-lucide="route" class="w-3.5 h-3.5 text-amber-500"></i>
+                    使用流程
+                </div>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-stone-800">三步，系统性备战</h2>
+            </div>
+            
+            <div class="space-y-5">
+                <div class="organic-card p-6 flex items-start gap-5 reveal">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-xl font-bold flex-shrink-0 shadow-sm">
+                        01
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-stone-800 mb-1">选题</h3>
+                        <p class="text-sm text-stone-500">按职能方向或难度筛选，也可直接用 AI 推荐，快速定位适合你当前阶段的练习题目。</p>
+                    </div>
+                </div>
+                
+                <div class="organic-card p-6 flex items-start gap-5 reveal" style="transition-delay: 0.1s">
+                    <div class="w-14 h-14 rounded-2xl bg-[#F5F0E8] text-stone-700 flex items-center justify-center text-xl font-bold flex-shrink-0 border border-[#E8DDD0]">
+                        02
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-stone-800 mb-1">作答</h3>
+                        <p class="text-sm text-stone-500">文字或语音作答，模拟真实面试节奏，支持反复练习，找到最自然的表达方式。</p>
+                    </div>
+                </div>
+                
+                <div class="organic-card p-6 flex items-start gap-5 reveal" style="transition-delay: 0.2s">
+                    <div class="w-14 h-14 rounded-2xl bg-[#F5F0E8] text-stone-700 flex items-center justify-center text-xl font-bold flex-shrink-0 border border-[#E8DDD0]">
+                        03
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-stone-800 mb-1">复盘</h3>
+                        <p class="text-sm text-stone-500">获取多维度 AI 分析报告，精准定位改进点，形成有效的练习闭环，持续进步。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="py-20">
+        <div class="max-w-5xl mx-auto px-6">
+            <div class="text-center mb-14 reveal">
+                <div class="tag mb-4">
+                    <i data-lucide="credit-card" class="w-3.5 h-3.5 text-amber-500"></i>
+                    定价方案
+                </div>
+                <h2 class="text-3xl lg:text-4xl font-semibold text-stone-800">选择适合你的方案</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="organic-card p-6 reveal">
+                    <div class="text-sm text-stone-400 mb-1">免费版</div>
+                    <div class="text-4xl font-bold text-stone-800 mb-6">¥0</div>
+                    <ul class="space-y-3 mb-6">
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            基础题库访问
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            简单 AI 反馈
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            关键词覆盖检查
+                        </li>
+                    </ul>
+                    <button class="w-full btn-soft py-2.5 text-sm">开始使用</button>
+                </div>
+                
+                <div class="organic-card p-6 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 reveal" style="transition-delay: 0.1s">
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="text-sm text-stone-400">次卡</div>
+                        <div class="text-xs px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium">推荐</div>
+                    </div>
+                    <div class="text-4xl font-bold text-stone-800 mb-6">¥29<span class="text-lg text-stone-400 font-normal">/10次</span></div>
+                    <ul class="space-y-3 mb-6">
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            完整题库访问
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            深度 AI 评估
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            历史记录保存
+                        </li>
+                    </ul>
+                    <button class="w-full btn-warm py-2.5 text-sm">购买次卡</button>
+                </div>
+                
+                <div class="organic-card p-6 reveal" style="transition-delay: 0.2s">
+                    <div class="text-sm text-stone-400 mb-1">月卡</div>
+                    <div class="text-4xl font-bold text-stone-800 mb-6">¥99<span class="text-lg text-stone-400 font-normal">/月</span></div>
+                    <ul class="space-y-3 mb-6">
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            无限次完整评估
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            模拟面试功能
+                        </li>
+                        <li class="flex items-center gap-2 text-sm text-stone-600">
+                            <span class="text-green-500">✓</span>
+                            专属客服支持
+                        </li>
+                    </ul>
+                    <button class="w-full btn-soft py-2.5 text-sm">订阅月卡</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20">
+        <div class="max-w-3xl mx-auto px-6">
+            <div class="organic-card p-10 text-center bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200 reveal">
+                <h2 class="text-3xl font-semibold text-stone-800 mb-3">
+                    准备好拿下<br>
+                    <span class="text-highlight">下一个 offer</span> 了吗？
+                </h2>
+                <p class="text-stone-500 mb-8">加入 2,000+ 正在系统备战的求职者</p>
+                <button class="btn-warm">免费开始练习</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-10 border-t border-[#E8DDD0]">
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-full bg-gradient-to-br from-amber-600 to-orange-700 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold">FP</span>
+                    </div>
+                    <span class="font-semibold text-lg text-stone-800">FacePrep</span>
+                </div>
+                <div class="text-sm text-stone-400">© 2025 FacePrep. 保留所有权利。</div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    </script>
+</body>
+</html>

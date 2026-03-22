@@ -359,9 +359,9 @@ export default function HistoryPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
-          className="bg-white border border-border/50 rounded-xl mb-6 overflow-hidden"
+          className="bg-surface-elevated rounded-xl mb-6 overflow-hidden shadow-subtle"
         >
-          <div className="grid grid-cols-3 divide-x divide-border/50">
+          <div className="grid grid-cols-3 divide-x divide-border/10">
             <div className="p-4 text-center">
               <div className="text-xs text-foreground-muted mb-1.5 flex items-center justify-center gap-1">
                 <Target className="w-3.5 h-3.5" />
@@ -406,10 +406,10 @@ export default function HistoryPage() {
             <button
               key={tab.value}
               onClick={() => setFilter(tab.value)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 filter === tab.value
-                  ? "bg-accent text-white"
-                  : "bg-white border border-border text-foreground-muted hover:text-foreground hover:border-accent/30"
+                  ? "bg-primary-gradient text-white shadow-glow"
+                  : "bg-surface-elevated text-foreground-muted hover:text-foreground shadow-subtle"
               }`}
             >
               {tab.icon}
@@ -451,7 +451,7 @@ export default function HistoryPage() {
                   return (
                     <div
                       key={`${record.type}-${record.id}`}
-                      className="group p-4 bg-white rounded-xl border border-border/50 hover:border-accent/30 transition-all duration-200"
+                      className="group p-4 bg-surface-elevated rounded-xl shadow-subtle hover:shadow-soft transition-all duration-200"
                       style={{ animationDelay: `${recordIndex * 0.05}s` }}
                     >
                       {/* Mobile & Desktop Layout */}

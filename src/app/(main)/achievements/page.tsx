@@ -27,12 +27,12 @@ function AchievementCard({
   return (
     <div
       className={`relative p-5 rounded-xl border transition-all duration-200 ${
-        unlocked ? "bg-amber-50/60 border-amber-200/70" : "bg-white border-border/50 opacity-60"
+        unlocked ? "bg-accent-fixed/30 shadow-subtle" : "bg-surface-elevated shadow-subtle opacity-60"
       }`}
     >
       {/* 解锁标记 */}
       {unlocked && (
-        <div className="absolute top-3 right-3 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
+        <div className="absolute top-3 right-3 w-6 h-6 bg-accent rounded-full flex items-center justify-center">
           <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"
@@ -69,7 +69,7 @@ function AchievementCard({
                 </span>
               </div>              <div className="h-1.5 bg-border/50 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${unlocked ? "bg-amber-500" : "bg-border"}`}
+                  className={`h-full rounded-full transition-all duration-500 ${unlocked ? "bg-accent" : "bg-border"}`}
                   style={{ width: `${progress.percentage}%` }}
                 />
               </div>
@@ -106,7 +106,7 @@ function CategoryTab({
     <button
       onClick={onClick}
       className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium text-sm transition-all ${
-        isActive ? "bg-accent text-white" : "bg-white border border-border text-foreground-muted hover:text-foreground hover:border-accent/30"
+        isActive ? "bg-primary-gradient text-white shadow-glow" : "bg-surface-elevated text-foreground-muted hover:text-foreground shadow-subtle"
       }`}
     >
       <span>{category.icon}</span>
@@ -250,10 +250,10 @@ export default function AchievementsPage() {
         <div className="flex flex-wrap gap-2 mb-6">
           <button
             onClick={() => setActiveCategory("ALL")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-full font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
               activeCategory === "ALL"
-                ? "bg-accent text-white"
-                : "bg-white border border-border text-foreground-muted hover:text-foreground hover:border-accent/30"
+                ? "bg-primary-gradient text-white shadow-glow"
+                : "bg-surface-elevated text-foreground-muted hover:text-foreground shadow-subtle"
             }`}
           >
             <span>🌟</span>

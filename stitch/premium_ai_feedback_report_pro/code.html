@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-variant": "#e5e2e1",
+              "on-background": "#1c1b1b",
+              "tertiary": "#555555",
+              "on-secondary-fixed-variant": "#474746",
+              "secondary-fixed-dim": "#c8c6c5",
+              "inverse-surface": "#313030",
+              "on-primary-fixed": "#00174b",
+              "surface-tint": "#0053db",
+              "surface-bright": "#fcf9f8",
+              "on-primary-container": "#eeefff",
+              "tertiary-container": "#6d6d6d",
+              "on-secondary": "#ffffff",
+              "surface-container-highest": "#e5e2e1",
+              "on-surface": "#1c1b1b",
+              "surface-container-low": "#f6f3f2",
+              "primary-fixed-dim": "#b4c5ff",
+              "on-primary-fixed-variant": "#003ea8",
+              "tertiary-fixed": "#e4e2e2",
+              "surface-container-high": "#eae7e7",
+              "on-primary": "#ffffff",
+              "error": "#ba1a1a",
+              "surface-container": "#f0eded",
+              "background": "#fcf9f8",
+              "inverse-on-surface": "#f3f0ef",
+              "surface": "#fcf9f8",
+              "primary-fixed": "#dbe1ff",
+              "on-tertiary-fixed": "#1b1c1c",
+              "surface-container-lowest": "#ffffff",
+              "surface-dim": "#dcd9d9",
+              "error-container": "#ffdad6",
+              "inverse-primary": "#b4c5ff",
+              "primary-container": "#2563eb",
+              "on-error-container": "#93000a",
+              "outline": "#737686",
+              "on-tertiary-container": "#f2f0ef",
+              "secondary-container": "#e2dfde",
+              "secondary": "#5f5e5e",
+              "on-tertiary": "#ffffff",
+              "on-error": "#ffffff",
+              "secondary-fixed": "#e5e2e1",
+              "tertiary-fixed-dim": "#c7c6c6",
+              "outline-variant": "#c3c6d7",
+              "on-tertiary-fixed-variant": "#464747",
+              "on-secondary-container": "#636262",
+              "on-secondary-fixed": "#1c1b1b",
+              "on-surface-variant": "#434655",
+              "primary": "#004ac6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pro-gradient {
+            background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .circular-progress {
+            transition: stroke-dashoffset 0.85s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Shell -->
+<header class="bg-[#fcf9f8] dark:bg-[#1c1b1b] backdrop-blur-md bg-opacity-80 docked full-width top-0 z-50 sticky">
+<nav class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-[#1c1b1b] dark:text-[#fcf9f8] font-headline tracking-tight">Interview Mentor</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="text-[#1c1b1b]/60 dark:text-[#fcf9f8]/60 hover:text-[#1c1b1b] dark:hover:text-[#fcf9f8] transition-colors duration-200 font-label" href="#">Dashboard</a>
+<a class="text-[#1c1b1b]/60 dark:text-[#fcf9f8]/60 hover:text-[#1c1b1b] dark:hover:text-[#fcf9f8] transition-colors duration-200 font-label" href="#">Practice</a>
+<a class="text-[#2563EB] dark:text-[#3b82f6] font-semibold border-b-2 border-[#2563EB] pb-1 font-label" href="#">Reports</a>
+<a class="text-[#1c1b1b]/60 dark:text-[#fcf9f8]/60 hover:text-[#1c1b1b] dark:hover:text-[#fcf9f8] transition-colors duration-200 font-label" href="#">Insights</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-[#f6f3f2] dark:hover:bg-[#2a2929] rounded-full transition-colors"><span class="material-symbols-outlined text-on-surface-variant">notifications</span></button>
+<button class="p-2 hover:bg-[#f6f3f2] dark:hover:bg-[#2a2929] rounded-full transition-colors"><span class="material-symbols-outlined text-on-surface-variant">settings</span></button>
+<div class="h-8 w-8 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="Professional headshot of a young male professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY9uGmwUSf_tMgozm4k2UqJRA3sOIoucI_SjcSDyZdQFGWEiSbEIxvukGJ4Wimt1Px56H0RcU84xV1b0OVpjdWDdya6VqGvtXEpYRomgbI9GWo-MZBT947F8TtSmg68Ic4Iwszd6NIcDpa7tWqFH_VYzCUpSk1Pgm4BIc6g6YVVQUWL8cpFBqPReBtKcS_0VtO2sDabbWiuFmGy-2i7Cx8N0D5RWHWvLc8VlUtZaZmXyDAlm7Lody17_qNyJctMDkgiVHmqC2ZpYMB"/>
+</div>
+</div>
+</nav>
+</header>
+<main class="max-w-7xl mx-auto px-8 py-12">
+<!-- Premium Header Section -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-16 items-start">
+<div class="lg:col-span-7">
+<div class="flex items-center gap-3 mb-4">
+<span class="px-3 py-1 bg-primary text-on-primary text-[10px] font-bold tracking-widest rounded-full font-headline">PRO</span>
+<span class="text-primary font-bold font-headline tracking-tight">AI FEEDBACK REPORT</span>
+</div>
+<h1 class="text-5xl font-extrabold font-headline tracking-tighter text-on-surface mb-6">Mastering Behavioral Impact</h1>
+<p class="text-xl text-on-surface-variant leading-relaxed max-w-2xl">
+                    Your performance in the "Conflict Resolution" module shows executive-level potential with refined nuances in empathy and structural clarity.
+                </p>
+</div>
+<div class="lg:col-span-5 flex flex-col items-center lg:items-end gap-6">
+<div class="relative group">
+<div class="absolute -inset-1 bg-primary/20 blur-2xl rounded-full group-hover:bg-primary/30 transition duration-1000"></div>
+<div class="relative bg-surface-container-lowest p-8 rounded-[2rem] shadow-[0_20px_40px_rgba(28,27,27,0.06)] flex flex-col items-center border border-outline-variant/10">
+<div class="text-sm font-bold text-primary tracking-widest uppercase mb-2">Overall Score</div>
+<div class="text-7xl font-extrabold font-headline tracking-tighter text-on-surface mb-1">88<span class="text-3xl text-outline-variant">/100</span></div>
+<div class="flex items-center gap-1 text-primary-container font-semibold">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+<span>+12% vs last session</span>
+</div>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 px-6 py-3 bg-surface-container-low text-on-surface font-semibold rounded-xl hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-lg">share</span>
+                        Share
+                    </button>
+<button class="flex items-center gap-2 px-6 py-3 pro-gradient text-on-primary font-semibold rounded-xl shadow-lg hover:brightness-110 transition-all">
+<span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+                        Export PDF
+                    </button>
+</div>
+</div>
+</section>
+<!-- Advanced Metrics Bento Grid -->
+<section class="mb-20">
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-2xl font-bold font-headline tracking-tight">Advanced Metrics</h2>
+<div class="h-[1px] flex-grow mx-8 bg-outline-variant/20"></div>
+<span class="text-sm font-medium text-on-surface-variant bg-surface-container-low px-4 py-1 rounded-full border border-outline-variant/10">Deep Neural Analysis Active</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Content Accuracy -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-transparent hover:border-primary/20 transition-colors">
+<div class="relative h-32 w-32 mx-auto mb-6">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-outline-variant/10" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary transition-all duration-1000" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" stroke-dasharray="264" stroke-dashoffset="26.4" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center text-2xl font-bold font-headline">90%</div>
+</div>
+<div class="text-center">
+<div class="font-bold text-lg mb-1">Content Accuracy</div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-widest">Alignment with JD</p>
+</div>
+</div>
+<!-- Logical Structure -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-transparent hover:border-primary/20 transition-colors">
+<div class="relative h-32 w-32 mx-auto mb-6">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-outline-variant/10" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary transition-all duration-1000" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" stroke-dasharray="264" stroke-dashoffset="52.8" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center text-2xl font-bold font-headline">80%</div>
+</div>
+<div class="text-center">
+<div class="font-bold text-lg mb-1">Logical Structure</div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-widest">STAR Methodology</p>
+</div>
+</div>
+<!-- Impact Density -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-transparent hover:border-primary/20 transition-colors">
+<div class="relative h-32 w-32 mx-auto mb-6">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-outline-variant/10" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary transition-all duration-1000" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" stroke-dasharray="264" stroke-dashoffset="39.6" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center text-2xl font-bold font-headline">85%</div>
+</div>
+<div class="text-center">
+<div class="font-bold text-lg mb-1">Impact Density</div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-widest">Quantifiable results</p>
+</div>
+</div>
+<!-- Professionalism -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-transparent hover:border-primary/20 transition-colors">
+<div class="relative h-32 w-32 mx-auto mb-6">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-outline-variant/10" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary transition-all duration-1000" cx="50" cy="50" fill="transparent" r="42" stroke="currentColor" stroke-dasharray="264" stroke-dashoffset="13.2" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center text-2xl font-bold font-headline">95%</div>
+</div>
+<div class="text-center">
+<div class="font-bold text-lg mb-1">Professionalism</div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-widest">Vocabulary &amp; Etiquette</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Deep-Dive Behavioral Analysis -->
+<section class="mb-20">
+<div class="flex items-center gap-4 mb-8">
+<h2 class="text-2xl font-bold font-headline tracking-tight">Deep-Dive Behavioral Analysis</h2>
+<span class="px-2 py-0.5 border border-primary text-primary text-[10px] font-bold rounded">PRO EXCLUSIVE</span>
+</div>
+<div class="bg-surface-container-low rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-3">
+<div class="p-10 border-b lg:border-b-0 lg:border-r border-outline-variant/10">
+<div class="flex items-center gap-3 mb-6">
+<div class="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">speed</span>
+</div>
+<span class="font-bold text-lg">Delivery Speed</span>
+</div>
+<div class="mb-4 flex items-center justify-between">
+<span class="text-sm font-medium">145 WPM</span>
+<span class="text-xs bg-success/10 text-primary-container px-2 py-1 rounded font-bold">OPTIMAL</span>
+</div>
+<div class="h-1 bg-outline-variant/20 rounded-full mb-6">
+<div class="h-full w-3/4 bg-primary rounded-full"></div>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">Your speech rate is within the professional "trust-building" zone. Avoid speeding up during technical explanations.</p>
+</div>
+<div class="p-10 border-b lg:border-b-0 lg:border-r border-outline-variant/10">
+<div class="flex items-center gap-3 mb-6">
+<div class="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<span class="font-bold text-lg">Tone Analysis</span>
+</div>
+<div class="flex items-center gap-2 mb-6">
+<div class="flex-1 bg-surface-container-high h-2 rounded-full overflow-hidden flex">
+<div class="w-[65%] bg-primary h-full"></div>
+<div class="w-[35%] bg-primary/40 h-full"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<div class="text-xs font-bold text-primary uppercase mb-1">Confidence</div>
+<div class="text-xl font-bold">65%</div>
+</div>
+<div>
+<div class="text-xs font-bold text-primary/60 uppercase mb-1">Empathy</div>
+<div class="text-xl font-bold">35%</div>
+</div>
+</div>
+</div>
+<div class="p-10">
+<div class="flex items-center gap-3 mb-6">
+<div class="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">visibility</span>
+</div>
+<span class="font-bold text-lg">Body Language</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl">check_circle</span>
+<div>
+<div class="text-sm font-bold">Eye Contact</div>
+<div class="text-xs text-on-surface-variant">Sustained 82% of response time.</div>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary/40 text-xl">info</span>
+<div>
+<div class="text-sm font-bold">Hand Gestures</div>
+<div class="text-xs text-on-surface-variant">Increase open-palm gestures for trust.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- AI-Optimized Answer Comparison -->
+<section class="mb-20">
+<h2 class="text-2xl font-bold font-headline tracking-tight mb-8">AI-Optimized Answer Comparison</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<!-- User Answer -->
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold tracking-widest text-outline uppercase px-3 py-1 bg-surface-container-high rounded-full">Your Original Answer</span>
+<span class="text-xs font-medium text-on-surface-variant italic">Transcribed via AI</span>
+</div>
+<div class="flex-grow p-8 bg-surface-container-low rounded-2xl border border-outline-variant/20 italic text-on-surface/80 leading-relaxed font-body">
+                        "So, when the project timeline slipped, I gathered the team. We talked about what went wrong. I told them we needed to work a few extra hours, but I also took on some of the coding tasks myself. In the end, we finished only two days late, which wasn't too bad considering the initial delay."
+                    </div>
+</div>
+<!-- AI Expert Answer -->
+<div class="flex flex-col relative">
+<div class="absolute -top-3 -right-3 z-10 px-3 py-1 pro-gradient text-on-primary text-[10px] font-bold rounded-lg shadow-lg">PRO SUGGESTION</div>
+<div class="flex items-center justify-between mb-4">
+<span class="text-xs font-bold tracking-widest text-primary uppercase px-3 py-1 bg-primary/10 rounded-full">AI-Generated Expert Answer</span>
+<div class="flex gap-1">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+<span class="text-xs font-bold text-primary uppercase">Optimized</span>
+</div>
+</div>
+<div class="flex-grow p-8 bg-surface-container-lowest rounded-2xl border border-primary/20 shadow-[0_15px_30px_rgba(37,99,235,0.08)] text-on-surface leading-relaxed font-body">
+                        "When the project timeline was compromised by a vendor delay, I <span class="bg-primary/10 text-primary px-1 rounded font-semibold">proactively convened a stakeholder alignment session</span>. I implemented a <span class="bg-primary/10 text-primary px-1 rounded font-semibold">resource-reallocation strategy</span> where I personally offloaded 20% of the critical-path coding. By leveraging Agile sprints, we <span class="bg-primary/10 text-primary px-1 rounded font-semibold">mitigated the 2-week risk into a mere 48-hour variance</span>, maintaining client trust."
+                    </div>
+</div>
+</div>
+</section>
+<!-- Actionable Growth Plan -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+<div class="lg:col-span-8">
+<h2 class="text-2xl font-bold font-headline tracking-tight mb-8">Actionable Growth Plan</h2>
+<div class="space-y-4">
+<div class="group flex items-center justify-between p-6 bg-surface-container-lowest border border-outline-variant/10 rounded-2xl hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex items-center gap-6">
+<div class="h-12 w-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary font-bold text-lg">01</div>
+<div>
+<h3 class="font-bold text-lg">Strengthen 'Result' in STAR</h3>
+<p class="text-sm text-on-surface-variant">Use percentages and dollar amounts to quantify success.</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-1 transition-all">chevron_right</span>
+</div>
+<div class="group flex items-center justify-between p-6 bg-surface-container-lowest border border-outline-variant/10 rounded-2xl hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex items-center gap-6">
+<div class="h-12 w-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary font-bold text-lg">02</div>
+<div>
+<h3 class="font-bold text-lg">Eliminate Filler Words</h3>
+<p class="text-sm text-on-surface-variant">Focus on pausing rather than using "So" or "Um".</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-1 transition-all">chevron_right</span>
+</div>
+<div class="group flex items-center justify-between p-6 bg-surface-container-lowest border border-outline-variant/10 rounded-2xl hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex items-center gap-6">
+<div class="h-12 w-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary font-bold text-lg">03</div>
+<div>
+<h3 class="font-bold text-lg">Expand Executive Vocabulary</h3>
+<p class="text-sm text-on-surface-variant">Replace "talked to" with "negotiated with" or "aligned with".</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary group-hover:translate-x-1 transition-all">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-4">
+<h2 class="text-2xl font-bold font-headline tracking-tight mb-8">Learning Path</h2>
+<div class="bg-surface-container-high rounded-3xl p-8">
+<div class="space-y-8">
+<div>
+<div class="text-[10px] font-bold tracking-[0.2em] text-primary uppercase mb-4">Recommended Module</div>
+<div class="flex gap-4 mb-4">
+<div class="h-16 w-16 shrink-0 rounded-xl bg-surface-container-lowest overflow-hidden">
+<img alt="Learning module cover" class="h-full w-full object-cover" data-alt="Corporate office meeting with blue color palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQweJSin2VOlgo79RC2nSrFU1MhT-8ESe9a6Dz1ut1u5w890bfm5mcCjJgTeomDfOZmlK49I3VmSnh-pghZJ4fcRvOJXco658oMZaQH1zudUHs4i6bqw6TC31PoaiQ3nFCZiuntb7DrWDF5eUx9JQ6xHqCPPTpcAPtphR_8d7ak-SPLlbKNFM6Ea2xuYhco5lPI1JIO_0mElcCVqTupzB53oy9S4ZZczLEfgo-jBt4dIGjzkj6vlyNAmhWApsa3nfpAwZ89kF7Zdfl"/>
+</div>
+<div>
+<h4 class="font-bold leading-tight mb-1">Advanced Executive Presence</h4>
+<p class="text-xs text-on-surface-variant">45 mins • 12 Lessons</p>
+</div>
+</div>
+<button class="w-full py-3 bg-surface-container-lowest text-on-surface font-bold text-sm rounded-xl border border-outline-variant/20 hover:bg-surface transition-colors">Start Learning</button>
+</div>
+<div class="pt-8 border-t border-outline-variant/10">
+<div class="text-[10px] font-bold tracking-[0.2em] text-primary uppercase mb-4">Next Practice Session</div>
+<div class="p-4 bg-primary text-on-primary rounded-2xl">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-3xl">psychology</span>
+<span class="text-xs font-bold bg-white/20 px-2 py-1 rounded">TOMORROW</span>
+</div>
+<div class="font-bold text-lg mb-1">C-Suite Simulation</div>
+<p class="text-xs text-white/70 mb-4">Handling hostile questions with grace.</p>
+<button class="w-full py-2 bg-white text-primary font-bold text-xs rounded-lg">Set Reminder</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-[#fcf9f8] dark:bg-[#1c1b1b] border-t-0 w-full px-8 py-12 mt-20 flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto">
+<div class="mb-6 md:mb-0">
+<span class="text-sm font-['Inter'] text-[#1c1b1b]/70 dark:text-[#fcf9f8]/70">© 2024 Interview Mentor AI. All rights reserved.</span>
+</div>
+<div class="flex gap-8">
+<a class="text-sm font-['Inter'] text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50 hover:text-[#2563EB] dark:hover:text-[#3b82f6] underline transition-all opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="text-sm font-['Inter'] text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50 hover:text-[#2563EB] dark:hover:text-[#3b82f6] underline transition-all opacity-80 hover:opacity-100" href="#">Terms of Service</a>
+<a class="text-sm font-['Inter'] text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50 hover:text-[#2563EB] dark:hover:text-[#3b82f6] underline transition-all opacity-80 hover:opacity-100" href="#">Support</a>
+<a class="text-sm font-['Inter'] text-[#1c1b1b]/50 dark:text-[#fcf9f8]/50 hover:text-[#2563EB] dark:hover:text-[#3b82f6] underline transition-all opacity-80 hover:opacity-100" href="#">Feedback</a>
+</div>
+</footer>
+</body></html>

@@ -48,7 +48,7 @@ function LoginPageContent() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Brand Showcase */}
-      <div className="hidden lg:flex lg:w-1/2 bg-accent relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary-gradient">
         {/* Grid Pattern */}
         <div className="absolute inset-0 opacity-[0.07]">
           <div className="absolute inset-0" style={{
@@ -89,7 +89,7 @@ function LoginPageContent() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <Link href="/" className="flex lg:hidden items-center justify-center gap-3 mb-12 group">
-            <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center transition-transform group-hover:scale-105">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105 bg-primary-gradient shadow-glow">
               <span className="text-white font-display font-bold">{t.appShortName}</span>
             </div>
             <span className="font-display text-xl font-semibold text-foreground">{t.appName}</span>
@@ -119,10 +119,7 @@ function LoginPageContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={locale === "zh" ? "请输入邮箱" : "Enter your email"}
                   required
-                  className="w-full px-5 py-4 bg-surface/50 border border-border/50 rounded-xl text-foreground placeholder-foreground-muted
-                    focus:outline-none focus:border-accent focus:bg-white focus:shadow-soft-md
-                    transition-all duration-300
-                    hover:border-accent/40"
+                  className="input-stitch w-full"
                 />
               </div>
             </div>
@@ -175,9 +172,7 @@ function LoginPageContent() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-accent text-white rounded-full font-semibold text-base
-                hover:bg-accent-dark transition-colors
-                disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3.5 text-white rounded-xl font-semibold text-base transition-all duration-300 bg-primary-gradient shadow-glow hover:shadow-glow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="flex items-center justify-center gap-2">
                 {isLoading ? (

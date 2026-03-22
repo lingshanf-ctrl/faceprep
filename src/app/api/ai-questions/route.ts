@@ -65,16 +65,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const MAX_QUESTIONS = 20;
+    if (questions.length > MAX_QUESTIONS) {
+      return NextResponse.json(
+        { error: `一次最多保存 ${MAX_QUESTIONS} 道题目` },
+        { status: 400 }
+      );
+    }
+
+    // 字段长度校验
+    for (const q of questions) {
+      if (!q.title || typeof q.title !== "string" || q.title.trim().length === 0) {
+        return NextResponse.json({ error: "题目标题不能为空" }, { status: 400 });
+      }
+      if (q.title.length > 500) {
+        return NextResponse.json({ error: "题目标题不能超过 500 字符" }, { status: 400 });
+      }
+      if (q.keyPoints && typeof q.keyPoints === "string" && q.keyPoints.length > 2000) {
+        return NextResponse.json({ error: "考察点内容不能超过 2000 字符" }, { status: 400 });
+      }
+    }
+
     // 批量创建题目
     const createdQuestions = await db.$transaction(
       questions.map((q) =>
         db.aIGeneratedQuestion.create({
           data: {
             userId: user.id,
-            title: q.title,
+            title: q.title.trim(),
             type: q.type as QuestionType,
             difficulty: q.difficulty,
-            keyPoints: q.keyPoints,
+            keyPoints: Array.isArray(q.keyPoints) ? (q.keyPoints as string[]).join("、") : q.keyPoints,
             jdText,
             resumeText,
             generationMode,

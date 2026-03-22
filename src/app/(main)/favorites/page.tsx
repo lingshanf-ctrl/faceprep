@@ -106,7 +106,7 @@ export default function FavoritesPage() {
             <div className="mb-10">
               <Link
                 href={`/questions/${getRandomFavoriteId()}`}
-                className="block bg-accent rounded-2xl p-8 text-white group hover:shadow-glow transition-all"
+                className="block rounded-2xl p-8 text-white group hover:shadow-glow-lg transition-all bg-primary-gradient shadow-glow"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-5">
@@ -145,7 +145,7 @@ export default function FavoritesPage() {
                   <Link
                     key={question.id}
                     href={`/questions/${question.id}`}
-                    className="block bg-surface rounded-2xl p-6 hover:bg-accent/5 border border-border hover:border-accent/10 transition-all group"
+                    className="block bg-surface-elevated rounded-2xl p-6 shadow-subtle hover:shadow-soft transition-all group"
                   >
                     <div className="flex items-start justify-between gap-6">
                       <div className="flex-1 min-w-0">

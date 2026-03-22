@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 
 // Edge Runtime 配置 - 在亚洲节点运行
 export const runtime = 'edge';
@@ -23,6 +24,12 @@ interface BaiduTokenResponse {
  */
 export async function POST(request: NextRequest) {
   try {
+    // 需要登录才能获取 Token，防止未授权滥用服务配额
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // 检查配置
     if (!BAIDU_API_KEY || !BAIDU_SECRET_KEY) {
       return NextResponse.json(
@@ -59,7 +66,7 @@ export async function POST(request: NextRequest) {
       accessToken: data.access_token,
       expiresIn: data.expires_in,
       appId: BAIDU_APP_ID,
-      appKey: BAIDU_API_KEY,
+      // appKey 不返回客户端，避免 API 密钥泄露
     });
   } catch (error) {
     console.error("Baidu token error:", error);

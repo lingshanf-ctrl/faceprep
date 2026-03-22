@@ -89,6 +89,10 @@ export default function AICustomPage() {
         }),
       });
 
+      if (response.status === 401) {
+        // 未登录，跳过保存，不报错
+        return;
+      }
       if (!response.ok) {
         throw new Error("保存题目失败");
       }

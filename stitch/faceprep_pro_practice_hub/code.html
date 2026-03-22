@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#e2dfde",
+                        "surface-dim": "#dcd9d9",
+                        "on-primary-fixed": "#00174b",
+                        "inverse-surface": "#313030",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "on-secondary-container": "#636262",
+                        "outline-variant": "#c3c6d7",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "surface-variant": "#e5e2e1",
+                        "surface-container": "#f0eded",
+                        "on-secondary-fixed-variant": "#474746",
+                        "error-container": "#ffdad6",
+                        "primary": "#004ac6",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#c7c6c6",
+                        "tertiary-container": "#6d6d6d",
+                        "surface-tint": "#0053db",
+                        "surface-container-low": "#f6f3f2",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#464747",
+                        "tertiary": "#555555",
+                        "secondary": "#5f5e5e",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-container": "#f2f0ef",
+                        "inverse-primary": "#b4c5ff",
+                        "secondary-fixed": "#e5e2e1",
+                        "tertiary-fixed": "#e4e2e2",
+                        "primary-container": "#2563eb",
+                        "background": "#fcf9f8",
+                        "inverse-on-surface": "#f3f0ef",
+                        "on-background": "#1c1b1b",
+                        "surface-container-high": "#eae7e7",
+                        "surface-bright": "#fcf9f8",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#fcf9f8",
+                        "outline": "#737686",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "on-primary-container": "#eeefff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#1c1b1b",
+                        "on-error-container": "#93000a"
+                    },
+                    fontFamily: {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .text-shadow-sm {
+            text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body antialiased selection:bg-primary/10">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fcf9f8] dark:bg-slate-950/80 backdrop-blur-xl">
+<nav class="flex justify-between items-center w-full px-8 h-16 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-[#1c1b1b] dark:text-slate-100 font-headline tracking-tight">Interview Mentor</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-[#2563EB] dark:text-[#3b82f6] border-b-2 border-[#2563EB] pb-1 font-medium transition-colors" href="#">Practice</a>
+<a class="text-[#1c1b1b]/70 dark:text-slate-400 hover:text-[#2563EB] transition-colors font-medium" href="#">Dashboard</a>
+<a class="text-[#1c1b1b]/70 dark:text-slate-400 hover:text-[#2563EB] transition-colors font-medium" href="#">Analytics</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-[#1c1b1b]/70 hover:bg-[#f6f3f2] dark:hover:bg-slate-800 rounded-lg transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-[#1c1b1b]/70 hover:bg-[#f6f3f2] dark:hover:bg-slate-800 rounded-lg transition-all">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/20">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="Close up professional headshot of a person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfT9LkH7PujIzIj1LEPBJR41NYXoT932lHKJ3RB4tJUNeyr5o08UAFTKaOERr8unGUqdGeF1ZYx0eLuOy9ptPoTEehWD6un_NXbfQjeyv8oXkKWYNxYPv8zEbrCja976jJWM4airneIl0aCFX9fiRfXiRS7vHq9sIUnXPfldn5dI9sUVGRK0r6yTKFTTJNNA7pCUppD9KbMj1vNqqPv568hsPwTLUmgLzXoMLblsAaUNE686jkqWcayk-JFdC-MkbhscpqT5qXfTy1"/>
+</div>
+</div>
+</nav>
+</header>
+<div class="flex pt-16 min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex h-[calc(100vh-64px)] w-64 fixed left-0 bg-[#fcf9f8] dark:bg-slate-950 flex-col py-8 gap-4 border-r border-transparent">
+<div class="px-6 mb-4">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined" data-icon="neurology" style="font-variation-settings: 'FILL' 1;">neurology</span>
+</div>
+<div>
+<h3 class="font-bold text-[#1c1b1b] dark:text-slate-100 font-headline leading-tight">Practice Hub</h3>
+<p class="text-xs text-[#1c1b1b]/60 dark:text-slate-400">The Articulated Mentor</p>
+</div>
+</div>
+</div>
+<nav class="flex flex-col gap-1 pr-4">
+<a class="flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-800 text-[#2563EB] font-semibold rounded-r-full shadow-sm transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="shuffle">shuffle</span>
+<span class="text-sm font-headline">Random</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-[#1c1b1b]/60 dark:text-slate-400 hover:translate-x-1 hover:text-[#2563EB] transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#2563EB]" data-icon="psychology">psychology</span>
+<span class="text-sm font-headline">Mock</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-[#1c1b1b]/60 dark:text-slate-400 hover:translate-x-1 hover:text-[#2563EB] transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#2563EB]" data-icon="neurology">neurology</span>
+<span class="text-sm font-headline">AI Custom</span>
+</a>
+<a class="flex items-center gap-3 px-6 py-3 text-[#1c1b1b]/60 dark:text-slate-400 hover:translate-x-1 hover:text-[#2563EB] transition-all duration-300 group" href="#">
+<span class="material-symbols-outlined group-hover:text-[#2563EB]" data-icon="bookmark">bookmark</span>
+<span class="text-sm font-headline">Bookmarked</span>
+</a>
+</nav>
+<div class="mt-auto px-6">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary py-3 rounded-xl font-bold text-sm shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
+                    Start Session
+                </button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 p-8 lg:p-12">
+<div class="max-w-6xl mx-auto">
+<!-- Header Section -->
+<header class="mb-16">
+<h1 class="text-4xl lg:text-5xl font-extrabold font-headline text-on-background tracking-tight mb-4 text-shadow-sm">
+                        Choose Your Practice Mode
+                    </h1>
+<p class="text-lg text-secondary max-w-2xl leading-relaxed">
+                        Select a tailored path to master your next interview. Our AI mentors are ready to simulate any industry scenario.
+                    </p>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+<!-- Card 1: Random Practice -->
+<div class="lg:col-span-7 group cursor-pointer">
+<div class="h-full bg-surface-container-low p-8 rounded-xl transition-all duration-300 hover:bg-surface-container-lowest hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] flex flex-col justify-between overflow-hidden relative border-b-2 border-transparent hover:border-primary/20">
+<div class="relative z-10">
+<div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="shuffle">shuffle</span>
+</div>
+<h2 class="text-2xl font-bold font-headline mb-3 text-on-surface">Ready for a Challenge?</h2>
+<p class="text-on-surface-variant leading-relaxed max-w-md">Let our AI select a top-tier question from our database based on global industry standards.</p>
+</div>
+<div class="mt-12 flex items-center text-primary font-bold text-sm tracking-wider uppercase">
+                                Explore Questions
+                                <span class="material-symbols-outlined ml-2 text-lg">arrow_forward</span>
+</div>
+<div class="absolute -right-8 -bottom-8 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[12rem]" data-icon="shuffle">shuffle</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Mock Interview -->
+<div class="lg:col-span-5 group cursor-pointer">
+<div class="h-full bg-surface-container-low p-8 rounded-xl transition-all duration-300 hover:bg-surface-container-lowest hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] flex flex-col justify-between border-b-2 border-transparent hover:border-primary/20">
+<div>
+<div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary mb-8 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="psychology">psychology</span>
+</div>
+<h2 class="text-2xl font-bold font-headline mb-3 text-on-surface">The Real Deal</h2>
+<p class="text-on-surface-variant leading-relaxed">Full-proctored, multi-question simulation with live AI feedback and performance analytics.</p>
+</div>
+<div class="mt-8">
+<span class="inline-flex items-center px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold tracking-widest">ENTER SIMULATION</span>
+</div>
+</div>
+</div>
+<!-- Card 3: AI Custom -->
+<div class="lg:col-span-5 group cursor-pointer">
+<div class="h-full bg-surface-container-low p-8 rounded-xl transition-all duration-300 hover:bg-surface-container-lowest hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] border-b-2 border-transparent hover:border-primary/20">
+<div class="flex justify-between items-start mb-8">
+<div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl" data-icon="neurology">neurology</span>
+</div>
+<span class="bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full tracking-tighter">NEW</span>
+</div>
+<h2 class="text-2xl font-bold font-headline mb-3 text-on-surface">Targeted Prep</h2>
+<p class="text-on-surface-variant leading-relaxed">Upload your Resume and JD to generate industry-specific questions tailored to your profile.</p>
+</div>
+</div>
+<!-- Card 4: Bookmarked Questions -->
+<div class="lg:col-span-7 group cursor-pointer">
+<div class="h-full bg-surface-container-low p-8 rounded-xl transition-all duration-300 hover:bg-surface-container-lowest hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] flex items-center gap-8 border-b-2 border-transparent hover:border-primary/20">
+<div class="shrink-0 w-20 h-20 bg-white rounded-2xl shadow-sm flex items-center justify-center text-primary group-hover:rotate-6 transition-transform">
+<span class="material-symbols-outlined text-4xl" data-icon="bookmark" style="font-variation-settings: 'FILL' 1;">bookmark</span>
+</div>
+<div class="flex-1">
+<h2 class="text-2xl font-bold font-headline mb-2 text-on-surface">Master Your Weaknesses</h2>
+<p class="text-on-surface-variant leading-relaxed">Quick access to your saved and favorited questions for focused revision.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Information / Social Proof -->
+<section class="mt-20 flex flex-col md:flex-row justify-between items-end gap-12 border-t border-outline-variant/10 pt-12">
+<div class="flex-1">
+<h3 class="text-sm font-bold tracking-widest text-primary uppercase mb-6">Recent Activity</h3>
+<div class="space-y-4">
+<div class="flex items-center gap-4 bg-white/40 p-4 rounded-xl border border-outline-variant/5">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-sm text-on-surface-variant font-medium">Completed: Senior Product Mock Interview</span>
+<span class="text-xs text-outline ml-auto">2h ago</span>
+</div>
+<div class="flex items-center gap-4 bg-white/40 p-4 rounded-xl border border-outline-variant/5">
+<div class="w-2 h-2 rounded-full bg-primary/30"></div>
+<span class="text-sm text-on-surface-variant font-medium">Saved: 12 Behavioral Questions to Bookmarks</span>
+<span class="text-xs text-outline ml-auto">Yesterday</span>
+</div>
+</div>
+</div>
+<div class="w-full md:w-auto bg-primary-container p-8 rounded-2xl text-on-primary shadow-2xl shadow-primary/20 max-w-sm">
+<p class="italic text-lg mb-6 leading-relaxed">"This AI mentor transformed my articulation. I went from stumbling to leading the conversation."</p>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-white/20">
+<img alt="Testimonial" class="w-full h-full object-cover rounded-full" data-alt="Close up portrait of a smiling professional" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgdJ6MyjHTMTuWjoSyghbR0HN9lo1-8kzyui9BRDXjcXriAyGeALmle4lY2oFsVMxEQ9x7Sl980eQANPQvSj9jtXgNFArugsqXYo7S8084M9PK8U07KziZAyw5WdlVpAXEr0y7mKgUb9XDyACbKABaR887AqS3GafgNhOg8h0XVxGEjrZ7foEEu_f_z_QUQUaDuFl334XQG8ByhqUEm2P_zDSlnIk2jlIS_uvn48WhzMALSiyZDyUb9ngxFr_viceqlyYSsScmUyqd"/>
+</div>
+<div>
+<p class="text-sm font-bold">Alex Chen</p>
+<p class="text-xs opacity-70">Software Engineer @ FinTech</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation Suppressed per Rules (Linear Experience prioritized on Web Layout) -->
+</body></html>

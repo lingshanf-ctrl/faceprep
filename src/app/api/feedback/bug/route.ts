@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { verifyAdmin } from "@/lib/admin-auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const rateLimit = checkRateLimit(`bug-report:${ip}`);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "提交过于频繁，请稍后再试" },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { type, content, pageUrl, userAgent } = body;
 
@@ -44,9 +58,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 获取反馈列表（仅用于内部管理）
+// 获取反馈列表（仅管理员可用）
 export async function GET(request: NextRequest) {
   try {
+    const auth = await verifyAdmin(request);
+    if (!auth.isAdmin) {
+      return NextResponse.json({ error: auth.error || "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const limit = parseInt(searchParams.get("limit") || "50");
