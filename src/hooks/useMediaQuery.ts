@@ -3,11 +3,8 @@
 import { useState, useEffect } from "react";
 
 export function useMediaQuery(query: string): boolean {
-  // 使用函数初始化，避免服务端渲染时访问 window
-  const [matches, setMatches] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia(query).matches;
-  });
+  // 始终以 false 初始化，与 SSR 保持一致，由 useEffect 同步真实值
+  const [matches, setMatches] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

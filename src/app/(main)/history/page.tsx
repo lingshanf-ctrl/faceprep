@@ -427,7 +427,7 @@ export default function HistoryPage() {
                       tabIndex={0}
                       onClick={() => { if (!isEditing) router.push(reportHref); }}
                       onKeyDown={(e) => { if (!isEditing && (e.key === "Enter" || e.key === " ")) router.push(reportHref); }}
-                      className="group flex items-center gap-2 md:gap-4 p-3 md:p-5 bg-[#f6f3f2] rounded-xl hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] transition-all cursor-pointer"
+                      className="group flex items-start md:items-center gap-2 md:gap-4 p-3 md:p-5 bg-[#f6f3f2] rounded-xl hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] transition-all cursor-pointer"
                     >
                       {/* Icon box */}
                       <div className={`w-9 h-9 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
@@ -447,7 +447,7 @@ export default function HistoryPage() {
                               type="text"
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
-                              className="flex-1 px-3 py-2 text-sm bg-surface border-2 border-accent rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20"
+                              className="w-48 sm:w-64 px-3 py-2 text-sm bg-surface border-2 border-accent rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20"
                               autoFocus
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") saveTitle(record.id);
@@ -470,26 +470,28 @@ export default function HistoryPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                            <h4 className="font-bold text-foreground text-sm sm:text-base leading-tight group-hover:text-accent transition-colors line-clamp-1">
-                              {record.title}
-                            </h4>
-                            {/* type badge */}
-                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#eef1ff] text-[#004ac6] border border-[#c5d0f5] flex-shrink-0">
+                          <div className="mb-1.5">
+                            {/* title + pencil on same line, never wrap between them */}
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <h4 className="font-bold text-foreground text-sm sm:text-base leading-tight group-hover:text-accent transition-colors truncate">
+                                {record.title}
+                              </h4>
+                              {record.type === "interview" && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); startEditTitle(record as unknown as InterviewSession); }}
+                                  className="p-1 text-foreground-muted hover:text-accent transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                                  aria-label={locale === "zh" ? "编辑标题" : "Edit title"}
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            {/* type badge on its own line */}
+                            <span className="inline-block text-[10px] px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#eef1ff] text-[#004ac6] border border-[#c5d0f5]">
                               {record.type === "interview"
                                 ? (locale === "zh" ? "模拟面试" : "Mock Interview")
                                 : (locale === "zh" ? "练习" : "Practice")}
                             </span>
-                            {/* edit pencil - interviews only */}
-                            {record.type === "interview" && (
-                              <button
-                                onClick={(e) => { e.stopPropagation(); startEditTitle(record as unknown as InterviewSession); }}
-                                className="p-1 text-foreground-muted hover:text-accent transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
-                                aria-label={locale === "zh" ? "编辑标题" : "Edit title"}
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                            )}
                           </div>
                         )}
                         {/* meta row */}

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAnonymousId, clearAnonymousId } from "@/lib/anonymous-user";
+import { syncFavoritesFromAPI } from "@/lib/favorites-store";
 
 interface User {
   id: string;
@@ -67,10 +68,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser().finally(() => setIsLoading(false));
   }, []);
 
-  // 用户登录后加载 membership
+  // 用户登录后加载 membership 并同步收藏
   useEffect(() => {
     if (user) {
       refreshMembership();
+      syncFavoritesFromAPI(); // 静默同步收藏，不阻塞渲染
     } else {
       setMembershipStatus(null);
     }

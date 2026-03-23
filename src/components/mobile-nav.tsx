@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, BookOpen, Edit3, Clock } from "lucide-react";
-import { useIsMobile } from "@/hooks/useMediaQuery";
 import { useLanguage } from "./language-provider";
 
 const navItemsDef = [
@@ -15,17 +14,14 @@ const navItemsDef = [
 
 export function MobileNav() {
   const pathname = usePathname();
-  const isMobile = useIsMobile();
   const { locale } = useLanguage();
-
-  if (!isMobile) return null;
 
   const isActive = (href: string) => {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-border safe-area-pb">
+    <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-border safe-area-pb">
       <div className="flex items-center justify-around h-16">
         {navItemsDef.map((item) => {
           const Icon = item.icon;

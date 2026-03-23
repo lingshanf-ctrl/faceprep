@@ -36,7 +36,7 @@ export function PageHeader({ title, subtitle }: PageHeaderProps) {
         ) : (
           <Link
             href="/login"
-            className="text-xs font-bold text-white bg-[#004ac6] px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
+            className="inline-flex items-center justify-center text-xs font-bold text-white bg-[#004ac6] px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
           >
             {locale === "zh" ? "登录" : "Sign In"}
           </Link>
