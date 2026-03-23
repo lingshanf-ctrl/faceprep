@@ -237,18 +237,11 @@ export default function QuestionDetailPage() {
 
   // ──────────── Render ────────────
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background orbs — consistent with other pages */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-accent/8 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 -right-32 w-[350px] h-[350px] bg-accent/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-success/4 rounded-full blur-[100px]" />
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 relative z-10">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-3xl mx-auto px-4 md:px-8 py-4 md:py-8">
 
         {/* ── Navigation bar ── */}
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center justify-between mb-6 md:mb-10">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors group"
@@ -312,7 +305,7 @@ export default function QuestionDetailPage() {
           </div>
 
           {/* Title */}
-          <h1 className="font-display text-2xl sm:text-3xl md:text-heading-xl font-semibold text-foreground leading-snug tracking-tight">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground leading-snug tracking-tight border-l-4 border-[#004ac6] pl-4">
             {question.title}
           </h1>
 
@@ -455,7 +448,7 @@ export default function QuestionDetailPage() {
           {!feedback ? (
             /* ───── Answer input ───── */
             <div className="space-y-4">
-              <div className="bg-white rounded-2xl border border-border shadow-subtle p-6 md:p-8">
+              <div className="bg-white rounded-2xl border border-border shadow-subtle p-4 md:p-8">
                 {/* History loaded banner */}
                 <AnimatePresence>
                   {selectedHistory && (
@@ -516,14 +509,14 @@ export default function QuestionDetailPage() {
               </div>
 
               {/* Submit row */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-foreground-muted hidden sm:block">
                   {locale === "zh" ? "提交后 AI 将在后台生成深度反馈" : "AI will generate deep feedback after submission"}
                 </p>
                 <button
                   onClick={handleSubmit}
                   disabled={!answer.trim() || isSubmitting}
-                  className="ml-auto flex items-center gap-2 px-7 py-3 bg-accent text-white text-sm font-medium rounded-full
+                  className="w-full sm:w-auto ml-auto flex items-center justify-center gap-2 px-7 py-3.5 bg-accent text-white text-sm font-medium rounded-full
                     hover:bg-accent-dark disabled:opacity-40 disabled:cursor-not-allowed
                     transition-all duration-200 hover:shadow-glow active:scale-95"
                 >

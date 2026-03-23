@@ -267,6 +267,9 @@
 ::-webkit-scrollbar-thumb  { background: #c3c6d7; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #737686; }
 
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 /* ===== Focus ===== */
 *:focus-visible {
   outline: 2px solid #004ac6;

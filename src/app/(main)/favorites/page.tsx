@@ -8,6 +8,7 @@ import { getPracticeRecords, PracticeRecord } from "@/lib/practice-store";
 import { useLanguage } from "@/components/language-provider";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/page-header";
 
 // Type config - language specific
 const getTypeConfig = (locale: string): Record<string, { label: string }> => ({
@@ -76,18 +77,13 @@ export default function FavoritesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        {/* Page Title */}
-        <div className="mb-16">
-          <h1 className="font-display text-display-sm font-bold text-foreground tracking-tight mb-4">
-            {t.favorites.title}
-          </h1>
-          <p className="text-body-lg text-foreground-muted">
-            {favoriteQuestions.length > 0
-              ? t.favorites.count.replace('{count}', String(favoriteQuestions.length))
-              : t.favorites.empty.desc}
-          </p>
-        </div>
+      <PageHeader
+        title={t.favorites.title}
+        subtitle={favoriteQuestions.length > 0
+          ? t.favorites.count.replace('{count}', String(favoriteQuestions.length))
+          : t.favorites.empty.desc}
+      />
+      <div className="max-w-5xl mx-auto px-6 md:px-8 py-8">
 
         {favoriteQuestions.length === 0 ? (
           /* Empty state */
@@ -106,7 +102,7 @@ export default function FavoritesPage() {
             <div className="mb-10">
               <Link
                 href={`/questions/${getRandomFavoriteId()}`}
-                className="block rounded-2xl p-8 text-white group hover:shadow-glow-lg transition-all bg-primary-gradient shadow-glow"
+                className="block rounded-xl p-8 text-white group hover:opacity-90 transition-all bg-[#004ac6]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-5">
@@ -121,7 +117,7 @@ export default function FavoritesPage() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-display text-heading font-semibold mb-1">{t.favorites.review.title}</h3>
+                      <h3 className="font-display text-heading font-semibold mb-1 text-white">{t.favorites.review.title}</h3>
                       <p className="text-white/70">{t.favorites.review.desc}</p>
                     </div>
                   </div>
@@ -145,7 +141,7 @@ export default function FavoritesPage() {
                   <Link
                     key={question.id}
                     href={`/questions/${question.id}`}
-                    className="block bg-surface-elevated rounded-2xl p-6 shadow-subtle hover:shadow-soft transition-all group"
+                    className="block bg-[#f6f3f2] rounded-xl p-6 hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] transition-all group"
                   >
                     <div className="flex items-start justify-between gap-6">
                       <div className="flex-1 min-w-0">

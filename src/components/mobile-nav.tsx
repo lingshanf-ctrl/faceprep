@@ -2,21 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BookOpen, Edit3, Clock, User } from "lucide-react";
+import { Home, BookOpen, Edit3, Clock } from "lucide-react";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import { useLanguage } from "./language-provider";
 
-const navItems = [
-  { href: "/dashboard", label: "首页", icon: Home },
-  { href: "/questions", label: "题库", icon: BookOpen },
-  { href: "/practice", label: "练习", icon: Edit3 },
-  { href: "/history", label: "历史", icon: Clock },
+const navItemsDef = [
+  { href: "/dashboard", labelZh: "首页", labelEn: "Home", icon: Home },
+  { href: "/questions", labelZh: "题库", labelEn: "Questions", icon: BookOpen },
+  { href: "/practice", labelZh: "练习", labelEn: "Practice", icon: Edit3 },
+  { href: "/history", labelZh: "历史", labelEn: "History", icon: Clock },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
   const isMobile = useIsMobile();
+  const { locale } = useLanguage();
 
-  // 只在移动端显示
   if (!isMobile) return null;
 
   const isActive = (href: string) => {
@@ -26,27 +27,27 @@ export function MobileNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-border safe-area-pb">
       <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => {
+        {navItemsDef.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+          const label = locale === "zh" ? item.labelZh : item.labelEn;
 
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                active
-                  ? "text-accent"
-                  : "text-foreground-muted hover:text-foreground"
+                active ? "text-accent" : "text-foreground-muted hover:text-foreground"
               }`}
             >
               <div className={`p-1.5 rounded-xl transition-all ${active ? "bg-accent/10" : ""}`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-medium mt-0.5">{item.label}</span>
+              <span className="text-[10px] font-medium mt-0.5">{label}</span>
             </Link>
           );
         })}
+
       </div>
     </nav>
   );

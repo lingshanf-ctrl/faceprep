@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, Suspense } from "react";
-import { motion } from "framer-motion";
+import { useMemo, useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { questions as systemQuestions } from "@/data/questions";
@@ -13,6 +12,7 @@ import {
   addCustomQuestions,
   deleteCustomQuestion,
 } from "@/lib/custom-questions-store";
+import { isFavorite, toggleFavorite } from "@/lib/favorites-store";
 import {
   previewParsedQuestions,
   formatToCustomQuestions,
@@ -30,10 +30,10 @@ import {
   BookOpen,
   CheckCircle2,
 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 
 // Design System Imports
 import { ScoreBadge } from "@/components/ui/score-badge";
-import { QuestionTypeBadge, CategoryBadge, DifficultyBadge } from "@/components/ui/type-badge";
 import { ConfirmDialog, useConfirmDialog } from "@/components/ui/confirm-dialog";
 import { typeColorConfig, categoryColorConfig, difficultyColorConfig } from "@/lib/design-tokens";
 
@@ -297,53 +297,32 @@ function QuestionsContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 md:py-10">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-1">
-            {locale === "zh" ? "题库" : "Questions"}
-          </h1>
-          <p className="text-foreground-muted text-sm">
-            {locale === "zh"
-              ? `精选 ${stats.system} 道面试题，${stats.custom} 道专属定制`
-              : `${stats.system} curated · ${stats.custom} custom`}
-          </p>
-        </motion.div>
+      <PageHeader
+        title={locale === "zh" ? "题库" : "Question Bank"}
+        subtitle={locale === "zh"
+          ? `精选 ${stats.system} 道面试题，${stats.custom} 道专属定制`
+          : `${stats.system} curated · ${stats.custom} custom`}
+      />
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 md:py-8">
 
-        {/* ── Source Tab Switcher (Top Level) ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.08 }}
-          className="flex items-center gap-2 mb-5"
-        >
+        {/* ── Source Tab Switcher (Stitch underline tabs) ── */}
+        <div className="flex items-center gap-5 md:gap-8 mb-5 md:mb-6 border-b border-[#eae7e7]">
           {[
-            { value: "system", label: locale === "zh" ? "官方题库" : "Official", icon: <BookOpen className="w-4 h-4" />, count: stats.system },
-            { value: "custom", label: locale === "zh" ? "我的题目" : "My Questions", icon: <Sparkles className="w-4 h-4" />, count: stats.custom },
+            { value: "system", label: locale === "zh" ? "官方题库" : "Official Library", count: stats.system },
+            { value: "custom", label: locale === "zh" ? "我的题目" : "My Questions", count: stats.custom },
           ].map((tab) => {
             const isActive = sourceFilter === tab.value;
             return (
               <button
                 key={tab.value}
                 onClick={() => setSourceFilter(tab.value as typeof sourceFilter)}
-                className={`group flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                className={`pb-3 md:pb-4 text-sm tracking-wide transition-all duration-200 ${
                   isActive
-                    ? "bg-primary-gradient text-white shadow-glow"
-                    : "bg-surface-elevated text-foreground-muted hover:text-foreground shadow-subtle"
+                    ? "font-bold text-[#004ac6] border-b-2 border-[#004ac6]"
+                    : "font-medium text-[#5f5e5e] hover:text-foreground"
                 }`}
               >
-                <span className={isActive ? "text-white/90" : "text-foreground-muted group-hover:text-accent"}>{tab.icon}</span>
-                <span>{tab.label}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${
-                  isActive ? "bg-white/20 text-white" : "bg-surface text-foreground-muted"
-                }`}>
-                  {tab.count}
-                </span>
+                {tab.label}
               </button>
             );
           })}
@@ -352,128 +331,171 @@ function QuestionsContent() {
           {sourceFilter === "custom" && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="ml-auto flex items-center gap-1.5 px-3.5 py-2.5 text-white text-sm font-semibold rounded-xl transition-all duration-200 bg-primary-gradient shadow-glow hover:shadow-glow-lg"
+              className="ml-auto mb-2 flex items-center gap-1.5 px-3 py-2 md:px-3.5 md:py-2.5 text-white text-xs md:text-sm font-semibold rounded-xl transition-all duration-200 bg-primary-gradient shadow-glow hover:shadow-glow-lg"
             >
               <Plus className="w-4 h-4" />
-              <span>{locale === "zh" ? "添加题目" : "Add"}</span>
+              <span>{locale === "zh" ? "添加" : "Add"}</span>
             </button>
           )}
-        </motion.div>
+        </div>
 
         {/* ── Filter Panel ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="mb-5 bg-surface-elevated rounded-xl overflow-hidden shadow-subtle"
-        >
-          {/* Row 1: Category tabs + Search */}
-          <div className="flex items-center gap-2 pr-3" style={{ borderBottom: "1px solid rgba(195,198,215,0.25)" }}>
-            {/* Category scroll */}
-            <div className="relative flex-1 min-w-0">
-              <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-surface-elevated to-transparent pointer-events-none z-10" />
-              <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-surface-elevated to-transparent pointer-events-none z-10" />
-              <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide px-3 py-2">
-                {CATEGORY_TABS.map((tab) => {
-                  const isActive = categoryFilter === tab.value;
-                  return (
-                    <button
-                      key={tab.value}
-                      onClick={() => setCategoryFilter(tab.value)}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
-                        isActive
-                          ? "bg-accent text-white"
-                          : "text-foreground-muted hover:text-foreground hover:bg-surface"
-                      }`}
-                    >
-                      {tab.label[locale as "zh" | "en"]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+        <div className="mb-4 md:mb-5 space-y-2">
 
-            {/* Compact inline search */}
-            <div className="relative flex-shrink-0 group">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground-muted transition-colors group-focus-within:text-accent pointer-events-none" />
+          {/* ── Mobile Filter (3 rows) ── */}
+          <div className="md:hidden space-y-2">
+            {/* Row 1: Search */}
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground-muted group-focus-within:text-accent pointer-events-none" />
               <input
                 type="text"
-                placeholder={locale === "zh" ? "搜索..." : "Search..."}
+                placeholder={locale === "zh" ? "搜索题目..." : "Search questions..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-32 focus:w-48 pl-8 pr-7 py-1.5 bg-surface border border-border rounded-lg text-xs text-foreground placeholder-foreground-muted
-                  focus:outline-none focus:border-accent focus:bg-white
-                  transition-all duration-300"
+                className="w-full pl-9 pr-8 py-2.5 bg-[#f6f3f2] rounded-xl text-sm text-foreground placeholder-foreground-muted
+                  focus:outline-none focus:ring-1 focus:ring-accent focus:bg-white transition-all"
               />
               {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Row 2: Category pills — wrapping */}
+            <div className="flex flex-wrap gap-1.5">
+              {CATEGORY_TABS.map((tab) => {
+                const isActive = categoryFilter === tab.value;
+                return (
+                  <button
+                    key={tab.value}
+                    onClick={() => setCategoryFilter(tab.value)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
+                      isActive
+                        ? "bg-[#004ac6] text-white"
+                        : "bg-[#f6f3f2] text-[#5f5e5e]"
+                    }`}
+                  >
+                    {tab.label[locale as "zh" | "en"]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Row 3: Type + Difficulty chips + Clear — wrapping */}
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(typeColorConfig).map(([key, config]) => (
                 <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-colors"
+                  key={key}
+                  onClick={() => setTypeFilter(typeFilter === key ? "" : key)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                    typeFilter === key
+                      ? `${config.bg} ${config.color}`
+                      : "bg-[#f6f3f2] text-[#5f5e5e]"
+                  }`}
                 >
-                  <X className="w-3 h-3" />
+                  {config.label[locale as "zh" | "en"]}
+                </button>
+              ))}
+              {Object.entries(difficultyColorConfig).map(([key, config]) => (
+                <button
+                  key={key}
+                  onClick={() => setDifficultyFilter(difficultyFilter === key ? "" : key)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                    difficultyFilter === key
+                      ? `${config.bg} ${config.color}`
+                      : "bg-[#f6f3f2] text-[#5f5e5e]"
+                  }`}
+                >
+                  {config.label[locale as "zh" | "en"]}
+                </button>
+              ))}
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-error bg-error/8 rounded-lg"
+                >
+                  <X className="w-2.5 h-2.5" />
+                  {locale === "zh" ? "清除" : "Clear"}
                 </button>
               )}
             </div>
           </div>
 
-          {/* Row 2: Type · Difficulty · Clear */}
-          <div className="flex items-center gap-1 px-3 py-1.5 flex-wrap">
-            {/* Type filters */}
-            {Object.entries(typeColorConfig).map(([key, config]) => (
-              <button
-                key={key}
-                onClick={() => setTypeFilter(typeFilter === key ? "" : key)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                  typeFilter === key
-                    ? `${config.bg} ${config.color} ring-1 ring-current/30`
-                    : "text-foreground-muted hover:text-foreground hover:bg-surface"
-                }`}
-              >
-                {config.label[locale as "zh" | "en"]}
-              </button>
-            ))}
-
-            {/* Divider */}
-            <span className="w-px h-3.5 bg-border/70 flex-shrink-0 mx-0.5" />
-
-            {/* Difficulty filters */}
-            {Object.entries(difficultyColorConfig).map(([key, config]) => (
-              <button
-                key={key}
-                onClick={() => setDifficultyFilter(difficultyFilter === key ? "" : key)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
-                  difficultyFilter === key
-                    ? `${config.bg} ${config.color} ring-1 ring-current/30`
-                    : "text-foreground-muted hover:text-foreground hover:bg-surface"
-                }`}
-              >
-                {config.label[locale as "zh" | "en"]}
-              </button>
-            ))}
-
-            {/* Spacer */}
-            <div className="flex-1" />
-
-            {/* Clear filters */}
-            {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-error hover:bg-error/5 rounded-lg transition-all"
-              >
-                <X className="w-3 h-3" />
-                <span>{locale === "zh" ? "清除筛选" : "Clear"}</span>
-              </button>
-            )}
+          {/* Desktop: original full filter panel */}
+          <div className="hidden md:block bg-surface-elevated rounded-xl overflow-hidden shadow-subtle">
+            <div className="flex items-center gap-2 pr-3" style={{ borderBottom: "1px solid rgba(195,198,215,0.25)" }}>
+              <div className="relative flex-1 min-w-0">
+                <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-surface-elevated to-transparent pointer-events-none z-10" />
+                <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-surface-elevated to-transparent pointer-events-none z-10" />
+                <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-hide px-3 py-2">
+                  {CATEGORY_TABS.map((tab) => {
+                    const isActive = categoryFilter === tab.value;
+                    return (
+                      <button
+                        key={tab.value}
+                        onClick={() => setCategoryFilter(tab.value)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
+                          isActive ? "bg-accent text-white" : "text-foreground-muted hover:text-foreground hover:bg-surface"
+                        }`}
+                      >
+                        {tab.label[locale as "zh" | "en"]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="relative flex-shrink-0 group">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground-muted transition-colors group-focus-within:text-accent pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder={locale === "zh" ? "搜索..." : "Search..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-32 focus:w-48 pl-8 pr-7 py-1.5 bg-surface border border-border rounded-lg text-xs text-foreground placeholder-foreground-muted
+                    focus:outline-none focus:border-accent focus:bg-white transition-all duration-300"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground transition-colors">
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-1 px-3 py-1.5 flex-wrap">
+              {Object.entries(typeColorConfig).map(([key, config]) => (
+                <button key={key} onClick={() => setTypeFilter(typeFilter === key ? "" : key)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                    typeFilter === key ? `${config.bg} ${config.color} ring-1 ring-current/30` : "text-foreground-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >{config.label[locale as "zh" | "en"]}</button>
+              ))}
+              <span className="w-px h-3.5 bg-border/70 flex-shrink-0 mx-0.5" />
+              {Object.entries(difficultyColorConfig).map(([key, config]) => (
+                <button key={key} onClick={() => setDifficultyFilter(difficultyFilter === key ? "" : key)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                    difficultyFilter === key ? `${config.bg} ${config.color} ring-1 ring-current/30` : "text-foreground-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >{config.label[locale as "zh" | "en"]}</button>
+              ))}
+              <div className="flex-1" />
+              {hasFilters && (
+                <button onClick={clearFilters} className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-error hover:bg-error/5 rounded-lg transition-all">
+                  <X className="w-3 h-3" />
+                  <span>{locale === "zh" ? "清除筛选" : "Clear"}</span>
+                </button>
+              )}
+            </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Custom Questions Selection Bar */}
         {sourceFilter === "custom" && customQuestions.length > 0 && (
-          <div className="flex items-center justify-between mb-5 px-3 py-2.5 sm:px-4 sm:py-3 bg-white border border-border/50 rounded-xl animate-fade-up" style={{ animationDelay: "0.4s" }}>
+          <div className="flex items-center justify-between mb-5 px-3 py-2.5 sm:px-4 sm:py-3 bg-white border border-border/50 rounded-xl">
             <label className="flex items-center gap-2.5 cursor-pointer group">
               <button
                 onClick={toggleSelectAll}
-                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                className={`w-4 h-4 md:w-5 md:h-5 rounded border-2 flex items-center justify-center transition-colors ${
                   selectedQuestions.size === filteredQuestions.length && filteredQuestions.length > 0
                     ? "bg-accent border-accent"
                     : selectedQuestions.size > 0
@@ -482,7 +504,7 @@ function QuestionsContent() {
                 }`}
               >
                 {selectedQuestions.size > 0 && (
-                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
@@ -515,24 +537,19 @@ function QuestionsContent() {
             onAddQuestion={() => setShowAddModal(true)}
           />
         ) : (
-          <div className="space-y-3 animate-fade-up" style={{ animationDelay: "0.5s" }}>
-            {filteredQuestions.map((question, index) => (
-              <div
+          <div className="space-y-3">
+            {filteredQuestions.map((question) => (
+              <QuestionCard
                 key={question.id}
-                className="animate-fade-up"
-                style={{ animationDelay: `${0.5 + index * 0.05}s` }}
-              >
-                <QuestionCard
-                  question={question}
-                  locale={locale}
-                  isPracticed={practiceStatus[question.id]?.practiced}
-                  highestScore={practiceStatus[question.id]?.highestScore}
-                  practiceCount={practiceStatus[question.id]?.count}
-                  isSelected={selectedQuestions.has(question.id)}
-                  onToggleSelect={() => toggleQuestionSelection(question.id)}
-                  onDelete={() => handleDeleteCustom(question.id, question.title)}
-                />
-              </div>
+                question={question}
+                locale={locale}
+                isPracticed={practiceStatus[question.id]?.practiced}
+                highestScore={practiceStatus[question.id]?.highestScore}
+                practiceCount={practiceStatus[question.id]?.count}
+                isSelected={selectedQuestions.has(question.id)}
+                onToggleSelect={() => toggleQuestionSelection(question.id)}
+                onDelete={() => handleDeleteCustom(question.id, question.title)}
+              />
             ))}
           </div>
         )}
@@ -595,134 +612,144 @@ function QuestionCard({
   onDelete,
 }: QuestionCardProps) {
   const isCustom = question.source === "custom";
-  const isOfficial = question.source === "system";
+  const [favorited, setFavorited] = useState(false);
+
+  useEffect(() => {
+    setFavorited(isFavorite(question.id));
+  }, [question.id]);
+
+  const handleToggleFavorite = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const next = toggleFavorite(question.id);
+    setFavorited(next);
+  }, [question.id]);
 
   return (
-    <div
-      className={`group relative bg-surface-elevated rounded-xl overflow-hidden transition-all duration-200
-        ${isCustom && isSelected
-          ? "shadow-glow ring-1 ring-accent/30"
-          : "shadow-subtle hover:shadow-soft"
-        }`}
+    <Link
+      href={`/questions/${question.id}`}
+      className={`group block rounded-xl p-4 md:p-5 transition-all hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] ${
+        isSelected
+          ? "bg-white ring-1 ring-accent/30 shadow-glow"
+          : "bg-[#f6f3f2]"
+      }`}
     >
-      {/* Official Question left accent */}
-      {isOfficial && (
-        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent/60" />
-      )}
-
-      <div className="p-4 sm:p-5 pl-5 sm:pl-6">
-        <div className="flex flex-row items-start gap-3">
+      <div className="flex items-start justify-between gap-3 md:gap-4">
+        {/* Left: checkbox (custom) + content */}
+        <div className="flex items-start gap-3 flex-1 min-w-0">
           {/* Selection Checkbox (custom only) */}
           {isCustom && (
             <button
-              onClick={onToggleSelect}
-              className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleSelect?.(); }}
+              className={`mt-0.5 w-4 h-4 md:w-5 md:h-5 rounded border-2 flex items-center justify-center transition-colors shrink-0 ${
                 isSelected
                   ? "bg-accent border-accent"
                   : "border-border bg-white hover:border-accent"
               }`}
             >
               {isSelected && (
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
               )}
             </button>
           )}
 
-          {/* Content */}
           <div className="flex-1 min-w-0">
-            {/* Tags - optimized for mobile */}
-            <div className="flex items-center gap-1.5 sm:gap-2 mb-3 flex-wrap">
-              <QuestionTypeBadge
-                type={question.type}
-                locale={locale as "zh" | "en"}
-                showIcon={false}
-              />
-              <CategoryBadge
-                category={question.category}
-                locale={locale as "zh" | "en"}
-                showIcon={false}
-              />
-              <DifficultyBadge
-                difficulty={question.difficulty}
-                locale={locale as "zh" | "en"}
-              />
-
+            {/* Tags */}
+            <div className="flex items-center gap-1 md:gap-1.5 mb-1.5 md:mb-2.5 flex-wrap">
+              <span className="text-[10px] px-1.5 md:px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#eef1ff] text-[#004ac6] border border-[#c5d0f5]">
+                {typeColorConfig[question.type as keyof typeof typeColorConfig]?.label[locale as "zh" | "en"] ?? question.type}
+              </span>
+              <span className="hidden md:inline text-[10px] px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#f2f2f2] text-[#888] border border-[#e4e4e4]">
+                {categoryColorConfig[question.category as keyof typeof categoryColorConfig]?.label[locale as "zh" | "en"] ?? question.category}
+              </span>
+              <span className={`text-[10px] px-1.5 md:px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#f2f2f2] border border-[#e4e4e4] ${
+                question.difficulty === 3 ? "text-[#555]" : "text-[#999]"
+              }`}>
+                {difficultyColorConfig[question.difficulty as keyof typeof difficultyColorConfig]?.label[locale as "zh" | "en"]}
+              </span>
               {question.frequency && question.frequency >= 2 && (
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold text-amber-700 bg-amber-50 border border-amber-200">
+                <span className="hidden md:inline text-[10px] px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#f2f2f2] text-[#888] border border-[#e4e4e4]">
                   ⚡ {locale === "zh" ? "高频" : "Hot"}
                 </span>
               )}
-
               {isCustom && (
-                <span className="text-xs px-3 py-1 rounded-full font-semibold text-accent bg-accent/10 border border-accent/30">
+                <span className="text-[10px] px-1.5 md:px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#eef1ff] text-[#004ac6] border border-[#c5d0f5]">
                   {locale === "zh" ? "专属" : "Custom"}
                 </span>
               )}
-
               {isPracticed && (
-                <span className="flex items-center gap-1 text-xs px-3 py-1 rounded-full font-semibold text-success bg-success/10 border border-success/30">
-                  <CheckCircle2 className="w-3 h-3" />
+                <span className="flex items-center gap-0.5 text-[10px] px-1.5 md:px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#f2f2f2] text-[#888] border border-[#e4e4e4]">
+                  <CheckCircle2 className="w-2.5 h-2.5" />
                   {locale === "zh" ? "已练" : "Done"}
                 </span>
               )}
             </div>
 
             {/* Title */}
-            <h3 className="font-semibold text-foreground mb-2 leading-relaxed text-base group-hover:text-accent transition-colors">
-              <Link href={`/questions/${question.id}`}>
-                {question.title}
-              </Link>
+            <h3 className="font-semibold text-foreground mb-0 md:mb-1 leading-snug text-sm md:text-base group-hover:text-accent transition-colors">
+              {question.title}
             </h3>
 
-            {/* Key Points */}
+            {/* Key Points — desktop only */}
             {question.keyPoints && (
-              <p className="text-foreground-muted text-sm line-clamp-2 leading-relaxed">
+              <p className="hidden md:block text-sm text-foreground-muted leading-relaxed line-clamp-2 mt-1.5">
                 {question.keyPoints}
               </p>
             )}
           </div>
+        </div>
 
-          {/* Right Side - Mobile: horizontal row at bottom, Desktop: vertical column */}
-          <div className="shrink-0 flex sm:flex-col items-center sm:items-end gap-2 sm:gap-3">
-            {/* Score */}
-            {isPracticed && highestScore !== undefined && (
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <ScoreBadge score={highestScore} size="sm" showLabel={false} />
-                {practiceCount && practiceCount > 1 && (
-                  <span className="text-xs text-foreground-muted bg-surface px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full font-medium border border-border">
-                    ×{practiceCount}
-                  </span>
-                )}
-              </div>
-            )}
+        {/* Right: bookmark + score + arrow */}
+        <div className="shrink-0 flex flex-col items-end gap-2 md:gap-3">
+          {/* Bookmark */}
+          <button
+            onClick={handleToggleFavorite}
+            className="p-1.5 md:p-2 rounded-xl transition-colors text-foreground-muted hover:text-accent hover:bg-accent/10"
+            aria-label={favorited ? (locale === "zh" ? "取消收藏" : "Remove") : (locale === "zh" ? "收藏" : "Save")}
+          >
+            <svg
+              className="w-4 h-4 md:w-5 md:h-5"
+              fill={favorited ? "currentColor" : "none"}
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+              />
+            </svg>
+          </button>
 
-            {/* Actions */}
-            <div className="flex items-center gap-1">
-              <Link
-                href={`/questions/${question.id}`}
-                className="group/btn flex items-center gap-1 px-3 sm:px-4 py-2 text-sm font-medium text-accent hover:bg-accent/8 rounded-xl transition-all duration-300"
-              >
-                <span className="hidden sm:inline">{locale === "zh" ? "练习" : "Practice"}</span>
-                <span className="sm:hidden">{locale === "zh" ? "去练" : "Go"}</span>
-                <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-0.5" />
-              </Link>
+          {/* Score */}
+          {isPracticed && highestScore !== undefined && (
+            <span className={`font-bold text-base md:text-lg leading-none ${
+              highestScore >= 80 ? "text-success" : highestScore >= 60 ? "text-warning" : "text-error"
+            }`}>
+              {highestScore}
+            </span>
+          )}
 
-              {isCustom && (
-                <button
-                  onClick={onDelete}
-                  className="p-2 text-foreground-muted hover:text-error hover:bg-error/5 rounded-full transition-all duration-300 sm:opacity-0 sm:group-hover:opacity-100"
-                  aria-label={locale === "zh" ? "删除" : "Delete"}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
+          {/* Delete (custom) or Arrow */}
+          {isCustom ? (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete?.(); }}
+              className="p-1.5 md:p-2 text-foreground-muted hover:text-error hover:bg-error/5 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
+              aria-label={locale === "zh" ? "删除" : "Delete"}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          ) : (
+            <svg className="w-4 h-4 md:w-5 md:h-5 text-foreground-muted group-hover:text-accent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

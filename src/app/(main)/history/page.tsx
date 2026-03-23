@@ -4,31 +4,27 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { getPracticeRecords, PracticeRecord } from "@/lib/practice-store";
-import { getInterviewSessionsAsync, InterviewSession, updateInterviewTitle, cloneInterviewSession } from "@/lib/interview-store";
+import { getInterviewSessionsAsync, InterviewSession, updateInterviewTitle, cloneInterviewSessionAsync } from "@/lib/interview-store";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ScoreBadge } from "@/components/ui/score-badge";
 import { getScoreColor } from "@/lib/ui-helpers";
 import { formatFriendlyDate } from "@/lib/ui-helpers";
 import {
-  Clock,
   TrendingUp,
   Flame,
   FileText,
-  MessageSquare,
-  ChevronRight,
   Pencil,
-  RotateCcw,
+  ChevronRight,
   Check,
   X,
-  History,
   Target,
   Calendar,
-  Brain,
   Loader2,
+  Users,
+  User,
 } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 
 interface CombinedRecord {
   id: string;
@@ -38,6 +34,7 @@ interface CombinedRecord {
   date: string;
   details?: string;
   questionCount?: number;
+  questionId?: string;
   evaluationStatus?: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
   isAIUpgrading?: boolean;
 }
@@ -116,14 +113,16 @@ export default function HistoryPage() {
   };
 
   // 再练一次
+  const [retryingId, setRetryingId] = useState<string | null>(null);
   const handleRetry = async (session: InterviewSession) => {
-    const newSession = cloneInterviewSession(session.id);
-    if (newSession) {
-      // 刷新列表
-      const allSessions = await getInterviewSessionsAsync();
-      setInterviewSessions(allSessions.filter((s) => s.status === "completed"));
-      // 跳转到新面试
-      router.push(`/interview/${newSession.id}`);
+    setRetryingId(session.id);
+    try {
+      const newSession = await cloneInterviewSessionAsync(session.id);
+      if (newSession) {
+        router.push(`/interview/${newSession.id}`);
+      }
+    } finally {
+      setRetryingId(null);
     }
   };
 
@@ -136,6 +135,7 @@ export default function HistoryPage() {
       score: r.score,
       date: r.createdAt,
       details: r.answer.slice(0, 60) + "...",
+      questionId: r.questionId,
       evaluationStatus: r.evaluationStatus,
       isAIUpgrading: !!(r.evaluationStatus === "COMPLETED" && (r.feedback as unknown as { aiUpgrading?: boolean })?.aiUpgrading),
     }));
@@ -302,29 +302,15 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-6"
-        >
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-1">
-            {locale === "zh" ? "学习记录" : "History"}
-          </h1>
-          <p className="text-foreground-muted text-sm">
-            {locale === "zh" ? "追踪你的进步轨迹" : "Track your progress"}
-          </p>
-        </motion.div>
+      <PageHeader
+        title={locale === "zh" ? "练习历史" : "Practice History"}
+        subtitle={locale === "zh" ? "Session Archives" : "Session Archives"}
+      />
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8 space-y-0">
 
         {/* 未登录用户提示 */}
         {!isAuthenticated && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl"
-          >
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -351,16 +337,11 @@ export default function HistoryPage() {
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Stats KPI Panel */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.05 }}
-          className="bg-surface-elevated rounded-xl mb-6 overflow-hidden shadow-subtle"
-        >
+        <div className="bg-[#f6f3f2] rounded-xl mb-6 overflow-hidden">
           <div className="grid grid-cols-3 divide-x divide-border/10">
             <div className="p-4 text-center">
               <div className="text-xs text-foreground-muted mb-1.5 flex items-center justify-center gap-1">
@@ -389,234 +370,207 @@ export default function HistoryPage() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Filter Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex items-center gap-2 mb-6"
-        >
+        <div className="flex items-center gap-8 mb-10 border-b border-[#eae7e7]">
           {([
-            { value: "all" as const, label: locale === "zh" ? "全部" : "All", icon: <History className="w-3.5 h-3.5" />, count: stats.totalRecords },
-            { value: "practice" as const, label: locale === "zh" ? "练习" : "Practice", icon: <Target className="w-3.5 h-3.5" />, count: stats.totalPractices },
-            { value: "interview" as const, label: locale === "zh" ? "面试" : "Interview", icon: <MessageSquare className="w-3.5 h-3.5" />, count: stats.totalInterviews },
+            { value: "all" as const, label: locale === "zh" ? "全部" : "All", count: stats.totalRecords },
+            { value: "practice" as const, label: locale === "zh" ? "练习" : "Practice", count: stats.totalPractices },
+            { value: "interview" as const, label: locale === "zh" ? "面试" : "Interview", count: stats.totalInterviews },
           ]).map((tab) => (
             <button
               key={tab.value}
               onClick={() => setFilter(tab.value)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 pb-4 text-sm tracking-wide transition-all duration-200 ${
                 filter === tab.value
-                  ? "bg-primary-gradient text-white shadow-glow"
-                  : "bg-surface-elevated text-foreground-muted hover:text-foreground shadow-subtle"
+                  ? "font-bold text-[#004ac6] border-b-2 border-[#004ac6]"
+                  : "font-medium text-[#5f5e5e] hover:text-foreground"
               }`}
             >
-              {tab.icon}
               {tab.label}
-              <span className={`text-xs tabular-nums ${filter === tab.value ? "opacity-70" : ""}`}>{tab.count}</span>
+              <span className="text-xs tabular-nums text-foreground-muted">{tab.count}</span>
             </button>
           ))}
-        </motion.div>
+        </div>
 
         {/* Timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="space-y-8"
-        >
-          {groupedRecords.map((group, groupIndex) => (
-            <div key={group.date} className="animate-fade-up" style={{ animationDelay: `${0.3 + groupIndex * 0.1}s` }}>
+        <div className="space-y-10">
+          {groupedRecords.map((group) => (
+            <div key={group.date}>
               {/* Date Header */}
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-accent/10 rounded-lg">
-                    <Calendar className="w-3.5 h-3.5 text-accent" />
-                  </div>
-                  <span className="text-sm font-bold text-foreground">{group.label}</span>
+                  <div className="w-2 h-2 rounded-full bg-[#004ac6] flex-shrink-0" />
+                  <span className="text-xs font-semibold text-foreground-muted uppercase tracking-widest">
+                    {group.label}
+                  </span>
                 </div>
-                <div className="flex-1 h-px bg-border"></div>
-                <span className="text-xs font-medium text-foreground-muted bg-surface px-2.5 py-1 rounded-full border border-border">
-                  {group.records.length} {locale === "zh" ? "条记录" : "records"}
+                <span className="text-xs text-foreground-muted">
+                  {group.records.length} {locale === "zh" ? "条" : "records"}
                 </span>
               </div>
 
               {/* Records */}
               <div className="space-y-3">
-                {group.records.map((record, recordIndex) => {
+                {group.records.map((record) => {
                   const isEditing = editingId === record.id && record.type === "interview";
-                  const isInterview = record.type === "interview";
+
+                  const reportHref = record.type === "practice"
+                    ? `/practice/review/${record.id}`
+                    : `/interview/${record.id}/report`;
 
                   return (
                     <div
                       key={`${record.type}-${record.id}`}
-                      className="group p-4 bg-surface-elevated rounded-xl shadow-subtle hover:shadow-soft transition-all duration-200"
-                      style={{ animationDelay: `${recordIndex * 0.05}s` }}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => { if (!isEditing) router.push(reportHref); }}
+                      onKeyDown={(e) => { if (!isEditing && (e.key === "Enter" || e.key === " ")) router.push(reportHref); }}
+                      className="group flex items-center gap-2 md:gap-4 p-3 md:p-5 bg-[#f6f3f2] rounded-xl hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] transition-all cursor-pointer"
                     >
-                      {/* Mobile & Desktop Layout */}
-                      <div className="flex items-start gap-3 sm:gap-4">
-                        {/* Type Icon - 固定大小 */}
-                        <Link
-                          href={
-                            record.type === "practice"
-                              ? `/practice/review/${record.id}`
-                              : `/interview/${record.id}/report`
-                          }
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            record.type === "practice"
-                              ? "bg-accent/10 text-accent"
-                              : "bg-success/10 text-success"
-                          }`}
-                        >
-                          {record.type === "practice" ? (
-                            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-                          ) : (
-                            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
-                          )}
-                        </Link>
+                      {/* Icon box */}
+                      <div className={`w-9 h-9 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                        record.type === "interview" ? "bg-[#eef1ff]" : "bg-[#f2f2f2]"
+                      }`}>
+                        {record.type === "interview"
+                          ? <Users className="w-4 h-4 md:w-6 md:h-6 text-[#004ac6]" />
+                          : <User className="w-4 h-4 md:w-6 md:h-6 text-[#888]" />
+                        }
+                      </div>
 
-                        {/* Content - 占据剩余空间 */}
-                        <div className="flex-1 min-w-0">
-                          {/* Title Row: 标题 + 分数 */}
-                          {isEditing ? (
-                            <div className="flex items-center gap-2 mb-2">
-                              <input
-                                type="text"
-                                value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
-                                className="flex-1 px-3 py-2 text-sm bg-surface border-2 border-accent rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") saveTitle(record.id);
-                                  if (e.key === "Escape") cancelEdit();
-                                }}
-                              />
-                              <button
-                                onClick={() => saveTitle(record.id)}
-                                className="p-2 text-success hover:bg-success/10 rounded-xl transition-colors"
-                              >
-                                <Check className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={cancelEdit}
-                                className="p-2 text-foreground-muted hover:bg-surface rounded-xl transition-colors"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-start sm:items-center gap-2 sm:gap-3 mb-1.5">
-                              <Link
-                                href={
-                                  record.type === "practice"
-                                    ? `/practice/review/${record.id}`
-                                    : `/interview/${record.id}/report`
-                                }
-                                className="flex-1 min-w-0"
-                              >
-                                <h4 className="font-semibold text-foreground text-sm sm:text-base leading-tight line-clamp-2 sm:line-clamp-1 group-hover:text-accent transition-colors">
-                                  {record.title}
-                                </h4>
-                              </Link>
-                              {/* Score Badge - 紧跟标题 */}
-                              <Link
-                                href={
-                                  record.type === "practice"
-                                    ? `/practice/review/${record.id}`
-                                    : `/interview/${record.id}/report`
-                                }
-                                className="flex-shrink-0"
-                              >
-                                {record.type === "practice" && (record.evaluationStatus === "PENDING" || record.evaluationStatus === "PROCESSING") ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
-                                    <Loader2 className="w-3 h-3 animate-spin" />
-                                    {locale === "zh" ? "分析中" : "Analyzing"}
-                                  </span>
-                                ) : record.type === "practice" && record.isAIUpgrading ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-600 border border-purple-200">
-                                    <Brain className="w-3 h-3" />
-                                    {locale === "zh" ? "AI分析中" : "AI analyzing"}
-                                  </span>
-                                ) : (
-                                  <ScoreBadge score={record.score} size="sm" className="sm:text-sm" />
-                                )}
-                              </Link>
-                            </div>
-                          )}
-
-                          {/* Meta Row: 时间 + 详情 + 操作按钮 */}
-                          <div className="flex items-center justify-between gap-2">
-                            {/* 时间和详情 */}
-                            <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-foreground-muted min-w-0 flex-1">
-                              <span className="font-medium flex-shrink-0">{formatTime(record.date)}</span>
-                              {record.details && (
-                                <>
-                                  <span className="text-border flex-shrink-0">•</span>
-                                  <span className="truncate">{record.details}</span>
-                                </>
-                              )}
-                              {record.questionCount && (
-                                <>
-                                  <span className="text-border flex-shrink-0">•</span>
-                                  <span className="px-1.5 sm:px-2 py-0.5 bg-surface rounded-full border border-border font-medium flex-shrink-0">
-                                    {record.questionCount} {locale === "zh" ? "题" : "Q"}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-
-                            {/* 操作按钮 - 更紧凑的设计 */}
-                            <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-                              {/* Interview Actions - 移动端始终显示，桌面端hover显示 */}
-                              {isInterview && (
-                                <>
-                                  <button
-                                    onClick={() => startEditTitle(record as unknown as InterviewSession)}
-                                    className="p-1.5 sm:p-2 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
-                                    title={locale === "zh" ? "编辑名称" : "Edit name"}
-                                  >
-                                    <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleRetry(record as unknown as InterviewSession)}
-                                    className="p-1.5 sm:p-2 text-foreground-muted hover:text-success hover:bg-success/10 rounded-lg transition-colors sm:opacity-0 sm:group-hover:opacity-100"
-                                    title={locale === "zh" ? "再练一次" : "Practice again"}
-                                  >
-                                    <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                  </button>
-                                </>
-                              )}
-
-                              <Link
-                                href={
-                                  record.type === "practice"
-                                    ? `/practice/review/${record.id}`
-                                    : `/interview/${record.id}/report`
-                                }
-                                className="p-1.5 sm:p-2 text-foreground-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
-                              >
-                                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                              </Link>
-                            </div>
+                      {/* Middle */}
+                      <div className="flex-1 min-w-0">
+                        {isEditing ? (
+                          <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="text"
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              className="flex-1 px-3 py-2 text-sm bg-surface border-2 border-accent rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveTitle(record.id);
+                                if (e.key === "Escape") cancelEdit();
+                              }}
+                            />
+                            <button
+                              onClick={(e) => { e.stopPropagation(); saveTitle(record.id); }}
+                              className="p-2 text-success hover:bg-success/10 rounded-xl transition-colors"
+                              aria-label={locale === "zh" ? "保存" : "Save"}
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); cancelEdit(); }}
+                              className="p-2 text-foreground-muted hover:bg-surface rounded-xl transition-colors"
+                              aria-label={locale === "zh" ? "取消" : "Cancel"}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
                           </div>
+                        ) : (
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <h4 className="font-bold text-foreground text-sm sm:text-base leading-tight group-hover:text-accent transition-colors line-clamp-1">
+                              {record.title}
+                            </h4>
+                            {/* type badge */}
+                            <span className="text-[10px] px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#eef1ff] text-[#004ac6] border border-[#c5d0f5] flex-shrink-0">
+                              {record.type === "interview"
+                                ? (locale === "zh" ? "模拟面试" : "Mock Interview")
+                                : (locale === "zh" ? "练习" : "Practice")}
+                            </span>
+                            {/* edit pencil - interviews only */}
+                            {record.type === "interview" && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); startEditTitle(record as unknown as InterviewSession); }}
+                                className="p-1 text-foreground-muted hover:text-accent transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                                aria-label={locale === "zh" ? "编辑标题" : "Edit title"}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {/* meta row */}
+                        <div className="flex items-center gap-3 text-xs text-foreground-muted flex-wrap">
+                          <span className="flex items-center gap-1 flex-shrink-0">
+                            <Calendar className="w-3 h-3" />
+                            {new Date(record.date).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                          {record.questionCount && (
+                            <span className="flex items-center gap-1 flex-shrink-0">
+                              <FileText className="w-3 h-3" />
+                              {record.questionCount} {locale === "zh" ? "道题" : "questions"}
+                            </span>
+                          )}
                         </div>
                       </div>
+
+                      {/* Score box */}
+                      <div className="flex-shrink-0 text-center md:min-w-[100px]">
+                        {record.type === "practice" && (record.evaluationStatus === "PENDING" || record.evaluationStatus === "PROCESSING") ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs font-medium bg-accent/10 text-accent">
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span className="hidden md:inline">{locale === "zh" ? "分析中" : "Analyzing"}</span>
+                          </span>
+                        ) : (
+                          <>
+                            <div className="text-xs text-foreground-muted mb-0.5 hidden md:block">
+                              {locale === "zh" ? "得分" : "Score"}
+                            </div>
+                            <div className="text-xl md:text-2xl font-bold text-[#004ac6] leading-none md:mb-1.5">
+                              {record.score}<span className="text-xs md:text-base font-semibold">%</span>
+                            </div>
+                            <span className="hidden md:inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                              {locale === "zh" ? "已完成" : "Completed"}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Practice Again */}
+                      {record.type === "interview" ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleRetry(record as unknown as InterviewSession); }}
+                          disabled={retryingId === record.id}
+                          className="flex-shrink-0 px-2.5 py-1 md:px-4 md:py-2.5 bg-[#004ac6] text-white text-xs md:text-sm font-semibold rounded-lg md:rounded-xl hover:bg-[#003aad] transition-colors whitespace-nowrap disabled:opacity-60"
+                        >
+                          {retryingId === record.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <>{locale === "zh" ? "再练" : "Retry"}<span className="hidden md:inline">{locale === "zh" ? "一次" : " Again"}</span></>
+                          )}
+                        </button>
+                      ) : record.questionId && record.evaluationStatus === "COMPLETED" ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); router.push(`/questions/${record.questionId}`); }}
+                          className="flex-shrink-0 px-2.5 py-1 md:px-4 md:py-2.5 bg-[#004ac6] text-white text-xs md:text-sm font-semibold rounded-lg md:rounded-xl hover:bg-[#003aad] transition-colors whitespace-nowrap"
+                        >
+                          {locale === "zh" ? "再练" : "Retry"}
+                          <span className="hidden md:inline">{locale === "zh" ? "一次" : " Again"}</span>
+                        </button>
+                      ) : null}
+
+                      {/* Arrow */}
+                      <svg
+                        className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 text-[#c3c6d7] group-hover:text-[#004ac6] transition-colors"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   );
                 })}
               </div>
             </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Load More / End */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="mt-10 text-center"
-        >
+        <div className="mt-10 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface rounded-full border border-border">
             <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted/50" />
             <span className="text-sm text-foreground-muted">
@@ -624,7 +578,7 @@ export default function HistoryPage() {
             </span>
             <div className="w-1.5 h-1.5 rounded-full bg-foreground-muted/50" />
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

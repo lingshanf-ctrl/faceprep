@@ -10,10 +10,12 @@ import {
   InterviewAnswer,
   fetchAIEvaluation,
   updateSessionWithAIEvaluationAsync,
+  cloneInterviewSessionAsync,
 } from "@/lib/interview-store";
 import { LoadingState } from "@/components/ui/loading-state";
 import { UpgradeModal } from "@/components/upgrade-modal";
 import { BasicInterviewFeedback, InterviewReportV2 } from "@/components/feedback";
+import { ScoreRing } from "@/components/ui/score-ring";
 
 // ==================== 工具函数 ====================
 
@@ -99,6 +101,21 @@ export default function InterviewReportPage() {
     creditsRemaining: number | null;
     monthlyExpiresAt: Date | null;
   }>({ creditsRemaining: null, monthlyExpiresAt: null });
+
+  const [isRetryingSession, setIsRetryingSession] = useState(false);
+
+  const handleRetrySession = async () => {
+    if (!session) return;
+    setIsRetryingSession(true);
+    try {
+      const newSession = await cloneInterviewSessionAsync(interviewId);
+      if (newSession) {
+        router.push(`/interview/${newSession.id}`);
+      }
+    } finally {
+      setIsRetryingSession(false);
+    }
+  };
 
   // 处理登录跳转
   const handleLogin = () => {
@@ -489,107 +506,34 @@ export default function InterviewReportPage() {
   const avgScore = Math.round(session.answers.reduce((acc, a) => acc + a.score, 0) / session.answers.length);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Hero Header */}
-      <div className="bg-white border-b border-slate-100">
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-foreground-muted mb-6">
-            <Link href="/history" className="hover:text-accent transition-colors">
-              {locale === "zh" ? "学习记录" : "History"}
-            </Link>
-            <span>/</span>
-            <span className="text-foreground">{locale === "zh" ? "面试报告" : "Interview Report"}</span>
-          </div>
-
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-            {/* Title & Meta */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3 truncate">{session.title}</h1>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-foreground-muted">
-                <span className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  {new Date(session.completedAt || "").toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  {formatDuration(totalDuration)}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                  {session.questions.length} {locale === "zh" ? "道题" : "questions"}
-                </span>
-              </div>
-            </div>
-
-            {/* Score Card */}
-            <div className={`flex-shrink-0 px-6 py-4 rounded-2xl border ${getScoreBgColor(session.overallScore)}`}>
-              <div className="text-center">
-                <div className={`text-4xl font-bold mb-1 ${getScoreColor(session.overallScore)}`}>
-                  {session.overallScore}
-                </div>
-                <div className={`text-sm font-medium ${getScoreColor(session.overallScore)}`}>
-                  {getScoreLevel(session.overallScore, locale)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* AI Status Banner */}
+    <div className="min-h-screen bg-background">
+      {/* Status Banners */}
       {isGeneratingAIReport && (
-        <div className="bg-accent/5 border-b border-accent/10">
-          <div className="max-w-4xl mx-auto px-6 py-3">
-            <div className="flex items-center gap-3 text-sm text-accent">
-              <div className="w-4 h-4 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+        <div className="bg-[#eef1ff] border-b border-[#c5d0f5]">
+          <div className="max-w-4xl mx-auto px-4 md:px-8 py-3">
+            <div className="flex items-center gap-3 text-sm text-[#004ac6]">
+              <div className="w-4 h-4 border-2 border-[#004ac6]/30 border-t-[#004ac6] rounded-full animate-spin" />
               <span>{locale === "zh" ? "AI 正在生成深度分析报告..." : "AI is generating analysis..."}</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* 评估进度 Banner */}
       {evaluationStatus && (evaluationStatus.pending > 0 || evaluationStatus.processing > 0) && (
-        <div className="bg-blue-50 border-b border-blue-100">
-          <div className="max-w-4xl mx-auto px-6 py-3">
+        <div className="bg-[#eef1ff] border-b border-[#c5d0f5]">
+          <div className="max-w-4xl mx-auto px-4 md:px-8 py-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-sm text-blue-700">
-                <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+              <div className="flex items-center gap-3 text-sm text-[#004ac6]">
+                <div className="w-4 h-4 border-2 border-[#004ac6]/30 border-t-[#004ac6] rounded-full animate-spin" />
                 <span>
                   {locale === "zh"
                     ? `AI 正在分析答案... (${evaluationStatus.completed}/${evaluationStatus.total})`
                     : `AI analyzing answers... (${evaluationStatus.completed}/${evaluationStatus.total})`}
                 </span>
               </div>
-              <div className="w-32 h-2 bg-blue-200 rounded-full overflow-hidden">
+              <div className="w-28 h-1.5 bg-[#c5d0f5] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-600 transition-all duration-300"
+                  className="h-full bg-[#004ac6] transition-all duration-300"
                   style={{ width: `${(evaluationStatus.completed / evaluationStatus.total) * 100}%` }}
                 />
               </div>
@@ -598,47 +542,70 @@ export default function InterviewReportPage() {
         </div>
       )}
 
-      {/* 评估失败 Banner */}
       {evaluationStatus && evaluationStatus.failed > 0 && evaluationStatus.pending === 0 && evaluationStatus.processing === 0 && (
         <div className="bg-rose-50 border-b border-rose-100">
-          <div className="max-w-4xl mx-auto px-6 py-3">
+          <div className="max-w-4xl mx-auto px-4 md:px-8 py-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-sm text-rose-700">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+              <div className="flex items-center gap-2 text-sm text-rose-700">
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>
                   {locale === "zh"
                     ? `${evaluationStatus.failed} 道题评估失败`
-                    : `${evaluationStatus.failed} answer(s) failed to evaluate`}
+                    : `${evaluationStatus.failed} answer(s) failed`}
                 </span>
               </div>
               <button
                 onClick={retryFailedEvaluations}
                 disabled={isRetrying}
-                className="px-3 py-1 text-sm font-medium text-rose-700 bg-rose-100 hover:bg-rose-200 rounded-lg transition-colors disabled:opacity-50"
+                className="px-3 py-1 text-xs font-semibold text-rose-700 bg-rose-100 hover:bg-rose-200 rounded-lg transition-colors disabled:opacity-50"
               >
-                {isRetrying
-                  ? locale === "zh"
-                    ? "重试中..."
-                    : "Retrying..."
-                  : locale === "zh"
-                    ? "重试"
-                    : "Retry"}
+                {isRetrying ? (locale === "zh" ? "重试中..." : "Retrying...") : (locale === "zh" ? "重试" : "Retry")}
               </button>
             </div>
           </div>
         </div>
       )}
 
-
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 md:px-8 py-4 md:py-8">
+        {/* Back link */}
+        <Link href="/history" className="inline-flex items-center gap-2 text-sm text-[#5f5e5e] hover:text-foreground transition-colors mb-6">
+          ← {locale === "zh" ? "返回历史" : "Back to History"}
+        </Link>
+
+        {/* Hero Card: ScoreRing + title + meta + overall quote */}
+        <div className="bg-white border border-[#eae7e7] rounded-2xl p-4 md:p-6 mb-4 md:mb-6 shadow-sm">
+          <div className="flex items-start gap-4 md:gap-6">
+            <ScoreRing score={session.overallScore} size={80} strokeWidth={6} className="flex-shrink-0 md:hidden" />
+            <ScoreRing score={session.overallScore} size={96} strokeWidth={7} className="flex-shrink-0 hidden md:block" />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg md:text-xl font-bold text-foreground mb-1 leading-snug line-clamp-2">
+                {session.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[#5f5e5e] mb-2 md:mb-3">
+                <span>
+                  {new Date(session.completedAt || "").toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
+                    year: "numeric", month: "short", day: "numeric",
+                  })}
+                </span>
+                <span className="text-[#c3c6d7]">·</span>
+                <span>{formatDuration(totalDuration)}</span>
+                <span className="text-[#c3c6d7]">·</span>
+                <span>{session.questions.length} {locale === "zh" ? "道题" : "questions"}</span>
+              </div>
+              {session.overallFeedback && (
+                <div className="border-l-2 border-[#004ac6]/30 pl-3 md:pl-4">
+                  <p className="text-xs md:text-sm text-[#5f5e5e] italic leading-relaxed line-clamp-2 md:line-clamp-none">
+                    &ldquo;{safeString(session.overallFeedback)}&rdquo;
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* 双模型架构：免费用户显示基础版，付费用户显示专业版 */}
         {hasAccess === false && session && (
           <BasicInterviewFeedback
@@ -653,27 +620,37 @@ export default function InterviewReportPage() {
           <InterviewReportV2 session={session} />
         )}
 
-        {/* 权限检查中 */}
         {hasAccess === null && (
           <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#004ac6]/30 border-t-[#004ac6] rounded-full animate-spin" />
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 mt-12 pt-8 border-t border-slate-100">
-          <Link
-            href="/practice"
-            className="flex-1 py-3 px-6 bg-white border border-slate-200 text-foreground rounded-xl font-medium hover:bg-slate-50 transition-all text-center"
-          >
-            {locale === "zh" ? "继续练习" : "Continue Practice"}
-          </Link>
+        <div className="flex flex-col sm:flex-row gap-3 mt-8 pt-6 border-t border-[#eae7e7]">
           <Link
             href="/history"
-            className="flex-1 py-3 px-6 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark transition-all text-center"
+            className="flex-1 py-3 px-6 bg-[#f6f3f2] text-foreground rounded-xl font-medium hover:bg-[#eae7e7] transition-all text-center text-sm"
           >
             {locale === "zh" ? "返回记录" : "Back to History"}
           </Link>
+          <button
+            onClick={handleRetrySession}
+            disabled={isRetryingSession}
+            className="flex-1 py-3 px-6 bg-[#004ac6] text-white rounded-xl font-medium hover:bg-[#003aad] transition-all text-center text-sm disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {isRetryingSession ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                {locale === "zh" ? "准备中..." : "Preparing..."}
+              </>
+            ) : (
+              locale === "zh" ? "再练一次" : "Practice Again"
+            )}
+          </button>
         </div>
       </div>
 

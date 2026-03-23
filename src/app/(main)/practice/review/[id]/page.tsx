@@ -15,6 +15,8 @@ import { UpgradeModal } from "@/components/upgrade-modal";
 import { SimplifiedFeedbackView } from "@/components/simplified-feedback";
 import { generateRuleBasedFeedback, type SimplifiedFeedback } from "@/lib/rule-engine-feedback";
 import { BasicFeedbackView, PremiumFeedbackView } from "@/components/feedback";
+import { PageHeader } from "@/components/page-header";
+import { ScoreRing } from "@/components/ui/score-ring";
 // import { Skeleton } from "@/components/ui/skeleton";
 
 const translations = {
@@ -24,6 +26,8 @@ const translations = {
     loading: "加载中...",
     notFound: "练习记录不存在",
     backToHistory: "返回历史",
+    tabReport: "AI 报告",
+    tabProgress: "进步曲线",
     questionTitle: "题目",
     yourAnswer: "你的回答",
     score: "得分",
@@ -77,6 +81,8 @@ const translations = {
     loading: "Loading...",
     notFound: "Practice record not found",
     backToHistory: "Back to History",
+    tabReport: "AI Report",
+    tabProgress: "Progress",
     questionTitle: "Question",
     yourAnswer: "Your Answer",
     score: "Score",
@@ -763,6 +769,7 @@ export default function PracticeReviewPage() {
   const [record, setRecord] = useState<PracticeRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [questionExists, setQuestionExists] = useState(true);
+  const [activeTab, setActiveTab] = useState<"report" | "progress">("report");
   const [showCompare, setShowCompare] = useState(false);
   const [progressHistory, setProgressHistory] = useState<Array<{ attempt: number; score: number; date: string }>>([]);
   const [evaluationStatus, setEvaluationStatus] = useState<"PENDING" | "PROCESSING" | "COMPLETED" | "FAILED" | null>(null);
@@ -1172,31 +1179,86 @@ export default function PracticeReviewPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 md:py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Link href="/history" className="text-foreground-muted hover:text-foreground transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </Link>
-            <span className="text-foreground-muted">/</span>
-            <span className="text-foreground font-medium">{t.title}</span>
+      <div className="max-w-4xl mx-auto px-4 md:px-8 py-4 md:py-8">
+        {/* Back link */}
+        <Link href="/history" className="inline-flex items-center gap-2 text-sm text-[#5f5e5e] hover:text-foreground transition-colors mb-6">
+          ← {t.backToHistory}
+        </Link>
+
+        {/* Hero Card: Score + Title + Date + Quote */}
+        <div className="bg-white border border-[#eae7e7] rounded-2xl p-4 md:p-6 mb-4 md:mb-6 shadow-sm">
+          <div className="flex items-start gap-4 md:gap-6">
+            <ScoreRing score={record.score} size={80} strokeWidth={6} className="flex-shrink-0 md:hidden" />
+            <ScoreRing score={record.score} size={96} strokeWidth={7} className="flex-shrink-0 hidden md:block" />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg md:text-xl font-bold text-foreground mb-1 leading-snug line-clamp-2">
+                {record.questionTitle}
+              </h1>
+              <p className="text-xs md:text-sm text-[#5f5e5e] mb-2 md:mb-3">
+                {new Date(record.createdAt).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
+                  year: "numeric", month: "long", day: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })}
+              </p>
+              {record.feedback?.suggestion && (
+                <div className="border-l-2 border-[#004ac6]/30 pl-3 md:pl-4">
+                  <p className="text-xs md:text-sm text-[#5f5e5e] italic leading-relaxed line-clamp-2 md:line-clamp-none">
+                    &ldquo;{record.feedback.suggestion}&rdquo;
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-          <h1 className="font-display text-display-sm font-bold text-foreground tracking-tight mb-2">
-            {record.questionTitle}
-          </h1>
-          <p className="text-foreground-muted">
-            {new Date(record.createdAt).toLocaleDateString(locale === "zh" ? "zh-CN" : "en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
         </div>
+
+        {/* Tab Bar */}
+        <div className="flex items-center gap-1 border-b border-[#eae7e7] mb-6">
+          <button
+            onClick={() => setActiveTab("report")}
+            className={`pb-3 px-1 text-sm font-medium transition-all mr-4 ${
+              activeTab === "report"
+                ? "border-b-2 border-[#004ac6] text-[#004ac6]"
+                : "text-[#5f5e5e] hover:text-foreground"
+            }`}
+          >
+            {t.tabReport}
+          </button>
+          <button
+            onClick={() => setActiveTab("progress")}
+            className={`pb-3 px-1 text-sm font-medium transition-all ${
+              activeTab === "progress"
+                ? "border-b-2 border-[#004ac6] text-[#004ac6]"
+                : "text-[#5f5e5e] hover:text-foreground"
+            }`}
+          >
+            {t.tabProgress}
+            {progressHistory.length > 1 && (
+              <span className="ml-1.5 text-xs bg-[#eef1ff] text-[#004ac6] px-1.5 py-0.5 rounded-full">
+                {progressHistory.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Progress Tab */}
+        {activeTab === "progress" && (
+          <div>
+            {progressHistory.length > 1 ? (
+              <ProgressCurve history={progressHistory} locale={locale} />
+            ) : (
+              <div className="bg-[#f6f3f2] rounded-xl p-12 text-center">
+                <p className="text-[#5f5e5e] text-sm">
+                  {locale === "zh"
+                    ? "练习 2 次以上后，即可在此查看你的进步曲线"
+                    : "Practice this question 2+ times to see your progress curve"}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Report Tab */}
+        {activeTab === "report" && <>
 
         {/* AI 评估进度 */}
         {(() => {
@@ -1356,14 +1418,6 @@ export default function PracticeReviewPage() {
           </div>
         )}
 
-        {/* Phase 3: Progress Curve - 进步曲线 (有有效反馈或评估完成时显示) */}
-        {(() => {
-          const hasFeedback = hasValidFeedback(record.feedback);
-          return (hasFeedback || evaluationStatus === "COMPLETED") && progressHistory.length > 1;
-        })() && (
-          <ProgressCurve history={progressHistory} locale={locale} />
-        )}
-
         {/* View Toggle (有有效反馈或评估完成时显示) */}
         {(() => {
           const hasFeedback = hasValidFeedback(record.feedback);
@@ -1406,43 +1460,35 @@ export default function PracticeReviewPage() {
         ) : (
           <React.Fragment>
             {/* Your Answer (始终显示) - 带分数徽章 + 参考答案 Tab */}
-            <Card className="mb-6">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                {/* Tab 切换 */}
-                <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+            <div className="bg-[#f6f3f2] rounded-xl mb-6 overflow-hidden">
+              <div className="flex items-center gap-1 px-6 pt-5 pb-0 border-b border-[#eae7e7]">
+                <button
+                  onClick={() => setAnswerTab("yours")}
+                  className={`pb-3 px-1 text-sm font-medium transition-all mr-4 ${
+                    answerTab === "yours"
+                      ? "border-b-2 border-[#004ac6] text-[#004ac6]"
+                      : "text-[#5f5e5e] hover:text-foreground"
+                  }`}
+                >
+                  {t.yourAnswer}
+                </button>
+                {/* 参考答案 Tab：仅免费用户显示（专业版有 AI 优化答案，无需重复） */}
+                {!hasAccess && questionData?.referenceAnswer && (
                   <button
-                    onClick={() => setAnswerTab("yours")}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                      answerTab === "yours"
-                        ? "bg-white text-slate-800 shadow-sm"
-                        : "text-slate-500 hover:text-slate-700"
+                    onClick={() => setAnswerTab("reference")}
+                    className={`pb-3 px-1 text-sm font-medium transition-all ${
+                      answerTab === "reference"
+                        ? "border-b-2 border-[#004ac6] text-[#004ac6]"
+                        : "text-[#5f5e5e] hover:text-foreground"
                     }`}
                   >
-                    {t.yourAnswer}
+                    {locale === "zh" ? "参考答案" : "Reference"}
                   </button>
-                  {/* 参考答案 Tab：仅免费用户显示（专业版有 AI 优化答案，无需重复） */}
-                  {!hasAccess && questionData?.referenceAnswer && (
-                    <button
-                      onClick={() => setAnswerTab("reference")}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        answerTab === "reference"
-                          ? "bg-white text-slate-800 shadow-sm"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}
-                    >
-                      {locale === "zh" ? "参考答案" : "Reference"}
-                    </button>
-                  )}
-                </div>
-                {/* 分数徽章 - 右上角 */}
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full ${getScoreColor(record.score)} bg-opacity-10`}>
-                  <span className="text-sm font-medium text-foreground-muted">得分</span>
-                  <span className={`font-bold ${getScoreTextColor(record.score)}`}>{record.score}</span>
-                </div>
-              </CardHeader>
-              <CardContent>
+                )}
+              </div>
+              <div className="p-6">
                 {answerTab === "yours" ? (
-                  <div className="bg-surface rounded-xl p-4 whitespace-pre-wrap text-foreground leading-relaxed">
+                  <div className="bg-white rounded-xl p-4 whitespace-pre-wrap text-foreground leading-relaxed text-sm border border-[#eae7e7]">
                     {record.answer}
                   </div>
                 ) : (
@@ -1450,8 +1496,8 @@ export default function PracticeReviewPage() {
                     {questionData?.referenceAnswer}
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* AI Feedback - 双模型架构：根据权限显示不同版本 */}
             {/* 评估失败时根据权限显示不同降级方案 */}
@@ -1511,13 +1557,16 @@ export default function PracticeReviewPage() {
           </React.Fragment>
         )}
 
+        {/* End Report Tab */}
+        </>}
+
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-border">
-          <Link href="/history" className="flex-1">
-            <Button variant="outline" className="w-full">
-              {t.backToHistory}
-            </Button>
-          </Link>
+        <div className="flex flex-col sm:flex-row gap-3 mt-8 pt-6 border-t border-[#eae7e7]">
+          <div className="flex-1">
+            <Link href="/history">
+              <Button variant="outline" className="w-full border-[#c3c6d7] hover:bg-[#f6f3f2]">{t.backToHistory}</Button>
+            </Link>
+          </div>
           {(() => {
             const hasFeedback = hasValidFeedback(record.feedback);
             // 未登录用户或无权限用户可以重新练习（使用简化反馈）
@@ -1525,7 +1574,7 @@ export default function PracticeReviewPage() {
             return canPractice && questionExists;
           })() ? (
             <Link href={`/questions/${record.questionId}`} className="flex-1">
-              <Button className="w-full bg-accent hover:bg-accent-dark">
+              <Button className="w-full bg-[#004ac6] hover:bg-[#003aa0] text-white">
                 {t.practiceAgain}
               </Button>
             </Link>

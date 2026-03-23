@@ -1,21 +1,45 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
   TrendingUp,
   TrendingDown,
-  Calendar,
-  Clock,
   ChevronRight,
+  CheckCircle,
+  Flame,
+  Play,
+  MessageSquare,
+  Code2,
+  User,
+  Briefcase,
+  Heart,
+  AlertCircle,
 } from "lucide-react";
 import { getStats, getPracticeRecords, getStreak, PracticeRecord } from "@/lib/practice-store";
 import { useLanguage } from "@/components/language-provider";
 import { ScoreBadge } from "@/components/ui/score-badge";
 import { questions } from "@/data/questions";
 import { getTypeConfig } from "@/lib/design-tokens";
+import { PageHeader } from "@/components/page-header";
+
+// Type icon map
+const typeIconMap: Record<string, React.ElementType> = {
+  BEHAVIORAL: MessageSquare,
+  TECHNICAL: Code2,
+  INTRO: User,
+  PROJECT: Briefcase,
+  HR: Heart,
+};
+
+function getDifficultyLabel(difficulty: number | undefined, locale: string) {
+  if (!difficulty) return "";
+  if (difficulty === 1) return locale === "zh" ? "简单" : "Easy";
+  if (difficulty === 2) return locale === "zh" ? "中等" : "Medium";
+  return locale === "zh" ? "困难" : "Hard";
+}
 
 // Types
 interface DashboardStats {
@@ -253,120 +277,99 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 md:px-6 py-10 md:py-14 space-y-8">
+      <PageHeader
+        title={locale === "zh" ? "练习仪表板" : "Practice Dashboard"}
+        subtitle={locale === "zh" ? `欢迎回来，今日继续保持！` : "Welcome back. Your AI mentor is ready."}
+      />
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0 }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-        >
-          <div>
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">
-              {locale === "zh" ? "欢迎回来" : "Welcome back"}
-            </h1>
-            <p className="text-sm text-foreground-muted mt-1.5 flex items-center gap-1.5">
-              <span>{locale === "zh" ? `连续 ${stats.streakDays} 天` : `${stats.streakDays}-day streak`}</span>
-              <span className="text-border">·</span>
-              <span>{locale === "zh" ? `共 ${stats.totalPractices} 次练习` : `${stats.totalPractices} practices`}</span>
-              <span className="text-border">·</span>
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {todayStr}
+      <div className="px-4 md:px-8 pb-16 max-w-7xl mx-auto space-y-10 pt-6 md:pt-8">
+
+        {/* Stats Grid — 3 columns */}
+        <section className="grid grid-cols-3 gap-3 md:gap-6">
+          {/* Questions Completed */}
+          <div className="p-3 md:p-8 bg-[#f6f3f2] rounded-xl flex flex-col justify-between h-28 md:h-48 group hover:bg-[#eae7e7] transition-colors">
+            <div className="flex justify-between items-start gap-1">
+              <span className="text-[#5f5e5e] font-body text-[9px] md:text-xs uppercase tracking-widest font-bold leading-tight line-clamp-2">
+                {locale === "zh" ? "练习次数" : "Completed"}
               </span>
-            </p>
-          </div>
-          <Link
-            href="/practice"
-            className="inline-flex items-center gap-2 h-10 px-5 text-white rounded-xl text-sm font-medium transition-all duration-300 bg-primary-gradient shadow-glow hover:shadow-glow-lg self-start sm:self-auto"
-          >
-            {locale === "zh" ? "开始练习" : "Start Practice"}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </motion.div>
-
-        {/* KPI Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {/* 练习次数 */}
-          <div className="bg-surface-elevated rounded-2xl px-6 py-6 shadow-subtle">
-            <p className="text-4xl font-display font-extrabold tabular-nums text-foreground">
-              {stats.totalPractices}
-            </p>
-            <p className="text-[10px] font-body font-bold uppercase tracking-widest text-foreground-subtle mt-1">
-              {locale === "zh" ? "练习次数" : "Practices"}
-            </p>
-          </div>
-
-          {/* 平均得分 */}
-          <div className="bg-surface-elevated rounded-2xl px-6 py-6 shadow-subtle">
-            <p className="text-4xl font-display font-extrabold tabular-nums text-foreground">
-              {Math.round(stats.averageScore)}
-            </p>
-            <p className="text-[10px] font-body font-bold uppercase tracking-widest text-foreground-subtle mt-1">
-              {locale === "zh" ? "平均得分" : "Avg Score"}
-            </p>
-            {stats.totalPractices >= 10 && stats.scoreTrend !== 0 && (
-              <p className={`text-xs mt-1 flex items-center gap-0.5 ${stats.scoreTrend > 0 ? "text-success" : "text-error"}`}>
-                {stats.scoreTrend > 0
-                  ? <TrendingUp className="h-3 w-3" />
-                  : <TrendingDown className="h-3 w-3" />}
-                {stats.scoreTrend > 0 ? "+" : ""}{stats.scoreTrend}{locale === "zh" ? " 分" : " pts"}
+              <CheckCircle className="w-3.5 h-3.5 md:w-5 md:h-5 text-[#004ac6] shrink-0" />
+            </div>
+            <div>
+              <span className="text-2xl md:text-4xl font-display font-extrabold text-foreground">{stats.totalPractices}</span>
+              <p className="text-xs text-[#004ac6] font-bold mt-1 hidden md:block">
+                {locale === "zh" ? "继续加油" : "Keep going!"}
               </p>
-            )}
+            </div>
           </div>
 
-          {/* 连续天数 */}
-          <div className="rounded-2xl px-6 py-6 bg-primary-gradient shadow-glow">
-            <p className="text-4xl font-display font-extrabold tabular-nums text-white">
-              {stats.streakDays}
-            </p>
-            <p className="text-[10px] font-body font-bold uppercase tracking-widest text-white/70 mt-1">
-              {locale === "zh" ? "连续天数" : "Streak (days)"}
-            </p>
+          {/* Avg Score */}
+          <div className="p-3 md:p-8 bg-[#f6f3f2] rounded-xl flex flex-col justify-between h-28 md:h-48 group hover:bg-[#eae7e7] transition-colors">
+            <div className="flex justify-between items-start gap-1">
+              <span className="text-[#5f5e5e] font-body text-[9px] md:text-xs uppercase tracking-widest font-bold leading-tight line-clamp-2">
+                {locale === "zh" ? "平均得分" : "Avg Score"}
+              </span>
+              <TrendingUp className="w-3.5 h-3.5 md:w-5 md:h-5 text-[#004ac6] shrink-0" />
+            </div>
+            <div>
+              <span className="text-2xl md:text-4xl font-display font-extrabold text-foreground">
+                {Math.round(stats.averageScore)}<span className="text-xs md:text-lg text-[#5f5e5e]">/100</span>
+              </span>
+              {stats.totalPractices >= 10 && stats.scoreTrend !== 0 && (
+                <p className={`text-xs mt-1 items-center gap-0.5 hidden md:flex ${stats.scoreTrend > 0 ? "text-success" : "text-error"}`}>
+                  {stats.scoreTrend > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {stats.scoreTrend > 0 ? "+" : ""}{stats.scoreTrend}{locale === "zh" ? " 分" : " pts"}
+                </p>
+              )}
+              {(stats.totalPractices < 10 || stats.scoreTrend === 0) && (
+                <p className="text-xs text-[#5f5e5e] mt-1 hidden md:block">{locale === "zh" ? "持续练习提升分数" : "Keep practicing to improve"}</p>
+              )}
+            </div>
           </div>
 
-          {/* 练习时长 */}
-          <div className="bg-surface-elevated rounded-2xl px-6 py-6 shadow-subtle">
-            <p className="text-4xl font-display font-extrabold tabular-nums text-foreground">
-              {Math.round(stats.totalTime / 60)}
-            </p>
-            <p className="text-[10px] font-body font-bold uppercase tracking-widest text-foreground-subtle mt-1 flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {locale === "zh" ? "练习时长（分钟）" : "Minutes practiced"}
-            </p>
+          {/* Current Streak */}
+          <div className="p-3 md:p-8 bg-primary-gradient rounded-xl flex flex-col justify-between h-28 md:h-48 text-white">
+            <div className="flex justify-between items-start gap-1">
+              <span className="font-body text-[9px] md:text-xs uppercase tracking-widest font-bold opacity-80 leading-tight line-clamp-2">
+                {locale === "zh" ? "连续天数" : "Streak"}
+              </span>
+              <Flame className="w-3.5 h-3.5 md:w-5 md:h-5 shrink-0" />
+            </div>
+            <div>
+              <span className="text-2xl md:text-4xl font-display font-extrabold">
+                {stats.streakDays}
+                <span className="text-base md:text-4xl"> {locale === "zh" ? "天" : "d"}</span>
+              </span>
+              <p className="text-xs opacity-80 mt-1 hidden md:block">
+                {locale === "zh" ? "保持势头，继续前进！" : "Keep the momentum going!"}
+              </p>
+            </div>
           </div>
-        </motion.div>
+        </section>
 
-        {/* 2-col grid */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        {/* Main 12-col Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
 
-          {/* Left: Blind spot + Recommendations */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Left 8-col */}
+          <div className="lg:col-span-8 space-y-6">
 
             {/* Card A: Blind Spot Analysis */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              className="bg-surface-elevated rounded-2xl overflow-hidden shadow-subtle"
             >
-              {/* Card header */}
-              <div className="px-6 py-4 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-foreground">
+              {/* Section title row */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-xl font-bold text-foreground">
                   {locale === "zh" ? "个人盲点分析" : "Blind Spot Analysis"}
                 </h2>
                 {!isNewUser && (
-                  <span className="text-xs text-foreground-muted">
+                  <span className="text-xs text-[#5f5e5e]">
                     {locale === "zh" ? `基于 ${stats.totalPractices} 次练习` : `Based on ${stats.totalPractices} practices`}
                   </span>
                 )}
               </div>
+              <div className="bg-[#f6f3f2] rounded-xl overflow-hidden shadow-[0_4px_16px_rgba(28,27,27,0.06)] hover:shadow-[0_8px_28px_rgba(28,27,27,0.10)] transition-shadow duration-300">
 
               {isNewUser ? (
                 <div className="px-6 py-12 text-center border-t border-border/50">
@@ -432,9 +435,10 @@ export default function DashboardPage() {
                   {/* Block 2: Top weak points */}
                   {blindspots?.topWeakPoints && blindspots.topWeakPoints.length > 0 && (
                     <div className="px-6 py-4">
-                      <p className="text-xs font-medium text-foreground-muted mb-3">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-warning bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-full mb-3">
+                        <AlertCircle className="w-3 h-3" />
                         {locale === "zh" ? "高频失分点" : "Common Weak Points"}
-                      </p>
+                      </span>
                       <ul className="space-y-2">
                         {blindspots.topWeakPoints.map((point, i) => (
                           <li key={i} className="flex items-start gap-2 text-sm text-foreground">
@@ -483,6 +487,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+              </div>{/* end inner bg card */}
             </motion.div>
 
             {/* Card B: Today's Recommendations */}
@@ -490,47 +495,66 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.3 }}
-              className="bg-surface-elevated rounded-2xl overflow-hidden shadow-subtle"
             >
-              <div className="px-6 py-4 flex items-center justify-between border-b border-border/10">
-                <h2 className="text-sm font-semibold text-foreground">
-                  {locale === "zh" ? "今日推荐" : "Recommended"}
+              {/* Section title row */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-xl font-bold text-foreground">
+                  {locale === "zh" ? "今日推荐" : "Recommended for You"}
                 </h2>
                 <Link
                   href="/questions"
-                  className="text-xs text-foreground-muted hover:text-accent transition-colors flex items-center gap-0.5"
+                  className="text-sm text-[#004ac6] font-medium hover:underline flex items-center gap-1"
                 >
-                  {locale === "zh" ? "全部题库" : "All questions"}
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  {locale === "zh" ? "查看题库" : "View Question Bank"}
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
-              <div className="divide-y divide-border/10">
+
+              {/* Question cards */}
+              <div className="space-y-4">
                 {recommendations.map((rec) => {
                   const cfg = getTypeConfig(rec.type, locale);
+                  const fullQuestion = questions.find(q => q.id === rec.id);
+                  const diffLabel = getDifficultyLabel(fullQuestion?.difficulty, locale);
+                  const TypeIcon = typeIconMap[rec.type] ?? MessageSquare;
                   return (
-                    <Link
-                      key={rec.id}
-                      href={`/questions/${rec.id}`}
-                      className="flex items-center gap-3 px-6 py-3.5 hover:bg-surface/50 transition-colors group"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-none ${cfg.bg} ${cfg.color}`}>
+                    <div key={rec.id} className="bg-[#f6f3f2] rounded-xl p-5 hover:bg-white hover:shadow-[0_8px_24px_rgba(28,27,27,0.06)] transition-all">
+                      {/* Top row: icon + badge + difficulty */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-9 h-9 bg-[#004ac6]/10 rounded-lg flex items-center justify-center shrink-0">
+                            <TypeIcon className="w-4 h-4 text-[#004ac6]" />
+                          </div>
+                          <span className="text-[11px] font-bold tracking-widest uppercase text-[#5f5e5e] bg-[#eae7e7] px-2.5 py-1 rounded">
                             {cfg.label}
                           </span>
-                          <span className="text-xs text-foreground-muted truncate">{rec.reason}</span>
                         </div>
-                        <p className="text-sm font-medium text-foreground line-clamp-1">
-                          {rec.title}
-                        </p>
+                        {diffLabel && (
+                          <span className="text-xs text-[#5f5e5e]">
+                            {locale === "zh" ? "难度：" : "Difficulty: "}<span className="font-medium text-foreground">{diffLabel}</span>
+                          </span>
+                        )}
                       </div>
-                      <ArrowRight className="h-3.5 w-3.5 text-foreground-muted shrink-0 group-hover:text-accent transition-colors" />
-                    </Link>
+                      {/* Question title */}
+                      <h3 className="font-display font-bold text-foreground leading-snug mb-1.5">
+                        &ldquo;{rec.title}&rdquo;
+                      </h3>
+                      {/* Reason/description */}
+                      <p className="text-sm text-[#5f5e5e] mb-4 leading-relaxed">{rec.reason}</p>
+                      {/* CTA */}
+                      <Link
+                        href={`/questions/${rec.id}`}
+                        className="text-sm font-bold text-[#004ac6] flex items-center gap-1 hover:gap-2 transition-all w-fit"
+                      >
+                        {locale === "zh" ? "立即练习" : "Practice Now"}
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
                   );
                 })}
                 {recommendations.length === 0 && (
-                  <div className="px-6 py-8 text-center">
-                    <p className="text-sm text-foreground-muted">
+                  <div className="py-10 text-center">
+                    <p className="text-sm text-[#5f5e5e]">
                       {locale === "zh" ? "加载中..." : "Loading..."}
                     </p>
                   </div>
@@ -539,69 +563,108 @@ export default function DashboardPage() {
             </motion.div>
           </div>
 
-          {/* Right: Recent Practices */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
-          >
-            <div className="bg-surface-elevated rounded-2xl overflow-hidden shadow-subtle">
-              <div className="px-6 py-4 flex items-center justify-between border-b border-border/10">
-                <h2 className="text-sm font-semibold text-foreground">
-                  {locale === "zh" ? "最近练习" : "Recent"}
-                </h2>
+          {/* Right 4-col */}
+          <div className="lg:col-span-4 space-y-8">
+            {/* Start Mock Interview CTA */}
+            <div className="p-6 md:p-8 bg-[#1c1b1b] rounded-2xl text-white space-y-5 relative overflow-hidden">
+              {/* Decorative dot grid */}
+              <div className="absolute top-0 right-0 w-28 h-28 opacity-[0.06]"
+                style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "10px 10px" }}
+              />
+              <div>
+                <h3 className="font-display text-3xl md:text-4xl font-extrabold leading-[1.1] tracking-tight text-white">
+                  {locale === "zh" ? (
+                    <>准备好<br />真实模拟了吗？</>
+                  ) : (
+                    <>Ready for a<br />real session?</>
+                  )}
+                </h3>
+                <p className="text-sm text-white/50 mt-3 leading-relaxed">
+                  {locale === "zh" ? "AI 全程监督 · 多题连贯 · 实时评分" : "Start a full AI-proctored mock interview with live feedback."}
+                </p>
+              </div>
+              <Link
+                href="/practice"
+                className="w-full py-3.5 bg-primary-gradient text-white font-bold rounded-xl shadow-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 text-sm relative z-10"
+              >
+                <Play className="w-4 h-4 fill-white" />
+                {locale === "zh" ? "开始模拟面试" : "Start Mock Interview"}
+              </Link>
+            </div>
+
+            {/* Recent Practices */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-xl font-bold text-foreground">
+                  {locale === "zh" ? "最近练习" : "Recent Practice"}
+                </h3>
                 <Link
                   href="/history"
-                  className="text-xs text-foreground-muted hover:text-accent transition-colors flex items-center gap-0.5"
+                  className="text-sm text-[#004ac6] font-medium hover:underline flex items-center gap-1"
                 >
-                  {locale === "zh" ? "全部" : "All"}
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  {locale === "zh" ? "查看全部" : "View All"}
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.25 }}
+              >
+              <div className="bg-[#f6f3f2] rounded-xl overflow-hidden">
 
               {recentRecords.length === 0 ? (
                 <div className="px-6 py-10 text-center">
-                  <p className="text-sm text-foreground-muted mb-4">
+                  <p className="text-sm text-[#5f5e5e] mb-4">
                     {locale === "zh" ? "还没有练习记录" : "No records yet"}
                   </p>
                   <Link
                     href="/practice"
-                    className="inline-flex items-center gap-1.5 text-xs text-accent hover:underline"
+                    className="inline-flex items-center gap-1.5 text-sm text-[#004ac6] font-medium hover:underline"
                   >
                     {locale === "zh" ? "去练习" : "Start practicing"}
-                    <ArrowRight className="h-3 w-3" />
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
               ) : (
-                <div className="divide-y divide-border/10">
+                <div className="divide-y divide-[#eae7e7]">
                   {recentRecords.map((record) => {
                     const title = record.questionTitle ||
                       questions.find((q) => q.id === record.questionId)?.title ||
                       (locale === "zh" ? "未知题目" : "Unknown");
+                    const questionData = questions.find((q) => q.id === record.questionId);
+                    const cfg = questionData ? getTypeConfig(questionData.type, locale) : null;
 
                     const date = new Date(record.createdAt);
                     const dateStr = locale === "zh"
-                      ? `${date.getMonth() + 1}/${date.getDate()}`
+                      ? `${date.getMonth() + 1}月${date.getDate()}日`
                       : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
                     return (
                       <Link
                         key={record.id}
                         href={`/practice/review/${record.id}`}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-surface/50 transition-colors group"
+                        className="flex items-center gap-3 px-5 py-4 hover:bg-white transition-colors group"
                       >
                         <ScoreBadge score={record.score} size="sm" />
-                        <p className="flex-1 text-sm text-foreground line-clamp-1 min-w-0">
-                          {title}
-                        </p>
-                        <span className="text-xs text-foreground-muted shrink-0">{dateStr}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground line-clamp-1">
+                            {title}
+                          </p>
+                          {cfg && (
+                            <span className="text-[11px] text-[#5f5e5e] mt-0.5 block">{cfg.label}</span>
+                          )}
+                        </div>
+                        <span className="text-xs text-[#5f5e5e] shrink-0">{dateStr}</span>
                       </Link>
                     );
                   })}
                 </div>
               )}
+              </div>
+              </motion.div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>

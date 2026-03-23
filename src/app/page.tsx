@@ -23,7 +23,7 @@ const reveal = {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background pb-20 md:pb-0">
 
       {/* ── Nav ─────────────────────────────────────────────── */}
       <motion.nav
@@ -66,7 +66,7 @@ export default function Home() {
       </motion.nav>
 
       {/* ── Hero ────────────────────────────────────────────── */}
-      <section className="relative pt-28 pb-20 md:pt-36 md:pb-32 overflow-hidden">
+      <section className="relative pt-20 pb-14 md:pt-36 md:pb-32 overflow-hidden">
         {/* Dot grid */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -103,7 +103,7 @@ export default function Home() {
               <motion.h1
                 variants={reveal}
                 custom={1}
-                className="font-display text-5xl md:text-6xl lg:text-[4.5rem] font-bold text-foreground leading-[1.05] tracking-tight mb-8"
+                className="font-display text-4xl md:text-6xl lg:text-[4.5rem] font-bold text-foreground leading-[1.05] tracking-tight mb-6 md:mb-8"
               >
                 让面试
                 <br />
@@ -123,18 +123,18 @@ export default function Home() {
               <motion.div
                 variants={reveal}
                 custom={3}
-                className="flex flex-wrap gap-3 mb-10"
+                className="flex flex-col sm:flex-row gap-3 mb-8 md:mb-10"
               >
                 <Link
                   href="/practice"
-                  className="inline-flex h-12 items-center gap-2 rounded-xl px-7 text-sm font-semibold text-white transition-all duration-300 bg-primary-gradient shadow-glow hover:shadow-glow-lg"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-7 text-sm font-semibold text-white transition-all duration-300 bg-primary-gradient shadow-glow hover:shadow-glow-lg"
                 >
                   免费开始练习
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/questions"
-                  className="inline-flex h-12 items-center gap-2 rounded-xl bg-surface-elevated px-7 text-sm font-medium text-foreground shadow-subtle hover:shadow-soft transition-all duration-300"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-surface-elevated px-7 text-sm font-medium text-foreground shadow-subtle hover:shadow-soft transition-all duration-300"
                 >
                   浏览题库
                 </Link>
@@ -255,7 +255,7 @@ export default function Home() {
               { value: "11",   label: "职能方向",   sub: "前端·后端·产品等" },
               { value: "∞",    label: "免费练习",   sub: "基础版无限次" },
             ].map(({ value, label, sub }) => (
-              <div key={label} className="px-8 py-10 text-center bg-white">
+              <div key={label} className="px-4 py-7 md:px-8 md:py-10 text-center bg-white">
                 <div className="tabular-nums font-display text-4xl font-bold text-foreground mb-1">
                   {value}
                 </div>
@@ -268,14 +268,14 @@ export default function Home() {
       </section>
 
       {/* ── Features ────────────────────────────────────────── */}
-      <section className="py-24 md:py-32">
+      <section className="py-14 md:py-32">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="mb-14"
+            className="mb-10 md:mb-14"
           >
             <div className="text-xs font-semibold uppercase tracking-[0.15em] text-foreground-muted mb-4">
               功能
@@ -331,7 +331,7 @@ export default function Home() {
       </section>
 
       {/* ── How it Works ────────────────────────────────────── */}
-      <section className="py-24 md:py-32 bg-[#FAFAFA] border-y border-border/50">
+      <section className="py-14 md:py-32 bg-[#FAFAFA] border-y border-border/50">
         <div className="max-w-4xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -397,14 +397,14 @@ export default function Home() {
       </section>
 
       {/* ── CTA ─────────────────────────────────────────────── */}
-      <section className="py-24 md:py-32">
+      <section className="py-14 md:py-32">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="rounded-[2rem] px-10 py-16 md:py-24 text-center bg-primary-gradient" style={{ boxShadow: "0 20px 60px rgba(0,74,198,0.25)" }}
+            className="rounded-2xl md:rounded-[2rem] px-6 py-12 md:px-10 md:py-24 text-center bg-primary-gradient" style={{ boxShadow: "0 20px 60px rgba(0,74,198,0.25)" }}
           >
             <div className="text-xs font-semibold uppercase tracking-[0.15em] text-white/40 mb-6">
               开始行动

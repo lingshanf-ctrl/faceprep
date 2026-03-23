@@ -250,51 +250,67 @@ export default function InterviewPage() {
   const typeInfo = typeConfig[currentQuestion.type] ?? { label: currentQuestion.type, labelZh: currentQuestion.type, color: "bg-surface text-foreground-muted border-border" };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* 与 /questions/[id]/page.tsx 完全一致的背景光晕 */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-accent/8 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 -right-32 w-[350px] h-[350px] bg-accent/5 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-success/4 rounded-full blur-[100px]" />
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 relative z-10">
-
-        {/* ── 导航栏（与单题页完全对齐）── */}
-        <div className="flex items-center justify-between mb-10">
+    <div className="min-h-screen bg-background">
+      {/* Immersive Top Bar */}
+      <nav className="fixed top-0 left-0 md:left-64 right-0 z-40 flex justify-between items-center px-6 md:px-8 py-4 bg-[#fcf9f8]/80 backdrop-blur-md border-b border-[#c3c6d7]/20">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary-gradient flex items-center justify-center">
+            <span className="text-white text-xs font-bold font-display">FP</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#f6f3f2] rounded-full">
+            <span className="w-1.5 h-1.5 bg-error rounded-full animate-pulse" />
+            <span className="text-xs font-semibold text-[#5f5e5e] uppercase tracking-widest">
+              {locale === "zh" ? "进行中" : "Live"}: {formatTime(elapsedTime)}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Mobile progress */}
+          <div className="flex sm:hidden items-center gap-2 text-xs text-[#5f5e5e]">
+            {currentQuestionIndex + 1} / {session.questions.length}
+          </div>
           <button
             onClick={() => setShowExitConfirm(true)}
-            className="flex items-center gap-1.5 text-sm text-foreground-muted hover:text-foreground transition-colors group"
+            className="px-4 py-2 bg-[#eae7e7] text-foreground text-sm font-bold rounded-lg hover:bg-[#e5e2e1] transition-all active:scale-95"
           >
-            <svg className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-            </svg>
-            {locale === "zh" ? "退出" : "Exit"}
+            {locale === "zh" ? "退出面试" : "Exit Interview"}
           </button>
+        </div>
+      </nav>
 
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-foreground-muted tabular-nums">
-              {currentQuestionIndex + 1} <span className="text-border mx-0.5">/</span> {session.questions.length}
-            </span>
-            <div className="flex items-center gap-1.5 text-xs text-foreground-muted font-mono tabular-nums">
-              <svg className="w-3.5 h-3.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {formatTime(elapsedTime)}
-            </div>
+      <div className="pt-16 min-h-screen">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        {/* Left: Main interview area (9 cols) */}
+        <div className="lg:col-span-9">
+
+        {/* Mobile progress */}
+        <div className="lg:hidden flex items-center gap-2 mb-6 text-sm">
+          <span className="text-[#5f5e5e]">{locale === "zh" ? "进度" : "Progress"}</span>
+          <span className="font-bold text-[#004ac6]">{currentQuestionIndex + 1} / {session.questions.length}</span>
+          <div className="flex-1 h-1 bg-[#eae7e7] rounded-full">
+            <div
+              className="h-full bg-[#004ac6] rounded-full transition-all duration-500"
+              style={{ width: `${((currentQuestionIndex + 1) / session.questions.length) * 100}%` }}
+            />
           </div>
         </div>
 
-        {/* ── 题目区（无卡片，直接在页面上）── */}
+        {/* ── 题目区（Stitch style: border-l-4）── */}
         <motion.div
           key={currentQuestionIndex}
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-8"
+          className="mb-8 bg-[#f6f3f2] rounded-xl p-6 md:p-10 border-l-4 border-[#004ac6]"
         >
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-[#004ac6] font-display font-extrabold text-lg">
+              {String(currentQuestionIndex + 1).padStart(2, "0")}
+            </span>
+            <span className="h-px w-8 bg-[#c3c6d7]" />
           {/* Meta row：题型徽章 + 难度点 */}
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3">
             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${typeInfo.color}`}>
               {locale === "zh" ? typeInfo.labelZh : typeInfo.label}
             </span>
@@ -302,9 +318,10 @@ export default function InterviewPage() {
               {difficultyDots(currentQuestion.difficulty)}
             </span>
           </div>
+          </div>
 
           {/* 题目标题 */}
-          <h1 className="font-display text-2xl sm:text-3xl md:text-heading-xl font-semibold text-foreground leading-snug tracking-tight">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground leading-snug tracking-tight mb-0">
             {currentQuestion.title}
           </h1>
 
@@ -435,7 +452,46 @@ export default function InterviewPage() {
           </div>
         </motion.div>
 
-      </div>
+        </div>{/* end lg:col-span-9 */}
+
+        {/* Right: Interview Roadmap (3 cols) */}
+        <aside className="hidden lg:flex lg:col-span-3 flex-col gap-6 sticky top-24">
+          <div className="bg-[#f6f3f2] rounded-xl p-6 flex flex-col gap-6 border border-[#c3c6d7]/20">
+            <div className="flex flex-col gap-1">
+              <h3 className="font-display font-bold text-foreground">{locale === "zh" ? "面试路线图" : "Interview Roadmap"}</h3>
+              <p className="text-xs text-[#5f5e5e] uppercase tracking-wider">
+                {locale === "zh"
+                  ? `进度: ${currentQuestionIndex + 1} / ${session.questions.length}`
+                  : `Session Progress: ${currentQuestionIndex + 1} of ${session.questions.length}`}
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              {session.questions.map((q, idx) => {
+                const isCompleted = idx < currentQuestionIndex;
+                const isCurrent = idx === currentQuestionIndex;
+                const qTypeInfo = typeConfig[q.type] ?? { labelZh: q.type, label: q.type };
+                return (
+                  <div key={q.id} className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                    isCurrent ? "bg-white shadow-sm" : isCompleted ? "opacity-50" : "opacity-40"
+                  }`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                      isCompleted ? "bg-[#004ac6] text-white" : isCurrent ? "border-2 border-[#004ac6] text-[#004ac6]" : "bg-[#eae7e7] text-[#5f5e5e]"
+                    }`}>
+                      {isCompleted ? "✓" : idx + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground truncate">{locale === "zh" ? qTypeInfo.labelZh : qTypeInfo.label}</p>
+                      <p className="text-[10px] text-[#5f5e5e] truncate">{q.title.slice(0, 30)}...</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
+
+        </div>{/* end grid */}
+      </div>{/* end pt-16 */}
 
       {/* 退出确认弹窗 */}
       {showExitConfirm && (

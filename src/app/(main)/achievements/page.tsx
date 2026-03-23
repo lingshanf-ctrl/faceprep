@@ -11,6 +11,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/page-header";
 
 // 成就卡片组件
 function AchievementCard({
@@ -26,13 +27,13 @@ function AchievementCard({
 }) {
   return (
     <div
-      className={`relative p-5 rounded-xl border transition-all duration-200 ${
-        unlocked ? "bg-accent-fixed/30 shadow-subtle" : "bg-surface-elevated shadow-subtle opacity-60"
+      className={`relative p-5 rounded-xl transition-all duration-200 ${
+        unlocked ? "bg-[#f6f3f2] border border-[#004ac6]/20" : "bg-[#f6f3f2] border border-[#eae7e7] opacity-60"
       }`}
     >
       {/* 解锁标记 */}
       {unlocked && (
-        <div className="absolute top-3 right-3 w-6 h-6 bg-accent rounded-full flex items-center justify-center">
+        <div className="absolute top-3 right-3 w-6 h-6 bg-[#004ac6] rounded-full flex items-center justify-center">
           <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"
@@ -190,20 +191,15 @@ export default function AchievementsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        {/* 头部 */}
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight mb-1">
-            成就中心
-          </h1>
-          <p className="text-foreground-muted text-sm">
-            完成练习，解锁成就，记录你的成长之路
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <PageHeader
+        title="成就中心"
+        subtitle="完成练习，解锁成就，记录你的成长之路"
+      />
+      <div className="max-w-5xl mx-auto px-6 md:px-8 py-8">
 
         {/* 总体进度 */}
-        <div className="bg-amber-500 rounded-xl p-5 text-white mb-6">
+        <div className="bg-[#004ac6] rounded-xl p-5 text-white mb-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/80 text-sm mb-1">成就收集进度</p>
@@ -247,32 +243,31 @@ export default function AchievementsPage() {
         </div>
 
         {/* 分类筛选 */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex items-center gap-6 mb-6 border-b border-[#eae7e7] overflow-x-auto">
           <button
             onClick={() => setActiveCategory("ALL")}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
+            className={`pb-3 text-sm font-medium whitespace-nowrap transition-all ${
               activeCategory === "ALL"
-                ? "bg-primary-gradient text-white shadow-glow"
-                : "bg-surface-elevated text-foreground-muted hover:text-foreground shadow-subtle"
+                ? "border-b-2 border-[#004ac6] text-[#004ac6]"
+                : "text-[#5f5e5e] hover:text-foreground"
             }`}
           >
-            <span>🌟</span>
-            <span>全部</span>
-            <span className={`ml-1 px-2 py-0.5 rounded-full text-xs ${activeCategory === "ALL" ? "bg-white/20" : "bg-surface"}`}>
-              {stats.unlockedCount}/{stats.total}
-            </span>
+            全部 ({stats.unlockedCount}/{stats.total})
           </button>
           {achievementCategories.map((cat) => {
             const catStats = stats.byCategory[cat.key] || { total: 0, unlocked: 0 };
             return (
-              <CategoryTab
+              <button
                 key={cat.key}
-                category={cat}
-                isActive={activeCategory === cat.key}
                 onClick={() => setActiveCategory(cat.key)}
-                unlockedCount={catStats.unlocked}
-                totalCount={catStats.total}
-              />
+                className={`pb-3 text-sm font-medium whitespace-nowrap transition-all ${
+                  activeCategory === cat.key
+                    ? "border-b-2 border-[#004ac6] text-[#004ac6]"
+                    : "text-[#5f5e5e] hover:text-foreground"
+                }`}
+              >
+                {cat.name} ({catStats.unlocked}/{catStats.total})
+              </button>
             );
           })}
         </div>

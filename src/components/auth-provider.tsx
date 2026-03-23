@@ -10,13 +10,21 @@ interface User {
   name: string | null;
 }
 
+export interface MembershipStatus {
+  membershipType: "MONTHLY" | "CREDIT" | "FREE";
+  creditsRemaining: number | null;
+  monthlyExpiresAt: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  membershipStatus: MembershipStatus | null;
   login: (email: string, password: string) => Promise<{ error?: string }>;
   register: (email: string, password: string, name?: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  refreshMembership: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,7 +32,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [membershipStatus, setMembershipStatus] = useState<MembershipStatus | null>(null);
   const router = useRouter();
+
+  const refreshMembership = async () => {
+    try {
+      const res = await fetch("/api/membership/status");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status) setMembershipStatus(data.status);
+      }
+    } catch {
+      // non-critical — leave existing status
+    }
+  };
 
   // 获取当前用户
   const refreshUser = async () => {
@@ -46,6 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser().finally(() => setIsLoading(false));
   }, []);
 
+  // 用户登录后加载 membership
+  useEffect(() => {
+    if (user) {
+      refreshMembership();
+    } else {
+      setMembershipStatus(null);
+    }
+  }, [user]);
+
   // 登录
   const login = async (email: string, password: string) => {
     try {
@@ -53,7 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const anonymousId = getAnonymousId();
       // 也获取旧的匿名ID（为了兼容之前的数据）
       const oldAnonymousId = typeof window !== 'undefined' ? localStorage.getItem('anonymous-id') : null;
-      console.log("[Debug Client] anonymousId:", anonymousId, "oldAnonymousId:", oldAnonymousId);
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -80,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 登录成功后清除匿名ID
       clearAnonymousId();
       setUser(data.user);
+      // membership 会由 user useEffect 触发加载
       return {};
     } catch {
       return { error: "登录失败，请检查网络" };
@@ -119,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 注册成功后清除匿名ID
       clearAnonymousId();
       setUser(data.user);
+      // membership 会由 user useEffect 触发加载
       return {};
     } catch {
       return { error: "注册失败，请检查网络" };
@@ -130,15 +161,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
+      setMembershipStatus(null);
       router.push("/");
-    } catch (error) {
-      console.error("[Logout Error]", error);
+    } catch {
+      // ignore
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, login, register, logout, refreshUser }}
+      value={{ user, isLoading, membershipStatus, login, register, logout, refreshUser, refreshMembership }}
     >
       {children}
     </AuthContext.Provider>

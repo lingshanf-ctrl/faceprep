@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useLanguage } from "@/components/language-provider";
 import { generateInterviewQuestions, GeneratedQuestion, getGenerationTips } from "@/lib/question-generator";
 import { createInterviewSessionAsync, InterviewQuestion } from "@/lib/interview-store";
+import { PageHeader } from "@/components/page-header";
 
 export default function AICustomPage() {
   const { locale } = useLanguage();
@@ -149,70 +150,56 @@ export default function AICustomPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 md:py-12">
-        <div className="mb-8">
+      <PageHeader
+        title={locale === 'zh' ? 'AI 定制练习' : 'AI Custom Practice'}
+        subtitle={locale === 'zh' ? '上传简历和 JD，AI 生成专属面试题' : 'Upload Resume & JD to generate tailored questions'}
+      />
+
+      <div className="max-w-2xl mx-auto px-6 md:px-8 py-8">
+        <div className="mb-4">
           <Link
             href="/practice"
-            className="inline-flex items-center gap-2 text-foreground-muted hover:text-foreground transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-sm text-[#5f5e5e] hover:text-foreground transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span className="text-sm">{locale === 'zh' ? '返回' : 'Back'}</span>
+            {locale === 'zh' ? '返回练习模式' : 'Back to Practice'}
           </Link>
-          <h1 className="font-display text-display font-bold text-foreground tracking-tight">
-            {locale === 'zh' ? 'AI 定制面试' : 'AI Custom Interview'}
-          </h1>
-          <p className="text-body text-foreground-muted mt-2">
-            {locale === 'zh' ? '基于岗位 JD 和简历，生成针对性面试题目' : 'Generate tailored questions based on job description and resume'}
-          </p>
         </div>
 
-        <div className="bg-surface rounded-3xl p-8 border border-border">
+        <div className="bg-[#f6f3f2] rounded-xl p-8">
           {!generatedQuestions ? (
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-3">
-                  {locale === 'zh' ? '生成模式' : 'Generation Mode'}
-                </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-6 border-b border-[#eae7e7] mb-6">
                   <button
                     onClick={() => setGenerationMode('ai')}
-                    className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all ${
+                    className={`pb-3 text-sm font-medium transition-all ${
                       generationMode === 'ai'
-                        ? 'border-accent bg-accent/5 text-accent'
-                        : 'border-border hover:border-accent/30'
+                        ? 'border-b-2 border-[#004ac6] text-[#004ac6]'
+                        : 'text-[#5f5e5e] hover:text-foreground'
                     }`}
                   >
-                    <div className="flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                      {locale === 'zh' ? 'AI 智能生成' : 'AI Generate'}
-                    </div>
-                    <p className="text-xs text-foreground-muted mt-1 font-normal">
-                      {locale === 'zh' ? '更精准、更个性化' : 'More precise & personalized'}
-                    </p>
+                    {locale === 'zh' ? 'AI 智能生成' : 'AI Generate'}
                   </button>
                   <button
                     onClick={() => setGenerationMode('rule')}
-                    className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all ${
+                    className={`pb-3 text-sm font-medium transition-all ${
                       generationMode === 'rule'
-                        ? 'border-accent bg-accent/5 text-accent'
-                        : 'border-border hover:border-accent/30'
+                        ? 'border-b-2 border-[#004ac6] text-[#004ac6]'
+                        : 'text-[#5f5e5e] hover:text-foreground'
                     }`}
                   >
-                    <div className="flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                      {locale === 'zh' ? '规则引擎' : 'Rule Engine'}
-                    </div>
-                    <p className="text-xs text-foreground-muted mt-1 font-normal">
-                      {locale === 'zh' ? '更快速、更稳定' : 'Faster & more stable'}
-                    </p>
+                    {locale === 'zh' ? '规则引擎' : 'Rule Engine'}
                   </button>
                 </div>
+                <p className="text-xs text-[#5f5e5e] -mt-4 mb-4">
+                  {generationMode === 'ai'
+                    ? (locale === 'zh' ? '基于大语言模型，生成更精准、更个性化的面试题' : 'LLM-powered, more precise & personalized questions')
+                    : (locale === 'zh' ? '基于规则引擎，更快速、更稳定' : 'Rule-based engine, faster & more stable')
+                  }
+                </p>
               </div>
 
               <div>
@@ -224,7 +211,7 @@ export default function AICustomPage() {
                   value={jdText}
                   onChange={(e) => setJdText(e.target.value)}
                   placeholder={locale === 'zh' ? '粘贴目标岗位的 JD 内容，AI 将基于岗位要求生成相关题目...' : 'Paste the job description here...'}
-                  className="w-full h-32 px-4 py-4 bg-background border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:border-accent resize-none transition-colors"
+                  className="w-full h-32 px-4 py-4 bg-white border-0 border-b-2 border-[#c3c6d7] rounded-t-lg text-foreground placeholder-[#5f5e5e]/50 focus:outline-none focus:border-[#004ac6] resize-none transition-colors"
                 />
                 <p className="text-xs text-foreground-muted mt-2">
                   {locale === 'zh' ? '提示：包含岗位职责、技能要求等信息可获得更精准的结果' : 'Tip: Include role responsibilities and skill requirements for better results'}
@@ -240,7 +227,7 @@ export default function AICustomPage() {
                   value={resumeText}
                   onChange={(e) => setResumeText(e.target.value)}
                   placeholder={locale === 'zh' ? '粘贴你的简历内容，AI 将结合你的经历生成更匹配的题目...' : 'Paste your resume for more personalized questions...'}
-                  className="w-full h-24 px-4 py-4 bg-background border border-border rounded-xl text-foreground placeholder-foreground-muted focus:outline-none focus:border-accent resize-none transition-colors"
+                  className="w-full h-24 px-4 py-4 bg-white border-0 border-b-2 border-[#c3c6d7] rounded-t-lg text-foreground placeholder-[#5f5e5e]/50 focus:outline-none focus:border-[#004ac6] resize-none transition-colors"
                 />
               </div>
 
@@ -253,7 +240,7 @@ export default function AICustomPage() {
               <button
                 onClick={handleGenerate}
                 disabled={!jdText.trim() || isGenerating || isSaving}
-                className="w-full py-4 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 bg-[#004ac6] text-white rounded-xl font-medium hover:bg-[#003aa0] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               >
                 {isGenerating || isSaving ? (
                   <>
@@ -343,9 +330,9 @@ export default function AICustomPage() {
                 {generatedQuestions.map((q, index) => (
                   <div
                     key={q.id}
-                    className="flex items-start gap-4 p-4 bg-background rounded-xl border border-border"
+                    className="flex items-start gap-4 p-4 bg-white rounded-xl border border-[#eae7e7]"
                   >
-                    <span className="flex-shrink-0 w-7 h-7 bg-accent/10 rounded-lg flex items-center justify-center text-sm font-medium text-accent">
+                    <span className="flex-shrink-0 w-7 h-7 bg-[#004ac6]/10 rounded-lg flex items-center justify-center text-sm font-bold text-[#004ac6]">
                       {index + 1}
                     </span>
                     <p className="text-foreground font-medium flex-1 text-sm">
@@ -359,7 +346,7 @@ export default function AICustomPage() {
                 <button
                   onClick={startFullInterview}
                   disabled={!generatedQuestions || generatedQuestions.length === 0}
-                  className="py-4 bg-accent text-white rounded-xl font-medium hover:bg-accent-dark disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                  className="py-4 bg-[#004ac6] text-white rounded-xl font-medium hover:bg-[#003aa0] disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -370,7 +357,7 @@ export default function AICustomPage() {
                 {savedQuestionIds.length > 0 && (
                   <button
                     onClick={startSinglePractice}
-                    className="py-4 bg-surface border border-border text-foreground rounded-xl font-medium hover:bg-accent/5 hover:border-accent/30 transition-all flex items-center justify-center gap-2"
+                    className="py-4 bg-white border border-[#c3c6d7] text-foreground rounded-xl font-medium hover:bg-[#f6f3f2] transition-all flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

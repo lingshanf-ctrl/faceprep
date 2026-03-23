@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/components/language-provider";
-import { Button } from "@/components/ui/button";
+import { Check, X, Zap, Shield, Users, Sparkles } from "lucide-react";
 
-// 用户类型
 type UserType = "free" | "credit_exhausted" | "monthly_expired" | "renew";
+type PlanTab = "credit" | "monthly";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -18,96 +18,88 @@ interface UpgradeModalProps {
 
 const translations = {
   zh: {
-    // 免费用户
-    freeTitle: "解锁 AI 深度分析",
-    freeSubtitle: "获取专业的面试教练级反馈",
-    freeCta: "立即开通会员",
-    // 次卡用完
-    creditExhaustedTitle: "次数已用完",
-    creditExhaustedSubtitle: "你的次卡权益已用完，继续查看需要续费",
-    creditExhaustedCta: "续费次卡",
-    // 月卡过期
-    monthlyExpiredTitle: "月卡已过期",
-    monthlyExpiredSubtitle: "你的月卡已到期，续费可继续享受不限次分析",
-    monthlyExpiredCta: "续费月卡",
-    // 主动续费
-    renewTitle: "续费会员",
-    renewSubtitle: "提前续费，无缝衔接当前会员权益",
-    renewCta: "立即续费",
-    // 通用
-    features: [
-      "四维能力评估",
-      "差距分析定位",
-      "AI优化答案示例",
-      "个性化改进建议",
-      "教练寄语",
-    ],
+    badge: "已有 50,000+ 求职者在使用",
+    freeTitle: "FacePrep Pro 会员",
+    freeSubtitle: "开启 AI 深度分析，系统性了解自己的面试表现与改进方向",
+    creditExhaustedTitle: "AI 分析次数已用完",
+    creditExhaustedSubtitle: "续费后即可继续获取深度反馈，查看每次练习的详细分析报告",
+    monthlyExpiredTitle: "月卡会员已到期",
+    monthlyExpiredSubtitle: "续费后继续享受不限次 AI 深度分析与全部 Pro 功能",
+    renewTitle: "续费 Pro 会员",
+    renewSubtitle: "提前续费，会员权益无缝延续，不中断使用体验",
+    compareTitle: "功能对比",
     freePlan: "免费版",
-    freeDesc: "基础分析，关键点覆盖检查",
-    creditPlan: "次卡",
-    creditDesc: "按需使用，灵活便捷",
-    monthlyPlan: "月卡",
-    monthlyDesc: "畅享无限次专业分析",
-    contactAdmin: "扫码进入小红书店铺下单",
-    contactStep1: "① 扫描下方二维码",
-    contactStep2: "② 小红书店铺下单领取早鸟价会员",
-    contactStep3: "③ 下单后备注栏将收到会员激活链接",
-    contactNote: "早鸟价限时优惠，先到先得",
+    proPlan: "Pro",
+    features: [
+      { label: "题库练习", free: true },
+      { label: "基础答题记录", free: true },
+      { label: "AI 深度评分", free: false },
+      { label: "四维能力评估", free: false },
+      { label: "差距分析定位", free: false },
+      { label: "AI 优化答案示例", free: false },
+      { label: "个性化改进建议", free: false },
+      { label: "教练寄语", free: false },
+    ],
+    creditTab: "次卡",
+    monthlyTab: "月卡",
+    bestValue: "推荐",
+    creditPrice: "¥9.9",
+    creditUnit: "/ 10次",
+    creditDesc: "灵活按需，用完再购",
+    creditHighlight: "早鸟体验价",
+    monthlyPrice: "¥19.9",
+    monthlyUnit: "/ 月",
+    monthlyDesc: "不限次数，畅享全部 Pro 功能",
+    monthlyHighlight: "早鸟价 ¥9.9 限时开放",
+    scanTitle: "扫码前往小红书店铺下单",
+    step1: "扫描下方二维码",
+    step2: "在小红书店铺选购早鸟套餐",
+    step3: "下单后备注栏会收到激活链接",
+    urgency: "早鸟体验价 ¥9.9，限时开放",
+    secureText: "安全支付，隐私保护",
     close: "暂不需要",
-    currentPlan: "当前套餐",
-    creditsLeft: "剩余",
-    times: "次",
-    expiresAt: "有效期至",
-    expiredAt: "已于",
-    expired: "过期",
-    upgradeHint: "升级会员，享受专业面试辅导",
-    renewHint: "续费后即刻恢复 AI 分析权益",
   },
   en: {
-    // Free user
-    freeTitle: "Unlock AI Deep Analysis",
-    freeSubtitle: "Get professional interview coaching feedback",
-    freeCta: "Activate Membership",
-    // Credit exhausted
-    creditExhaustedTitle: "Credits Exhausted",
-    creditExhaustedSubtitle: "Your credit pack is used up, renewal required",
-    creditExhaustedCta: "Renew Credits",
-    // Monthly expired
+    badge: "50,000+ job seekers using FacePrep",
+    freeTitle: "FacePrep Pro",
+    freeSubtitle: "Access AI-powered deep analysis to understand your interview performance and where to improve",
+    creditExhaustedTitle: "Analysis Credits Used Up",
+    creditExhaustedSubtitle: "Top up to continue receiving detailed AI feedback on your practice sessions",
     monthlyExpiredTitle: "Monthly Plan Expired",
-    monthlyExpiredSubtitle: "Your monthly plan has expired, renew for unlimited access",
-    monthlyExpiredCta: "Renew Monthly",
-    // Proactive renew
-    renewTitle: "Renew Membership",
-    renewSubtitle: "Renew early to seamlessly extend your current benefits",
-    renewCta: "Renew Now",
-    // Common
-    features: [
-      "4-Dimension Assessment",
-      "Gap Analysis",
-      "AI-Optimized Answers",
-      "Personalized Suggestions",
-      "Coach Message",
-    ],
+    monthlyExpiredSubtitle: "Renew to continue unlimited AI analysis and all Pro features",
+    renewTitle: "Renew Pro Membership",
+    renewSubtitle: "Renew early to extend your benefits without any interruption",
+    compareTitle: "Feature Comparison",
     freePlan: "Free",
-    freeDesc: "Basic analysis, key points coverage check",
-    creditPlan: "Credit Pack",
-    creditDesc: "Use as needed, flexible",
-    monthlyPlan: "Monthly",
-    monthlyDesc: "Unlimited professional analysis",
-    contactAdmin: "Scan QR to order on Xiaohongshu",
-    contactStep1: "① Scan the QR code below",
-    contactStep2: "② Place order on Xiaohongshu at early bird price",
-    contactStep3: "③ Activation link sent in order notes after purchase",
-    contactNote: "Early bird pricing — limited time offer",
-    close: "Not Now",
-    currentPlan: "Current Plan",
-    creditsLeft: "Remaining",
-    times: "credits",
-    expiresAt: "Valid until",
-    expiredAt: "Expired on",
-    expired: "",
-    upgradeHint: "Upgrade for professional interview coaching",
-    renewHint: "Renew to restore AI analysis access",
+    proPlan: "Pro",
+    features: [
+      { label: "Question Bank", free: true },
+      { label: "Practice History", free: true },
+      { label: "AI Deep Scoring", free: false },
+      { label: "4-Dimension Assessment", free: false },
+      { label: "Gap Analysis", free: false },
+      { label: "AI-Optimized Answers", free: false },
+      { label: "Personalized Suggestions", free: false },
+      { label: "Coach Message", free: false },
+    ],
+    creditTab: "Credits",
+    monthlyTab: "Monthly",
+    bestValue: "Popular",
+    creditPrice: "¥9.9",
+    creditUnit: "/ 10 uses",
+    creditDesc: "Flexible, pay as you go",
+    creditHighlight: "Early bird price",
+    monthlyPrice: "¥19.9",
+    monthlyUnit: "/ mo",
+    monthlyDesc: "Unlimited AI analysis, all Pro features",
+    monthlyHighlight: "Early bird ¥9.9 — limited time",
+    scanTitle: "Order via Xiaohongshu",
+    step1: "Scan the QR code below",
+    step2: "Select the early bird plan on Xiaohongshu",
+    step3: "Activation link will be sent in your order notes",
+    urgency: "Early bird price ¥9.9 — limited time",
+    secureText: "Secure checkout, privacy protected",
+    close: "Maybe Later",
   },
 };
 
@@ -121,164 +113,219 @@ export function UpgradeModal({
   const { locale } = useLanguage();
   const t = translations[locale === "zh" ? "zh" : "en"];
   const [mounted, setMounted] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanTab>("monthly");
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
 
   if (!isOpen || !mounted) return null;
 
-  // 根据用户类型获取文案和主题
-  const getContent = () => {
+  const getTitle = () => {
     switch (userType) {
-      case "credit_exhausted":
-        return {
-          title: t.creditExhaustedTitle,
-          subtitle: t.creditExhaustedSubtitle,
-          cta: t.creditExhaustedCta,
-          hint: t.renewHint,
-          theme: {
-            gradient: "from-amber-500 to-amber-600",
-            bg: "bg-amber-50",
-            border: "border-amber-200",
-            text: "text-amber-700",
-            accent: "text-amber-600",
-            icon: "text-amber-500",
-          },
-        };
-      case "monthly_expired":
-        return {
-          title: t.monthlyExpiredTitle,
-          subtitle: t.monthlyExpiredSubtitle,
-          cta: t.monthlyExpiredCta,
-          hint: t.renewHint,
-          theme: {
-            gradient: "from-purple-500 to-purple-600",
-            bg: "bg-purple-50",
-            border: "border-purple-200",
-            text: "text-purple-700",
-            accent: "text-purple-600",
-            icon: "text-purple-500",
-          },
-        };
-      case "renew":
-        return {
-          title: t.renewTitle,
-          subtitle: t.renewSubtitle,
-          cta: t.renewCta,
-          hint: t.renewHint,
-          theme: {
-            gradient: "from-purple-500 to-purple-600",
-            bg: "bg-purple-50",
-            border: "border-purple-200",
-            text: "text-purple-700",
-            accent: "text-purple-600",
-            icon: "text-purple-500",
-          },
-        };
-      default:
-        return {
-          title: t.freeTitle,
-          subtitle: t.freeSubtitle,
-          cta: t.freeCta,
-          hint: t.upgradeHint,
-          theme: {
-            gradient: "from-accent to-accent-dark",
-            bg: "bg-accent/5",
-            border: "border-accent/10",
-            text: "text-accent",
-            accent: "text-accent",
-            icon: "text-accent",
-          },
-        };
+      case "credit_exhausted": return t.creditExhaustedTitle;
+      case "monthly_expired": return t.monthlyExpiredTitle;
+      case "renew": return t.renewTitle;
+      default: return t.freeTitle;
     }
   };
 
-  const content = getContent();
+  const getSubtitle = () => {
+    switch (userType) {
+      case "credit_exhausted": return t.creditExhaustedSubtitle;
+      case "monthly_expired": return t.monthlyExpiredSubtitle;
+      case "renew": return t.renewSubtitle;
+      default: return t.freeSubtitle;
+    }
+  };
+
+  const planData = selectedPlan === "monthly"
+    ? { price: t.monthlyPrice, unit: t.monthlyUnit, desc: t.monthlyDesc, highlight: t.monthlyHighlight }
+    : { price: t.creditPrice, unit: t.creditUnit, desc: t.creditDesc, highlight: t.creditHighlight };
 
   return createPortal(
     <div className="fixed inset-0 z-[100] overflow-y-auto">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal Container - 使用 flex 居中 */}
+      {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        {/* Modal */}
-        <div className="relative bg-background rounded-2xl shadow-xl max-w-md w-full">
-          {/* Header */}
-          <div className={`bg-gradient-to-r ${content.theme.gradient} p-6 text-white`}>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
+        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[720px] overflow-hidden">
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          {/* Header — Klein Blue */}
+          <div className="bg-[#004ac6] px-7 pt-7 pb-6 relative overflow-hidden">
+            {/* Subtle dot grid */}
+            <div
+              className="absolute inset-0 opacity-[0.06]"
+              style={{
+                backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
+                backgroundSize: "20px 20px",
+              }}
+            />
+            {/* Soft glow */}
+            <div className="absolute -top-16 -right-16 w-56 h-56 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative">
+              <div className="inline-flex items-center gap-1.5 bg-white/15 border border-white/20 text-white/90 text-xs font-medium px-3 py-1 rounded-full mb-4">
+                <Users className="w-3 h-3" />
+                {t.badge}
               </div>
-              <div>
-                <h2 className="text-xl font-bold">{content.title}</h2>
-                <p className="text-sm text-white/80">{content.subtitle}</p>
-              </div>
+              <h2 className="font-display text-2xl font-extrabold text-white tracking-tight mb-1.5">
+                {getTitle()}
+              </h2>
+              <p className="text-sm text-white/70 leading-relaxed max-w-lg">
+                {getSubtitle()}
+              </p>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-5">
-            {/* 功能亮点 — 紧凑横排 */}
-            <div className="flex flex-wrap gap-2 mb-5">
-              {t.features.map((feature, index) => (
-                <span key={index} className="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
-                  <svg className="w-3 h-3 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {feature}
-                </span>
-              ))}
-            </div>
+          {/* Body — two columns */}
+          <div className="flex flex-col md:flex-row">
 
-            {/* 开通步骤 + 二维码 — 左右布局 */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 flex items-center gap-4">
-              {/* 左：步骤 */}
-              <div className="flex-1 space-y-2">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">{t.contactAdmin}</p>
-                {[t.contactStep1, t.contactStep2, t.contactStep3].map((step, i) => (
-                  <p key={i} className="text-sm text-slate-700">{step}</p>
+            {/* Left: Feature comparison */}
+            <div className="flex-1 px-7 py-6 border-b md:border-b-0 md:border-r border-[#eae7e7]">
+              <p className="text-[11px] font-semibold text-[#5f5e5e] uppercase tracking-wider mb-4">
+                {t.compareTitle}
+              </p>
+
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_auto_auto] gap-x-5 mb-2 px-1">
+                <span />
+                <span className="text-xs font-medium text-[#5f5e5e] w-10 text-center">{t.freePlan}</span>
+                <span className="text-xs font-bold text-[#004ac6] w-10 text-center">{t.proPlan}</span>
+              </div>
+
+              <div className="space-y-0.5">
+                {t.features.map((feature, i) => (
+                  <div
+                    key={i}
+                    className={`grid grid-cols-[1fr_auto_auto] gap-x-5 items-center px-2 py-2.5 rounded-lg ${
+                      !feature.free ? "bg-[#eef1ff]/40" : ""
+                    }`}
+                  >
+                    <span className={`text-sm ${feature.free ? "text-[#5f5e5e]" : "text-[#1c1b1b] font-medium"}`}>
+                      {feature.label}
+                    </span>
+                    <span className="w-10 flex justify-center">
+                      {feature.free
+                        ? <Check className="w-4 h-4 text-[#5f5e5e]" />
+                        : <X className="w-3.5 h-3.5 text-[#c3c6d7]" />
+                      }
+                    </span>
+                    <span className="w-10 flex justify-center">
+                      <Check className="w-4 h-4 text-[#004ac6]" strokeWidth={2.5} />
+                    </span>
+                  </div>
                 ))}
-                <div className="flex items-center gap-1.5 pt-1">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  <p className="text-xs text-amber-600 font-medium">{t.contactNote}</p>
-                </div>
-              </div>
-
-              {/* 右：二维码 */}
-              <div className="flex flex-col items-center gap-1 shrink-0">
-                <div className="bg-white rounded-xl p-1.5 border border-slate-200 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/qrcode-xiaohongshu.jpg"
-                    alt="小红书二维码"
-                    className="w-28 h-28 object-contain rounded-lg"
-                  />
-                </div>
-                <p className="text-xs text-slate-400">@是昭乐呀</p>
               </div>
             </div>
 
-            {/* Actions */}
-            <Button variant="outline" className="w-full" onClick={onClose}>
-              {t.close}
-            </Button>
+            {/* Right: Purchase panel */}
+            <div className="w-full md:w-[280px] px-6 py-6 flex flex-col gap-4 shrink-0">
+
+              {/* Plan toggle */}
+              <div className="flex bg-[#f6f3f2] rounded-xl p-1 gap-1">
+                {(["credit", "monthly"] as PlanTab[]).map((plan) => (
+                  <button
+                    key={plan}
+                    onClick={() => setSelectedPlan(plan)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                      selectedPlan === plan
+                        ? "bg-white text-[#1c1b1b] shadow-sm"
+                        : "text-[#5f5e5e] hover:text-[#1c1b1b]"
+                    }`}
+                  >
+                    {plan === "monthly" && selectedPlan === "monthly" && (
+                      <Sparkles className="w-3 h-3 text-[#004ac6]" />
+                    )}
+                    {plan === "credit" ? t.creditTab : t.monthlyTab}
+                    {plan === "monthly" && (
+                      <span className="bg-[#004ac6] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                        {t.bestValue}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Price display */}
+              <div className="bg-[#f6f3f2] rounded-xl px-4 py-3.5">
+                <div className="flex items-baseline gap-1 mb-0.5">
+                  <span className="text-3xl font-extrabold text-[#1c1b1b] font-display">{planData.price}</span>
+                  <span className="text-sm text-[#5f5e5e]">{planData.unit}</span>
+                </div>
+                <p className="text-xs text-[#5f5e5e] mb-2.5">{planData.desc}</p>
+                <div className="inline-flex items-center gap-1 bg-[#004ac6]/10 text-[#004ac6] text-xs font-semibold px-2.5 py-1 rounded-full">
+                  <Zap className="w-3 h-3" />
+                  {planData.highlight}
+                </div>
+              </div>
+
+              {/* QR + Steps */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-semibold text-[#5f5e5e] uppercase tracking-wider">
+                  {t.scanTitle}
+                </p>
+                <div className="flex gap-3 items-start">
+                  {/* QR code */}
+                  <div className="bg-white rounded-xl p-1.5 border border-[#eae7e7] shadow-sm shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/qrcode-xiaohongshu.jpg"
+                      alt="小红书二维码"
+                      className="w-[72px] h-[72px] object-contain rounded-lg"
+                    />
+                  </div>
+                  {/* Steps */}
+                  <div className="space-y-2 flex-1 min-w-0">
+                    {[t.step1, t.step2, t.step3].map((step, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className="w-4 h-4 rounded-full bg-[#004ac6]/10 text-[#004ac6] text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                          {i + 1}
+                        </span>
+                        <p className="text-xs text-[#5f5e5e] leading-relaxed">{step}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Urgency badge */}
+                <div className="flex items-center gap-2 bg-[#eef1ff] border border-[#c5d0f5] rounded-lg px-3 py-2">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#004ac6] animate-pulse shrink-0" />
+                  <p className="text-xs text-[#004ac6] font-medium">{t.urgency}</p>
+                </div>
+              </div>
+
+              {/* Security + Close */}
+              <div className="flex flex-col gap-2 mt-auto pt-1">
+                <div className="flex items-center justify-center gap-1.5 text-[#5f5e5e]">
+                  <Shield className="w-3 h-3" />
+                  <span className="text-xs">{t.secureText}</span>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-full py-2 text-sm font-medium text-[#5f5e5e] hover:text-[#1c1b1b] border border-[#eae7e7] rounded-xl hover:bg-[#f6f3f2] transition-colors"
+                >
+                  {t.close}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

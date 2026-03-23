@@ -316,35 +316,6 @@ export function InterviewReportV2({ session }: InterviewReportV2Props) {
 
   return (
     <div className="space-y-6">
-      {/* 整体评分 */}
-      <Card className="border border-slate-200 bg-white">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-500 mb-1">
-                {locale === "zh" ? "综合评分" : "Overall Score"}
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className={`text-5xl font-bold ${getScoreColor(session.overallScore)}`}>
-                  {session.overallScore}
-                </span>
-                <span className="text-sm text-slate-400">/100</span>
-              </div>
-              <p className={`text-sm mt-1 ${getScoreColor(session.overallScore)}`}>
-                {getScoreLevel(session.overallScore, locale)}
-              </p>
-            </div>
-            <div className="text-right">
-              <div
-                className={`px-4 py-2 rounded-full text-sm font-medium border ${getScoreBgColor(session.overallScore)}`}
-              >
-                {session.answers?.length} {locale === "zh" ? "道题已回答" : "questions answered"}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* 整体反馈 */}
       {(session.overallFeedback || session.strengths?.length || session.improvements?.length) && (
         <Card className="border border-slate-200">
