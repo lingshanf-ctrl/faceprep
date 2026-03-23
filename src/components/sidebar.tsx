@@ -59,7 +59,7 @@ const navItems: NavItemDef[] = [
     icon: Zap,
     subItems: [
       { href: "/questions", labelZh: "随机挑战", labelEn: "Random", icon: Shuffle },
-      { href: "/practice", labelZh: "完整模拟", labelEn: "Mock", icon: Brain },
+      { href: "/practice/mock", labelZh: "完整模拟", labelEn: "Mock", icon: Brain },
       { href: "/practice/ai-custom", labelZh: "AI 自定义", labelEn: "AI Custom", icon: Sparkles },
       { href: "/favorites", labelZh: "收藏题目", labelEn: "Bookmarked", icon: Bookmark },
     ],

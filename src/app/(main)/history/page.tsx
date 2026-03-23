@@ -427,10 +427,10 @@ export default function HistoryPage() {
                       tabIndex={0}
                       onClick={() => { if (!isEditing) router.push(reportHref); }}
                       onKeyDown={(e) => { if (!isEditing && (e.key === "Enter" || e.key === " ")) router.push(reportHref); }}
-                      className="group flex items-start md:items-center gap-2 md:gap-4 p-3 md:p-5 bg-[#f6f3f2] rounded-xl hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] transition-all cursor-pointer"
+                      className="group flex items-center gap-2 md:gap-4 p-3 md:p-5 bg-[#f6f3f2] rounded-xl hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] transition-all cursor-pointer"
                     >
-                      {/* Icon box */}
-                      <div className={`w-9 h-9 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      {/* Icon box — self-start so it aligns with the title line, not card center */}
+                      <div className={`self-start mt-0.5 w-9 h-9 md:w-12 md:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                         record.type === "interview" ? "bg-[#eef1ff]" : "bg-[#f2f2f2]"
                       }`}>
                         {record.type === "interview"
@@ -470,9 +470,9 @@ export default function HistoryPage() {
                             </button>
                           </div>
                         ) : (
-                          <div className="mb-1.5">
-                            {/* title + pencil on same line, never wrap between them */}
-                            <div className="flex items-center gap-1.5 mb-1">
+                          <div>
+                            {/* title + pencil on same line */}
+                            <div className="flex items-center gap-1.5 mb-1.5">
                               <h4 className="font-bold text-foreground text-sm sm:text-base leading-tight group-hover:text-accent transition-colors truncate">
                                 {record.title}
                               </h4>
@@ -486,8 +486,8 @@ export default function HistoryPage() {
                                 </button>
                               )}
                             </div>
-                            {/* type badge on its own line */}
-                            <span className="inline-block text-[10px] px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#eef1ff] text-[#004ac6] border border-[#c5d0f5]">
+                            {/* type badge — equal spacing above (mb-1.5 from title) and below (mb-1.5 to meta) */}
+                            <span className="inline-block mb-1.5 text-[10px] px-2 py-0.5 rounded font-semibold tracking-wider uppercase bg-[#eef1ff] text-[#004ac6] border border-[#c5d0f5]">
                               {record.type === "interview"
                                 ? (locale === "zh" ? "模拟面试" : "Mock Interview")
                                 : (locale === "zh" ? "练习" : "Practice")}

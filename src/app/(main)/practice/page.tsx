@@ -181,12 +181,12 @@ export default function PracticePage() {
                   <Shuffle className="w-5 h-5 md:w-7 md:h-7" />
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold font-display mb-2 md:mb-3 text-foreground">
-                  {locale === 'zh' ? '随机挑战' : 'Ready for a Challenge?'}
+                  {locale === 'zh' ? '随机挑战' : 'Random Challenge'}
                 </h2>
                 <p className="text-[#5f5e5e] leading-relaxed max-w-md text-sm md:text-base">
                   {locale === 'zh'
-                    ? '从题库中随机挑选高质量面试题，参照行业标准，随时开练。'
-                    : 'Let our AI select a top-tier question from our database based on global industry standards.'}
+                    ? '优先展示系统为你推荐的题目，暂无推荐时从题库随机抽取，即刻开练。'
+                    : 'Starts with your personalized recommendations — falls back to a random pick from the question bank when none are available.'}
                 </p>
               </div>
               <div className="mt-8 md:mt-12 flex items-center text-[#004ac6] font-bold text-sm tracking-wider uppercase gap-2">
@@ -209,12 +209,12 @@ export default function PracticePage() {
                   <Brain className="w-5 h-5 md:w-7 md:h-7" />
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold font-display mb-2 md:mb-3 text-foreground">
-                  {locale === 'zh' ? '完整模拟面试' : 'The Real Deal'}
+                  {locale === 'zh' ? '模拟面试' : 'Mock Interview'}
                 </h2>
                 <p className="text-[#5f5e5e] leading-relaxed text-sm md:text-base">
                   {locale === 'zh'
-                    ? '完整流程的多题连贯模拟，AI 实时反馈与综合评估。'
-                    : 'Full-proctored, multi-question simulation with live AI feedback and performance analytics.'}
+                    ? '多题连贯作答，模拟真实面试节奏，结束后 AI 给出综合评分与详细反馈。'
+                    : 'Answer multiple questions back-to-back in a real interview flow, with AI scoring and feedback at the end.'}
                 </p>
               </div>
               <div className="mt-6 md:mt-8">
@@ -235,12 +235,12 @@ export default function PracticePage() {
                 <span className="bg-[#004ac6] text-white text-[10px] font-black px-3 py-1 rounded-full tracking-tighter">NEW</span>
               </div>
               <h2 className="text-xl md:text-2xl font-bold font-display mb-2 md:mb-3 text-foreground">
-                {locale === 'zh' ? 'AI 自定义练习' : 'Targeted Prep'}
+                {locale === 'zh' ? 'AI 定制模拟面试' : 'AI Mock Interview'}
               </h2>
               <p className="text-[#5f5e5e] leading-relaxed text-sm md:text-base">
                 {locale === 'zh'
-                  ? '上传简历和 JD，AI 生成专属面试题，精准匹配目标岗位。'
-                  : 'Upload your Resume and JD to generate industry-specific questions tailored to your profile.'}
+                  ? '上传简历和 JD，AI 按目标岗位生成专属题目，连贯作答后给出针对性评估。'
+                  : 'Upload your resume and JD — AI builds a tailored question set for your target role and evaluates your full run.'}
               </p>
             </div>
           </Link>
@@ -264,12 +264,12 @@ export default function PracticePage() {
               </div>
               <div className="flex-1">
                 <h2 className="text-xl md:text-2xl font-bold font-display mb-1 md:mb-2 text-foreground">
-                  {locale === 'zh' ? '针对薄弱项' : 'Master Your Weaknesses'}
+                  {locale === 'zh' ? '收藏练习' : 'Bookmarked Practice'}
                 </h2>
                 <p className="text-[#5f5e5e] leading-relaxed text-sm md:text-base">
                   {locale === 'zh'
-                    ? '基于历史数据识别薄弱题型，快速访问收藏题目进行专项练习。'
-                    : 'Quick access to your saved and favorited questions for focused revision.'}
+                    ? '从你收藏的题目中随机抽取一道，专项练习你标记的重点。'
+                    : 'Randomly picks one from your bookmarked questions for targeted revision.'}
                 </p>
               </div>
             </div>
