@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "./auth-provider";
 import { useLanguage } from "./language-provider";
 import { UserMenu } from "./user-menu";
@@ -26,12 +27,19 @@ export function PageHeader({ title, subtitle }: PageHeaderProps) {
         >
           {locale === "zh" ? "EN" : "中"}
         </button>
-        {user && (
+        {user ? (
           <UserMenu
             user={user}
             membershipStatus={membershipStatus}
             onLogout={logout}
           />
+        ) : (
+          <Link
+            href="/login"
+            className="text-xs font-bold text-white bg-[#004ac6] px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
+          >
+            {locale === "zh" ? "登录" : "Sign In"}
+          </Link>
         )}
       </div>
     </header>

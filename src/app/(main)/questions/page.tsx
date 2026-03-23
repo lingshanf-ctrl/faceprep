@@ -29,6 +29,7 @@ import {
   Sparkles,
   BookOpen,
   CheckCircle2,
+  Bookmark,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 
@@ -613,6 +614,7 @@ function QuestionCard({
 }: QuestionCardProps) {
   const isCustom = question.source === "custom";
   const [favorited, setFavorited] = useState(false);
+  const [toast, setToast] = useState(false);
 
   useEffect(() => {
     setFavorited(isFavorite(question.id));
@@ -623,17 +625,38 @@ function QuestionCard({
     e.stopPropagation();
     const next = toggleFavorite(question.id);
     setFavorited(next);
+    setToast(true);
+    setTimeout(() => setToast(false), 1500);
   }, [question.id]);
 
   return (
     <Link
       href={`/questions/${question.id}`}
-      className={`group block rounded-xl p-4 md:p-5 transition-all hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] ${
+      className={`group relative block rounded-xl p-4 md:p-5 transition-all hover:bg-white hover:shadow-[0_20px_40px_rgba(28,27,27,0.06)] ${
         isSelected
           ? "bg-white ring-1 ring-accent/30 shadow-glow"
           : "bg-[#f6f3f2]"
       }`}
     >
+      {/* Bookmark — absolute top-right */}
+      <button
+        onClick={handleToggleFavorite}
+        className={`absolute top-3 right-3 transition-colors ${
+          favorited ? "text-[#004ac6]" : "text-[#c3c6d7] hover:text-[#5f5e5e]"
+        }`}
+        aria-label={favorited ? (locale === "zh" ? "取消收藏" : "Remove") : (locale === "zh" ? "收藏" : "Save")}
+      >
+        <Bookmark className="w-4 h-4 md:w-[18px] md:h-[18px]" fill="currentColor" strokeWidth={0} />
+      </button>
+
+      {/* Subtle toast */}
+      {toast && (
+        <div className="absolute top-9 right-2 bg-[#1c1b1b]/75 text-white text-[11px] px-2.5 py-1 rounded-full whitespace-nowrap pointer-events-none z-10 animate-fade-in">
+          {favorited
+            ? (locale === "zh" ? "已收藏" : "Saved")
+            : (locale === "zh" ? "已取消收藏" : "Removed")}
+        </div>
+      )}
       <div className="flex items-start justify-between gap-3 md:gap-4">
         {/* Left: checkbox (custom) + content */}
         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -701,29 +724,8 @@ function QuestionCard({
           </div>
         </div>
 
-        {/* Right: bookmark + score + arrow */}
-        <div className="shrink-0 flex flex-col items-end gap-2 md:gap-3">
-          {/* Bookmark */}
-          <button
-            onClick={handleToggleFavorite}
-            className="p-1.5 md:p-2 rounded-xl transition-colors text-foreground-muted hover:text-accent hover:bg-accent/10"
-            aria-label={favorited ? (locale === "zh" ? "取消收藏" : "Remove") : (locale === "zh" ? "收藏" : "Save")}
-          >
-            <svg
-              className="w-4 h-4 md:w-5 md:h-5"
-              fill={favorited ? "currentColor" : "none"}
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-              />
-            </svg>
-          </button>
-
+        {/* Right: score + arrow */}
+        <div className="shrink-0 flex flex-col items-end gap-2 md:gap-3 mt-6 md:mt-7">
           {/* Score */}
           {isPracticed && highestScore !== undefined && (
             <span className={`font-bold text-base md:text-lg leading-none ${
